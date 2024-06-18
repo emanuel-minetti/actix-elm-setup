@@ -7,5 +7,8 @@
   },
   "author": "",
   "license": "MIT",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "bootstrap": "^5.3.3"
+  }
 }
