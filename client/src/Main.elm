@@ -15,16 +15,16 @@ initialModel =
 
 
 view _ =
-    { title = "Elm-Intl"
+    { title = "Actix Elm Setup"
     , body = viewBody
     }
 
 
 viewBody =
     [ div [ class "jumbotron" ]
-        [ h1 [] [ text "Welcome to Dunder Mifflin!" ]
+        [ h1 [] [ text "Welcome to Emu's Test!" ]
         , p []
-            [ text "Dunder Mifflin Inc. (stock symbol "
+            [ text "Emus Test Inc. (stock symbol "
             , strong [] [ text "DMI" ]
             , text <|
                 """

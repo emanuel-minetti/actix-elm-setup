@@ -1,6 +1,6 @@
 mod routes;
 
-use actix_web::{web, HttpServer, Responder};
+use actix_web::{web, HttpServer};
 use actix_files::Files;
 
 
