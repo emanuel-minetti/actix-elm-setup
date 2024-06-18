@@ -24,7 +24,7 @@ viewBody =
     [ div [ class "jumbotron" ]
         [ h1 [] [ text "Welcome to Emu's Test!" ]
         , p []
-            [ text "Emus Test Inc. (stock symbol "
+            [ text "Emus Test soso Inc. (stock symbol "
             , strong [] [ text "DMI" ]
             , text <|
                 """
