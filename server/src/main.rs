@@ -14,6 +14,7 @@ async fn main() -> std::io::Result<()> {
                     .service(Files::new("/css", "../public/css"))
                     .service(Files::new("/img", "../public/img"))
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
+                    .route("/", web::get().to(routes::return_index))
                     .route("/{route}", web::get().to(routes::return_index))
             )})
         .bind(("127.0.0.1", 8080))?
