@@ -10,10 +10,10 @@ async fn main() -> std::io::Result<()> {
         actix_web::App::new()
             .service(
                 web::scope("")
-                    .service(Files::new("/assets", "../public/assets"))
+                    .service(Files::new("/js", "../public/js"))
                     .service(Files::new("/css", "../public/css"))
+                    .service(Files::new("/img", "../public/img"))
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
-                    .route("/elm.js", web::get().to(routes::return_elm))
                     .route("/{route}", web::get().to(routes::return_index))
             )})
         .bind(("127.0.0.1", 8080))?
