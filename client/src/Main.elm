@@ -2,9 +2,10 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, href, selected, src, width)
+import Html.Attributes exposing (alt, class, height, href, selected, src, value, width)
+import Html.Events exposing (onInput)
 import Http
-import I18n exposing (I18n)
+import I18n exposing (I18n, Language(..))
 
 
 type alias Model =
@@ -15,6 +16,7 @@ type alias Model =
 
 type Msg
     = GotTranslations (Result Http.Error (I18n -> I18n))
+    | SwitchLanguage String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -45,15 +47,18 @@ update msg model =
                     in
                     ( { model | i18n = newI18n }, Cmd.none )
 
+        SwitchLanguage _ ->
+            ( model, Cmd.none )
 
-view : Model -> Document msg
+
+view : Model -> Document Msg
 view model =
     { title = "Actix Elm Setup"
     , body = viewBody model
     }
 
 
-viewBody : Model -> List (Html msg)
+viewBody : Model -> List (Html Msg)
 viewBody model =
     [ viewHeader model
     , div []
@@ -72,7 +77,7 @@ viewBody model =
     ]
 
 
-viewHeader : Model -> Html msg
+viewHeader : Model -> Html Msg
 viewHeader model =
     header []
         [ nav [ class "navbar bg-body-tertiary" ]
@@ -90,10 +95,7 @@ viewHeader model =
                     , text "Actix Elm Setup"
                     ]
                 , span [ class "navbar-text" ] [ viewLoginText model ]
-                , select []
-                    [ option [] [ text (I18n.german model.i18n) ]
-                    , option [ selected True ] [ text (I18n.english model.i18n) ]
-                    ]
+                , select [ onInput SwitchLanguage ] (viewSelectOptions model)
                 ]
             ]
         ]
@@ -107,6 +109,29 @@ viewLoginText model =
 
         Just userName ->
             text (I18n.loggedInAs model.i18n ++ userName)
+
+
+viewSelectOptions : Model -> List (Html Msg)
+viewSelectOptions model =
+    let
+        langToFunc : I18n.Language -> (I18n -> String)
+        langToFunc lang =
+            case lang of
+                En ->
+                    I18n.en
+
+                De ->
+                    I18n.de
+
+        langToOption : I18n.Language -> Html Msg
+        langToOption lang =
+            option
+                [ value (I18n.languageToString lang)
+                , selected (lang == I18n.currentLanguage model.i18n)
+                ]
+                [ text (langToFunc lang model.i18n) ]
+    in
+    List.map langToOption I18n.languages
 
 
 main : Program () Model Msg
