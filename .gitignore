@@ -1,4 +1,4 @@
 /public/
 /client/node_modules/
 /client/elm-stuff
-/client/src/i18n-stuff/
+/client/src/I18n.elm

@@ -2,16 +2,48 @@ module Main exposing (main)
 
 import Browser exposing (Document)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, href, src, width)
+import Html.Attributes exposing (alt, class, height, href, selected, src, width)
+import Http
+import I18n exposing (I18n)
 
 
 type alias Model =
-    { user : Maybe String }
+    { user : Maybe String
+    , i18n : I18n
+    }
 
 
-initialModel : Model
-initialModel =
-    { user = Just "Emu" }
+type Msg
+    = GotTranslations (Result Http.Error (I18n -> I18n))
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    let
+        i18n =
+            I18n.init { lang = I18n.De, path = "lang" }
+    in
+    ( { user = Just "Emu"
+      , i18n = i18n
+      }
+    , I18n.loadHeader GotTranslations i18n
+    )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        GotTranslations result ->
+            case result of
+                Err _ ->
+                    ( model, Cmd.none )
+
+                Ok updateI18n ->
+                    let
+                        newI18n =
+                            updateI18n model.i18n
+                    in
+                    ( { model | i18n = newI18n }, Cmd.none )
 
 
 view : Model -> Document msg
@@ -59,8 +91,8 @@ viewHeader model =
                     ]
                 , span [ class "navbar-text" ] [ viewLoginText model ]
                 , select []
-                    [ option [] [ text "Deutsch" ]
-                    , option [] [ text "Englisch" ]
+                    [ option [] [ text (I18n.german model.i18n) ]
+                    , option [ selected True ] [ text (I18n.english model.i18n) ]
                     ]
                 ]
             ]
@@ -71,17 +103,17 @@ viewLoginText : Model -> Html msg
 viewLoginText model =
     case model.user of
         Nothing ->
-            text "Sie sind nicht angemeldet"
+            text (I18n.notLoggedIn model.i18n)
 
         Just userName ->
-            text ("Sie sind angemdet als: " ++ userName)
+            text (I18n.loggedInAs model.i18n ++ userName)
 
 
-main : Program () Model msg
+main : Program () Model Msg
 main =
     Browser.document
-        { init = \() -> ( initialModel, Cmd.none )
-        , update = \_ _ -> ( initialModel, Cmd.none )
+        { init = init
+        , update = update
         , subscriptions = \_ -> Sub.none
         , view = view
         }
