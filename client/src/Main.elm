@@ -11,6 +11,8 @@ import I18n exposing (I18n, Language(..))
 type alias Model =
     { user : Maybe String
     , i18n : I18n
+    , infos : List String
+    , errors : List String
     }
 
 
@@ -27,6 +29,8 @@ init _ =
     in
     ( { user = Just "Emu"
       , i18n = i18n
+      , infos = [ "Loading Translations ..." ]
+      , errors = []
       }
     , I18n.loadHeader GotTranslations i18n
     )
@@ -35,16 +39,25 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotTranslations (Err _) ->
-            -- TODO handle error
-            ( model, Cmd.none )
+        GotTranslations (Err httpError) ->
+            let
+                newErrors =
+                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError) :: model.errors
+
+                infoFilter info =
+                    not <| (info == "Loading Translations ...") || info == I18n.loadingLang model.i18n
+
+                newInfos =
+                    List.filter infoFilter model.infos
+            in
+            ( { model | errors = newErrors, infos = newInfos }, Cmd.none )
 
         GotTranslations (Ok updateI18n) ->
             let
                 newI18n =
                     updateI18n model.i18n
             in
-            ( { model | i18n = newI18n }, Cmd.none )
+            ( { model | i18n = newI18n, infos = Maybe.withDefault [] (List.tail model.infos) }, Cmd.none )
 
         SwitchLanguage langString ->
             let
@@ -54,7 +67,7 @@ update msg model =
                 ( newI18n, cmd ) =
                     I18n.switchLanguage lang GotTranslations model.i18n
             in
-            ( { model | i18n = newI18n }, cmd )
+            ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
 
 
 view : Model -> Document Msg
@@ -67,6 +80,8 @@ view model =
 viewBody : Model -> List (Html Msg)
 viewBody model =
     [ viewHeader model
+    , viewMessages model
+    , viewErrors model
     , div []
         [ h1 [] [ text "Welcome to Emu's Test!" ]
         , p []
@@ -133,11 +148,66 @@ viewSelectOptions model =
         langToOption lang =
             option
                 [ value (I18n.languageToString lang)
-                , selected (lang == I18n.currentLanguage model.i18n)
+                , selected (lang == I18n.arrivedLanguage model.i18n)
                 ]
                 [ text (langToFunc lang model.i18n) ]
     in
     List.map langToOption I18n.languages
+
+
+viewMessages model =
+    viewInfos model
+
+
+viewInfos : Model -> Html msg
+viewInfos model =
+    let
+        viewEntry message =
+            li [] [ text message ]
+    in
+    if List.length model.infos == 0 then
+        text ""
+
+    else if List.length model.infos > 1 then
+        ul [ class "text-center alert alert-light" ] (List.map viewEntry model.infos)
+
+    else
+        div [ class "text-center alert alert-light" ] [ text (Maybe.withDefault "" (List.head model.infos)) ]
+
+
+viewErrors : Model -> Html msg
+viewErrors model =
+    let
+        viewEntry message =
+            li [] [ text message ]
+    in
+    if List.length model.errors == 0 then
+        text ""
+
+    else if List.length model.errors > 1 then
+        ul [ class "text-center alert alert-danger" ] (List.map viewEntry model.errors)
+
+    else
+        div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head model.errors)) ]
+
+
+buildErrorMessage : Http.Error -> String
+buildErrorMessage httpError =
+    case httpError of
+        Http.BadUrl message ->
+            message
+
+        Http.Timeout ->
+            "Server is taking too long to respond. Please try again later."
+
+        Http.NetworkError ->
+            "Unable to reach server."
+
+        Http.BadStatus statusCode ->
+            "Request failed with status code: " ++ String.fromInt statusCode
+
+        Http.BadBody message ->
+            message
 
 
 main : Program () Model Msg
