@@ -35,31 +35,26 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotTranslations result ->
-            case result of
-                Err _ ->
-                    -- TODO handle error
-                    ( model, Cmd.none )
+        GotTranslations (Err _) ->
+            -- TODO handle error
+            ( model, Cmd.none )
 
-                Ok updateI18n ->
-                    let
-                        newI18n =
-                            updateI18n model.i18n
-                    in
-                    ( { model | i18n = newI18n }, Cmd.none )
+        GotTranslations (Ok updateI18n) ->
+            let
+                newI18n =
+                    updateI18n model.i18n
+            in
+            ( { model | i18n = newI18n }, Cmd.none )
 
         SwitchLanguage langString ->
-            case I18n.languageFromString langString of
-                Nothing ->
-                    -- TODO handle error
-                    ( model, Cmd.none )
+            let
+                lang =
+                    Maybe.withDefault I18n.En <| I18n.languageFromString langString
 
-                Just lang ->
-                    let
-                        ( newI18n, cmd ) =
-                            I18n.switchLanguage lang GotTranslations model.i18n
-                    in
-                    ( { model | i18n = newI18n }, cmd )
+                ( newI18n, cmd ) =
+                    I18n.switchLanguage lang GotTranslations model.i18n
+            in
+            ( { model | i18n = newI18n }, cmd )
 
 
 view : Model -> Document Msg
@@ -106,7 +101,7 @@ viewHeader model =
                     , text "Actix Elm Setup"
                     ]
                 , span [ class "navbar-text" ] [ viewLoginText model ]
-                , select [ onInput SwitchLanguage ] (viewSelectOptions model)
+                , select [ onInput SwitchLanguage ] <| viewSelectOptions model
                 ]
             ]
         ]
@@ -129,10 +124,10 @@ viewSelectOptions model =
         langToFunc lang =
             case lang of
                 En ->
-                    I18n.en
+                    I18n.english
 
                 De ->
-                    I18n.de
+                    I18n.german
 
         langToOption : I18n.Language -> Html Msg
         langToOption lang =

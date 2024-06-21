@@ -1,4 +1,4 @@
 { "loggedInAs": "You're logged in as: ",
   "notLoggedIn": "You're not logged in.",
-  "en":  "English",
-  "de":  "German"}
+  "english":  "English",
+  "german":  "German"}
