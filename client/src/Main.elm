@@ -25,7 +25,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         i18n =
-            I18n.init { lang = I18n.De, path = "lang" }
+            I18n.init { lang = I18n.En, path = "lang" }
     in
     ( { user = Just "Emu"
       , i18n = i18n
@@ -42,7 +42,7 @@ update msg model =
         GotTranslations (Err httpError) ->
             let
                 newErrors =
-                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError) :: model.errors
+                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.errors
 
                 infoFilter info =
                     not <| (info == "Loading Translations ...") || info == I18n.loadingLang model.i18n
@@ -191,17 +191,17 @@ viewErrors model =
         div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head model.errors)) ]
 
 
-buildErrorMessage : Http.Error -> String
-buildErrorMessage httpError =
+buildErrorMessage : Http.Error -> Model -> String
+buildErrorMessage httpError model =
     case httpError of
         Http.BadUrl message ->
             message
 
         Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
+            I18n.timeout model.i18n
 
         Http.NetworkError ->
-            "Unable to reach server."
+            I18n.network model.i18n
 
         Http.BadStatus statusCode ->
             "Request failed with status code: " ++ String.fromInt statusCode

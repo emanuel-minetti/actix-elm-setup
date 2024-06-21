@@ -1,0 +1,6 @@
+{
+  "timeout":  "Server is taking too long to respond. Please try again later.",
+  "network": "Unable to reach server.",
+  "failedWithStatus": "Request failed with status code: ",
+  "badStatus": "Request failed with status code: "
+}
