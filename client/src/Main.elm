@@ -38,6 +38,7 @@ update msg model =
         GotTranslations result ->
             case result of
                 Err _ ->
+                    -- TODO handle error
                     ( model, Cmd.none )
 
                 Ok updateI18n ->
@@ -47,8 +48,18 @@ update msg model =
                     in
                     ( { model | i18n = newI18n }, Cmd.none )
 
-        SwitchLanguage _ ->
-            ( model, Cmd.none )
+        SwitchLanguage langString ->
+            case I18n.languageFromString langString of
+                Nothing ->
+                    -- TODO handle error
+                    ( model, Cmd.none )
+
+                Just lang ->
+                    let
+                        ( newI18n, cmd ) =
+                            I18n.switchLanguage lang GotTranslations model.i18n
+                    in
+                    ( { model | i18n = newI18n }, cmd )
 
 
 view : Model -> Document Msg
