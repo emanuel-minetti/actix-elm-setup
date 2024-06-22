@@ -25,14 +25,14 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         i18n =
-            I18n.init { lang = I18n.En, path = "lang" }
+            I18n.init { lang = I18n.De, path = "lang" }
     in
     ( { user = Just "Emu"
       , i18n = i18n
       , infos = [ "Loading Translations ..." ]
       , errors = []
       }
-    , I18n.loadHeader GotTranslations i18n
+    , I18n.loadMain GotTranslations i18n
     )
 
 
@@ -204,7 +204,7 @@ buildErrorMessage httpError model =
             I18n.network model.i18n
 
         Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
+            I18n.badStatus model.i18n ++ String.fromInt statusCode
 
         Http.BadBody message ->
             message
