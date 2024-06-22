@@ -32,7 +32,7 @@ init _ =
       , infos = [ "Loading Translations ..." ]
       , errors = []
       }
-    , I18n.loadMain GotTranslations i18n
+    , Cmd.batch [ I18n.loadHeader GotTranslations i18n, I18n.loadError GotTranslations i18n ]
     )
 
 

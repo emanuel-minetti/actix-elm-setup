@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "prebuild": "ncp web/ ../public/ && ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",
+    "prebuild": "npx travelm-agency --elm_path=src/I18n.elm --json_path=../public/lang/ src/i18n",
+    "postbuild": "ncp web/ ../public/ && ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",
     "build": "elm make src/Main.elm --output ../public/js/elm.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

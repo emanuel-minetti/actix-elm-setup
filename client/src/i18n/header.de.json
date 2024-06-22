@@ -1,0 +1,7 @@
+{ "loggedInAs": "Sie sind angemeldet als: ",
+  "notLoggedIn": "Sie sind nicht angemeldet.",
+  "english":  "Englisch",
+  "german":  "Deutsch",
+  "loadingLang":  "Lade Sprache ...",
+  "failedLoadingLang": "Fehler beim Laden der neuen Sprache: "
+}
