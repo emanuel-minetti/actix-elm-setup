@@ -1,11 +1,13 @@
 module Main exposing (main)
 
 import Browser exposing (Document)
+import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, selected, src, value, width)
 import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
+import Url exposing (Url)
 
 
 type alias Model =
@@ -13,26 +15,36 @@ type alias Model =
     , i18n : I18n
     , infos : List String
     , errors : List String
+    , route : Route
+    , navKey : Nav.Key
     }
+
+
+type Route
+    = NotFound
+    | Home
 
 
 type Msg
     = GotTranslations (Result Http.Error (I18n -> I18n))
     | SwitchLanguage String
+    | None
 
 
 main : Program String Model Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , update = update
         , subscriptions = \_ -> Sub.none
         , view = view
+        , onUrlRequest = \_ -> None
+        , onUrlChange = \_ -> None
         }
 
 
-init : String -> ( Model, Cmd Msg )
-init flags =
+init : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags _ key =
     let
         preferredLangFromBrowser =
             flags
@@ -47,6 +59,8 @@ init flags =
       , i18n = i18n
       , infos = [ "Loading Translations ..." ]
       , errors = []
+      , route = Home
+      , navKey = key
       }
     , Cmd.batch [ I18n.loadHeader GotTranslations i18n, I18n.loadError GotTranslations i18n ]
     )
@@ -84,6 +98,9 @@ update msg model =
                     I18n.switchLanguage lang GotTranslations model.i18n
             in
             ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
+
+        None ->
+            ( model, Cmd.none )
 
 
 view : Model -> Document Msg
@@ -251,3 +268,21 @@ buildErrorMessage httpError model =
 
         Http.BadBody message ->
             message
+
+
+
+--parseUrl : Url -> Route
+--parseUrl url =
+--    case parse matchRoute url of
+--        Just route ->
+--            route
+--
+--        Nothing ->
+--            NotFound
+--
+--
+--matchRoute : Parser (Route -> a) a
+--matchRoute =
+--    oneOf
+--        [ map Home top
+--        ]
