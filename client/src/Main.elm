@@ -97,20 +97,8 @@ viewBody : Model -> List (Html Msg)
 viewBody model =
     [ viewHeader model
     , viewMessages model
-    , viewErrors model
-    , div []
-        [ h1 [] [ text "Welcome to Emu's Test!" ]
-        , p []
-            [ text "Emus Test nanu Inc. (stock symbol "
-            , strong [] [ text "DMI" ]
-            , text <|
-                """
-                ) is a micro-cap regional paper and office
-                supply distributor with an emphasis on servicing
-                small-business clients.
-                """
-            ]
-        ]
+    , viewCurrentPage model
+    , viewFooter model
     ]
 
 
@@ -171,8 +159,12 @@ viewSelectOptions model =
     List.map langToOption I18n.languages
 
 
+viewMessages : Model -> Html msg
 viewMessages model =
-    viewInfos model
+    div []
+        [ viewInfos model
+        , viewErrors model
+        ]
 
 
 viewInfos : Model -> Html msg
@@ -205,6 +197,41 @@ viewErrors model =
 
     else
         div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head model.errors)) ]
+
+
+viewCurrentPage : Model -> Html msg
+viewCurrentPage _ =
+    div []
+        [ h1 [] [ text "Welcome to Emu's Test!" ]
+        , p []
+            [ text "Emus Test nanu Inc. (stock symbol "
+            , strong [] [ text "DMI" ]
+            , text <|
+                """
+                    ) is a micro-cap regional paper and office
+                    supply distributor with an emphasis on servicing
+                    small-business clients.
+                    """
+            ]
+        ]
+
+
+viewFooter : Model -> Html Msg
+viewFooter _ =
+    footer [ class "bg-body-tertiary" ]
+        [ div [ class "container-fluid" ]
+            [ div [ class "row align-items-start" ]
+                [ div [ class "col" ]
+                    [ ul [ class "list-unstyled" ]
+                        [ li [] [ text "Soso" ]
+                        , li [] [ text "Nanu" ]
+                        ]
+                    ]
+                , div [ class "col" ]
+                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
+                ]
+            ]
+        ]
 
 
 buildErrorMessage : Http.Error -> Model -> String
