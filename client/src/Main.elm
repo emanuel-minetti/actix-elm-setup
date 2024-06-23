@@ -21,11 +21,27 @@ type Msg
     | SwitchLanguage String
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+main : Program String Model Msg
+main =
+    Browser.document
+        { init = init
+        , update = update
+        , subscriptions = \_ -> Sub.none
+        , view = view
+        }
+
+
+init : String -> ( Model, Cmd Msg )
+init flags =
     let
+        preferredLangFromBrowser =
+            flags
+
+        preferredLang =
+            Maybe.withDefault I18n.En <| I18n.languageFromString preferredLangFromBrowser
+
         i18n =
-            I18n.init { lang = I18n.De, path = "lang" }
+            I18n.init { lang = preferredLang, path = "lang" }
     in
     ( { user = Just "Emu"
       , i18n = i18n
@@ -208,13 +224,3 @@ buildErrorMessage httpError model =
 
         Http.BadBody message ->
             message
-
-
-main : Program () Model Msg
-main =
-    Browser.document
-        { init = init
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        , view = view
-        }
