@@ -1,13 +1,19 @@
 module Main exposing (main)
 
-import Browser exposing (Document)
+import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, selected, src, value, width)
 import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
+import Route exposing (Route(..))
 import Url exposing (Url)
+
+
+type Page
+    = NotFoundPage
+    | HomePage
 
 
 type alias Model =
@@ -17,18 +23,15 @@ type alias Model =
     , errors : List String
     , route : Route
     , navKey : Nav.Key
+    , page : Page
     }
-
-
-type Route
-    = NotFound
-    | Home
 
 
 type Msg
     = GotTranslations (Result Http.Error (I18n -> I18n))
     | SwitchLanguage String
-    | None
+    | UrlChanged Url
+    | LinkClicked UrlRequest
 
 
 main : Program String Model Msg
@@ -38,13 +41,13 @@ main =
         , update = update
         , subscriptions = \_ -> Sub.none
         , view = view
-        , onUrlRequest = \_ -> None
-        , onUrlChange = \_ -> None
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
 
 
 init : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags _ key =
+init flags url key =
     let
         preferredLangFromBrowser =
             flags
@@ -54,16 +57,44 @@ init flags _ key =
 
         i18n =
             I18n.init { lang = preferredLang, path = "lang" }
+
+        initialRoute =
+            Route.parseUrl url
+
+        initialModel =
+            { user = Just "Emu"
+            , i18n = i18n
+            , infos = [ "Loading Translations ..." ]
+            , errors = []
+            , route = initialRoute
+            , navKey = key
+            , page = NotFoundPage
+            }
+
+        initialCmds =
+            [ I18n.loadHeader GotTranslations i18n
+            , I18n.loadError GotTranslations i18n
+            , I18n.loadFooter GotTranslations i18n
+            ]
     in
-    ( { user = Just "Emu"
-      , i18n = i18n
-      , infos = [ "Loading Translations ..." ]
-      , errors = []
-      , route = Home
-      , navKey = key
-      }
-    , Cmd.batch [ I18n.loadHeader GotTranslations i18n, I18n.loadError GotTranslations i18n ]
+    ( initialModel
+    , Cmd.batch initialCmds
     )
+        |> initCurrentPage
+
+
+initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( model, existingCmds ) =
+    let
+        ( currentPage, mappedPageCmds ) =
+            case model.route of
+                Route.NotFound ->
+                    ( NotFoundPage, Cmd.none )
+
+                Route.Home ->
+                    ( HomePage, Cmd.none )
+    in
+    ( { model | page = currentPage }, Cmd.batch [ existingCmds, mappedPageCmds ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,8 +130,25 @@ update msg model =
             in
             ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
 
-        None ->
-            ( model, Cmd.none )
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.navKey (Url.toString url)
+                    )
+
+                Browser.External url ->
+                    ( model
+                    , Nav.load url
+                    )
+
+        UrlChanged url ->
+            let
+                newRoute =
+                    Route.parseUrl url
+            in
+            ( { model | route = newRoute }, Cmd.none )
+                |> initCurrentPage
 
 
 view : Model -> Document Msg
@@ -216,10 +264,25 @@ viewErrors model =
         div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head model.errors)) ]
 
 
-viewCurrentPage : Model -> Html msg
-viewCurrentPage _ =
+viewCurrentPage : Model -> Html Msg
+viewCurrentPage model =
+    case model.page of
+        NotFoundPage ->
+            viewNotFoundPage model
+
+        HomePage ->
+            viewHomePage model
+
+
+viewNotFoundPage : Model -> Html msg
+viewNotFoundPage _ =
+    h3 [] [ text "Oops! The page you requested was not found!" ]
+
+
+viewHomePage : Model -> Html msg
+viewHomePage _ =
     div []
-        [ h1 [] [ text "Welcome to Emu's Test!" ]
+        [ h1 [] [ text "Welcome to Emu's Homepage!" ]
         , p []
             [ text "Emus Test nanu Inc. (stock symbol "
             , strong [] [ text "DMI" ]
@@ -234,14 +297,14 @@ viewCurrentPage _ =
 
 
 viewFooter : Model -> Html Msg
-viewFooter _ =
+viewFooter model =
     footer [ class "bg-body-tertiary" ]
         [ div [ class "container-fluid" ]
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ text "Soso" ]
-                        , li [] [ text "Nanu" ]
+                        [ li [] [ a [ href "/home" ] [ text <| I18n.privacy model.i18n ] ]
+                        , li [] [ text <| I18n.imprint model.i18n ]
                         ]
                     ]
                 , div [ class "col" ]
@@ -268,21 +331,3 @@ buildErrorMessage httpError model =
 
         Http.BadBody message ->
             message
-
-
-
---parseUrl : Url -> Route
---parseUrl url =
---    case parse matchRoute url of
---        Just route ->
---            route
---
---        Nothing ->
---            NotFound
---
---
---matchRoute : Parser (Route -> a) a
---matchRoute =
---    oneOf
---        [ map Home top
---        ]
