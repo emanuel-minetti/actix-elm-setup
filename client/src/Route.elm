@@ -8,6 +8,7 @@ import Url.Parser exposing (..)
 type Route
     = NotFound
     | Home
+    | Privacy
 
 
 parseUrl : Url -> Route
@@ -25,6 +26,7 @@ matchRoute =
     oneOf
         [ map Home top
         , map Home (s "home")
+        , map Privacy (s "privacy")
         ]
 
 
@@ -42,3 +44,6 @@ routeToString route =
 
         Home ->
             "/"
+
+        Privacy ->
+            "/privacy"

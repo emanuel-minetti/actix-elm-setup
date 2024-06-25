@@ -7,13 +7,15 @@ import Html.Attributes exposing (alt, class, height, href, selected, src, value,
 import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
+import Page.Privacy as PrivacyPage
 import Route exposing (Route(..))
 import Url exposing (Url)
 
 
-type Page
-    = NotFoundPage
-    | HomePage
+type PageModel
+    = NotFoundPageModel
+    | HomePageModel
+    | PrivacyPageModel PrivacyPage.Model
 
 
 type alias Model =
@@ -23,7 +25,7 @@ type alias Model =
     , errors : List String
     , route : Route
     , navKey : Nav.Key
-    , page : Page
+    , pageModel : PageModel
     }
 
 
@@ -32,6 +34,7 @@ type Msg
     | SwitchLanguage String
     | UrlChanged Url
     | LinkClicked UrlRequest
+    | PrivacyPageMsg PrivacyPage.Msg
 
 
 main : Program String Model Msg
@@ -68,7 +71,7 @@ init flags url key =
             , errors = []
             , route = initialRoute
             , navKey = key
-            , page = NotFoundPage
+            , pageModel = NotFoundPageModel
             }
 
         initialCmds =
@@ -89,18 +92,25 @@ initCurrentPage ( model, existingCmds ) =
         ( currentPage, mappedPageCmds ) =
             case model.route of
                 Route.NotFound ->
-                    ( NotFoundPage, Cmd.none )
+                    ( NotFoundPageModel, Cmd.none )
 
                 Route.Home ->
-                    ( HomePage, Cmd.none )
+                    ( HomePageModel, Cmd.none )
+
+                Route.Privacy ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            PrivacyPage.init model.i18n
+                    in
+                    ( PrivacyPageModel pageModel, Cmd.map PrivacyPageMsg pageCmds )
     in
-    ( { model | page = currentPage }, Cmd.batch [ existingCmds, mappedPageCmds ] )
+    ( { model | pageModel = currentPage }, Cmd.batch [ existingCmds, mappedPageCmds ] )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        GotTranslations (Err httpError) ->
+    case ( msg, model.pageModel ) of
+        ( GotTranslations (Err httpError), _ ) ->
             let
                 newErrors =
                     (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.errors
@@ -113,14 +123,14 @@ update msg model =
             in
             ( { model | errors = newErrors, infos = newInfos }, Cmd.none )
 
-        GotTranslations (Ok updateI18n) ->
+        ( GotTranslations (Ok updateI18n), _ ) ->
             let
                 newI18n =
                     updateI18n model.i18n
             in
             ( { model | i18n = newI18n, infos = Maybe.withDefault [] (List.tail model.infos) }, Cmd.none )
 
-        SwitchLanguage langString ->
+        ( SwitchLanguage langString, _ ) ->
             let
                 lang =
                     Maybe.withDefault I18n.En <| I18n.languageFromString langString
@@ -130,7 +140,7 @@ update msg model =
             in
             ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
 
-        LinkClicked urlRequest ->
+        ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
                     ( model
@@ -142,13 +152,23 @@ update msg model =
                     , Nav.load url
                     )
 
-        UrlChanged url ->
+        ( UrlChanged url, _ ) ->
             let
                 newRoute =
                     Route.parseUrl url
             in
             ( { model | route = newRoute }, Cmd.none )
                 |> initCurrentPage
+
+        ( PrivacyPageMsg subMsg, PrivacyPageModel pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    PrivacyPage.update subMsg pageModel
+            in
+            ( { model | pageModel = PrivacyPageModel updatedPageModel }, Cmd.map PrivacyPageMsg updatedCmd )
+
+        ( _, _ ) ->
+            ( model, Cmd.none )
 
 
 view : Model -> Document Msg
@@ -266,12 +286,16 @@ viewErrors model =
 
 viewCurrentPage : Model -> Html Msg
 viewCurrentPage model =
-    case model.page of
-        NotFoundPage ->
+    case model.pageModel of
+        NotFoundPageModel ->
             viewNotFoundPage model
 
-        HomePage ->
+        HomePageModel ->
             viewHomePage model
+
+        PrivacyPageModel pageModel ->
+            PrivacyPage.view pageModel
+                |> Html.map PrivacyPageMsg
 
 
 viewNotFoundPage : Model -> Html msg
@@ -303,7 +327,7 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ a [ href "/home" ] [ text <| I18n.privacy model.i18n ] ]
+                        [ li [] [ a [ href "/privacy" ] [ text <| I18n.privacy model.i18n ] ]
                         , li [] [ text <| I18n.imprint model.i18n ]
                         ]
                     ]
