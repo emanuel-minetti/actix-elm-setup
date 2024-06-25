@@ -327,7 +327,7 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ a [ href "/privacy" ] [ text <| I18n.privacy model.i18n ] ]
+                        [ li [] [ a [ href "/privacy" ] [ text <| I18n.footerPrivacy model.i18n ] ]
                         , li [] [ text <| I18n.imprint model.i18n ]
                         ]
                     ]
