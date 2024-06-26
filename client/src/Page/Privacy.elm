@@ -1,4 +1,4 @@
-module Page.Privacy exposing (Model, Msg, init, update, view)
+module Page.Privacy exposing (Model, Msg(..), init, update, view)
 
 import Html exposing (Html, h3, text)
 import Http
@@ -50,8 +50,12 @@ update msg model =
             in
             ( { model | i18n = newI18n, infos = Maybe.withDefault [] (List.tail model.infos) }, Cmd.none )
 
-        LanguageSwitched _ ->
-            ( model, Cmd.none )
+        LanguageSwitched lang ->
+            let
+                ( newI18n, cmd ) =
+                    I18n.switchLanguage lang GotTranslations model.i18n
+            in
+            ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
 
 
 view : Model -> Html Msg

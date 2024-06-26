@@ -7,7 +7,7 @@ import Html.Attributes exposing (alt, class, height, href, selected, src, value,
 import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
-import Page.Privacy as PrivacyPage
+import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route(..))
 import Url exposing (Url)
 
@@ -135,8 +135,21 @@ update msg model =
                 lang =
                     Maybe.withDefault I18n.En <| I18n.languageFromString langString
 
-                ( newI18n, cmd ) =
+                ( newI18n, mainCmd ) =
                     I18n.switchLanguage lang GotTranslations model.i18n
+
+                pageCmd =
+                    case model.pageModel of
+                        PrivacyPageModel pageModel ->
+                            PrivacyPage.update (PrivacyPage.LanguageSwitched lang) pageModel
+                                |> Tuple.second
+                                |> Cmd.map PrivacyPageMsg
+
+                        _ ->
+                            Cmd.none
+
+                cmd =
+                    Cmd.batch [ mainCmd, pageCmd ]
             in
             ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
 
