@@ -328,7 +328,7 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ a [ href (Route.routeToString Route.Privacy) ] [ text <| I18n.footerPrivacy model.i18n ] ]
+                        [ li [] [ a [ href (Route.(Route.routeToString Route.Privacy) Route.Privacy) ] [ text <| I18n.footerPrivacy model.i18n ] ]
                         , li [] [ a [ href (Route.routeToString Route.Imprint) ] [ text <| I18n.footerImprint model.i18n ] ]
                         ]
                     ]
