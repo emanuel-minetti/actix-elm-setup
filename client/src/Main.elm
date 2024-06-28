@@ -261,16 +261,20 @@ viewSelectOptions model =
 
 viewCurrentPage : Model -> Html Msg
 viewCurrentPage model =
-    case model.pageModel of
-        NotFoundPageModel ->
-            viewNotFoundPage model
+    let
+        page =
+            case model.pageModel of
+                NotFoundPageModel ->
+                    viewNotFoundPage model
 
-        HomePageModel ->
-            viewHomePage model
+                HomePageModel ->
+                    viewHomePage model
 
-        PrivacyPageModel pageModel ->
-            PrivacyPage.view pageModel
-                |> Html.map PrivacyPageMsg
+                PrivacyPageModel pageModel ->
+                    PrivacyPage.view pageModel
+                        |> Html.map PrivacyPageMsg
+    in
+    div [ class "container" ] [ page ]
 
 
 viewNotFoundPage : Model -> Html msg
