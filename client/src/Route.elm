@@ -1,4 +1,4 @@
-module Route exposing (Route(..), parseUrl, pushUrl)
+module Route exposing (Route(..), parseUrl, pushUrl, routeToString)
 
 import Browser.Navigation as Nav
 import Url exposing (Url)
@@ -9,6 +9,7 @@ type Route
     = NotFound
     | Home
     | Privacy
+    | Imprint
 
 
 parseUrl : Url -> Route
@@ -27,6 +28,7 @@ matchRoute =
         [ map Home top
         , map Home (s "home")
         , map Privacy (s "privacy")
+        , map Imprint (s "imprint")
         ]
 
 
@@ -47,3 +49,6 @@ routeToString route =
 
         Privacy ->
             "/privacy"
+
+        Imprint ->
+            "/imprint"

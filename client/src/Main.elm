@@ -8,8 +8,9 @@ import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
 import Messages exposing (Messages, viewMessages)
+import Page.Imprint as ImprintPage
 import Page.Privacy as PrivacyPage exposing (Msg(..))
-import Route exposing (Route(..))
+import Route exposing (Route)
 import Url exposing (Url)
 
 
@@ -17,6 +18,7 @@ type PageModel
     = NotFoundPageModel
     | HomePageModel
     | PrivacyPageModel PrivacyPage.Model
+    | ImprintPageModel ImprintPage.Model
 
 
 type alias Model =
@@ -35,6 +37,7 @@ type Msg
     | UrlChanged Url
     | LinkClicked UrlRequest
     | PrivacyPageMsg PrivacyPage.Msg
+    | ImprintPageMsg ImprintPage.Msg
 
 
 main : Program String Model Msg
@@ -105,6 +108,13 @@ initCurrentPage ( model, existingCmds ) =
                             PrivacyPage.init model.i18n
                     in
                     ( PrivacyPageModel pageModel, Cmd.map PrivacyPageMsg pageCmds )
+
+                Route.Imprint ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            ImprintPage.init model.i18n
+                    in
+                    ( ImprintPageModel pageModel, Cmd.map ImprintPageMsg pageCmds )
     in
     ( { model | pageModel = currentPage }, Cmd.batch [ existingCmds, mappedPageCmds ] )
 
@@ -182,6 +192,13 @@ update msg model =
                     PrivacyPage.update subMsg pageModel
             in
             ( { model | pageModel = PrivacyPageModel updatedPageModel }, Cmd.map PrivacyPageMsg updatedCmd )
+
+        ( ImprintPageMsg subMsg, ImprintPageModel pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    ImprintPage.update subMsg pageModel
+            in
+            ( { model | pageModel = ImprintPageModel updatedPageModel }, Cmd.map ImprintPageMsg updatedCmd )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -274,6 +291,10 @@ viewCurrentPage model =
                 PrivacyPageModel pageModel ->
                     PrivacyPage.view pageModel
                         |> Html.map PrivacyPageMsg
+
+                ImprintPageModel pageModel ->
+                    ImprintPage.view pageModel
+                        |> Html.map ImprintPageMsg
     in
     div [ class "container" ] [ page ]
 
@@ -307,8 +328,8 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ a [ href "/privacy" ] [ text <| I18n.footerPrivacy model.i18n ] ]
-                        , li [] [ text <| I18n.imprint model.i18n ]
+                        [ li [] [ a [ href (Route.routeToString Route.Privacy) ] [ text <| I18n.footerPrivacy model.i18n ] ]
+                        , li [] [ a [ href (Route.routeToString Route.Imprint) ] [ text <| I18n.footerImprint model.i18n ] ]
                         ]
                     ]
                 , div [ class "col" ]
