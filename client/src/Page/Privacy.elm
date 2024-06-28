@@ -1,6 +1,6 @@
 module Page.Privacy exposing (Model, Msg(..), init, update, view)
 
-import Html exposing (Html, h3, text)
+import Html exposing (Html, div, h3, text)
 import Http
 import I18n exposing (I18n)
 
@@ -60,7 +60,11 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    h3 [] [ text (I18n.title model.i18n) ]
+    div []
+        [ h3 []
+            [ text (I18n.privacyTitle model.i18n) ]
+        , div [] (I18n.privacyContent [] model.i18n)
+        ]
 
 
 buildErrorMessage : Http.Error -> Model -> String
