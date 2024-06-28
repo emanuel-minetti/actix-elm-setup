@@ -3,12 +3,12 @@ module Page.Privacy exposing (Model, Msg(..), init, update, view)
 import Html exposing (Html, div, h3, text)
 import Http
 import I18n exposing (I18n)
+import Messages exposing (Messages)
 
 
 type alias Model =
     { i18n : I18n
-    , infos : List String
-    , errors : List String
+    , messages : Messages
     }
 
 
@@ -20,8 +20,10 @@ type Msg
 init : I18n -> ( Model, Cmd Msg )
 init i18n =
     ( { i18n = i18n
-      , infos = [ "Loading Translations ..." ]
-      , errors = []
+      , messages =
+            { infos = [ "Loading Translations ..." ]
+            , errors = []
+            }
       }
     , I18n.loadPrivacy GotTranslations i18n
     )
@@ -33,35 +35,36 @@ update msg model =
         GotTranslations (Err httpError) ->
             let
                 newErrors =
-                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.errors
+                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.messages.errors
 
                 infoFilter info =
                     not <| (info == "Loading Translations ...") || info == I18n.loadingLang model.i18n
 
                 newInfos =
-                    List.filter infoFilter model.infos
+                    List.filter infoFilter model.messages.infos
             in
-            ( { model | errors = newErrors, infos = newInfos }, Cmd.none )
+            ( { model | messages = { errors = newErrors, infos = newInfos } }, Cmd.none )
 
         GotTranslations (Ok updateI18n) ->
             let
                 newI18n =
                     updateI18n model.i18n
             in
-            ( { model | i18n = newI18n, infos = Maybe.withDefault [] (List.tail model.infos) }, Cmd.none )
+            ( { model | i18n = newI18n, messages = Messages.removeFirstInfo model.messages }, Cmd.none )
 
         LanguageSwitched lang ->
             let
                 ( newI18n, cmd ) =
                     I18n.switchLanguage lang GotTranslations model.i18n
             in
-            ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
+            ( { model | i18n = newI18n, messages = Messages.addInfo model.messages (I18n.loadingLang model.i18n) }, cmd )
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ h3 []
+        [ Messages.viewMessages model.messages
+        , h3 []
             [ text (I18n.privacyTitle model.i18n) ]
         , div [] (I18n.privacyContent [] model.i18n)
         ]

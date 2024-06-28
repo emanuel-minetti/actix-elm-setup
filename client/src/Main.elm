@@ -7,6 +7,7 @@ import Html.Attributes exposing (alt, class, height, href, selected, src, value,
 import Html.Events exposing (onInput)
 import Http
 import I18n exposing (I18n, Language(..))
+import Messages exposing (Messages, viewMessages)
 import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route(..))
 import Url exposing (Url)
@@ -21,8 +22,7 @@ type PageModel
 type alias Model =
     { user : Maybe String
     , i18n : I18n
-    , infos : List String
-    , errors : List String
+    , messages : Messages
     , route : Route
     , navKey : Nav.Key
     , pageModel : PageModel
@@ -67,8 +67,10 @@ init flags url key =
         initialModel =
             { user = Just "Emu"
             , i18n = i18n
-            , infos = [ "Loading Translations ..." ]
-            , errors = []
+            , messages =
+                { infos = [ "Loading Translations ..." ]
+                , errors = []
+                }
             , route = initialRoute
             , navKey = key
             , pageModel = NotFoundPageModel
@@ -113,22 +115,22 @@ update msg model =
         ( GotTranslations (Err httpError), _ ) ->
             let
                 newErrors =
-                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.errors
+                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.messages.errors
 
                 infoFilter info =
                     not <| (info == "Loading Translations ...") || info == I18n.loadingLang model.i18n
 
                 newInfos =
-                    List.filter infoFilter model.infos
+                    List.filter infoFilter model.messages.errors
             in
-            ( { model | errors = newErrors, infos = newInfos }, Cmd.none )
+            ( { model | messages = { errors = newErrors, infos = newInfos } }, Cmd.none )
 
         ( GotTranslations (Ok updateI18n), _ ) ->
             let
                 newI18n =
                     updateI18n model.i18n
             in
-            ( { model | i18n = newI18n, infos = Maybe.withDefault [] (List.tail model.infos) }, Cmd.none )
+            ( { model | i18n = newI18n, messages = Messages.removeFirstInfo model.messages }, Cmd.none )
 
         ( SwitchLanguage langString, _ ) ->
             let
@@ -151,7 +153,7 @@ update msg model =
                 cmd =
                     Cmd.batch [ mainCmd, pageCmd ]
             in
-            ( { model | i18n = newI18n, infos = I18n.loadingLang model.i18n :: model.infos }, cmd )
+            ( { model | i18n = newI18n, messages = Messages.addInfo model.messages (I18n.loadingLang model.i18n) }, cmd )
 
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
@@ -194,7 +196,7 @@ view model =
 viewBody : Model -> List (Html Msg)
 viewBody model =
     [ viewHeader model
-    , viewMessages model
+    , viewMessages model.messages
     , viewCurrentPage model
     , viewFooter model
     ]
@@ -255,46 +257,6 @@ viewSelectOptions model =
                 [ text (langToFunc lang model.i18n) ]
     in
     List.map langToOption I18n.languages
-
-
-viewMessages : Model -> Html msg
-viewMessages model =
-    div []
-        [ viewInfos model
-        , viewErrors model
-        ]
-
-
-viewInfos : Model -> Html msg
-viewInfos model =
-    let
-        viewEntry message =
-            li [] [ text message ]
-    in
-    if List.length model.infos == 0 then
-        text ""
-
-    else if List.length model.infos > 1 then
-        ul [ class "text-center alert alert-light" ] (List.map viewEntry model.infos)
-
-    else
-        div [ class "text-center alert alert-light" ] [ text (Maybe.withDefault "" (List.head model.infos)) ]
-
-
-viewErrors : Model -> Html msg
-viewErrors model =
-    let
-        viewEntry message =
-            li [] [ text message ]
-    in
-    if List.length model.errors == 0 then
-        text ""
-
-    else if List.length model.errors > 1 then
-        ul [ class "text-center alert alert-danger" ] (List.map viewEntry model.errors)
-
-    else
-        div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head model.errors)) ]
 
 
 viewCurrentPage : Model -> Html Msg
