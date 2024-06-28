@@ -115,7 +115,8 @@ update msg model =
         ( GotTranslations (Err httpError), _ ) ->
             let
                 newErrors =
-                    (I18n.failedLoadingLang model.i18n ++ buildErrorMessage httpError model) :: model.messages.errors
+                    (I18n.failedLoadingLang model.i18n ++ Messages.buildErrorMessage httpError model.i18n)
+                        :: model.messages.errors
 
                 infoFilter info =
                     not <| (info == "Loading Translations ...") || info == I18n.loadingLang model.i18n
@@ -315,22 +316,3 @@ viewFooter model =
                 ]
             ]
         ]
-
-
-buildErrorMessage : Http.Error -> Model -> String
-buildErrorMessage httpError model =
-    case httpError of
-        Http.BadUrl message ->
-            message
-
-        Http.Timeout ->
-            I18n.timeout model.i18n
-
-        Http.NetworkError ->
-            I18n.network model.i18n
-
-        Http.BadStatus statusCode ->
-            I18n.badStatus model.i18n ++ String.fromInt statusCode
-
-        Http.BadBody message ->
-            message

@@ -1,7 +1,9 @@
-module Messages exposing (Messages, addInfo, removeFirstInfo, viewMessages)
+module Messages exposing (Messages, addInfo, buildErrorMessage, removeFirstInfo, viewMessages)
 
 import Html exposing (Html, div, li, text, ul)
 import Html.Attributes exposing (class)
+import Http
+import I18n exposing (I18n)
 
 
 type alias Messages =
@@ -58,3 +60,22 @@ viewErrors messages =
 
     else
         div [ class "text-center alert alert-danger" ] [ text (Maybe.withDefault "" (List.head messages.errors)) ]
+
+
+buildErrorMessage : Http.Error -> I18n -> String
+buildErrorMessage httpError i18n =
+    case httpError of
+        Http.BadUrl message ->
+            message
+
+        Http.Timeout ->
+            I18n.timeout i18n
+
+        Http.NetworkError ->
+            I18n.network i18n
+
+        Http.BadStatus statusCode ->
+            I18n.badStatus i18n ++ String.fromInt statusCode
+
+        Http.BadBody message ->
+            message
