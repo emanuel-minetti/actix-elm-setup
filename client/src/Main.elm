@@ -4,7 +4,7 @@ import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, selected, src, value, width)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import Http
 import I18n exposing (I18n, Language(..))
 import Messages exposing (Messages, viewMessages)
@@ -36,6 +36,7 @@ type Msg
     | SwitchLanguage String
     | UrlChanged Url
     | LinkClicked UrlRequest
+    | GoToRoute Route
     | PrivacyPageMsg PrivacyPage.Msg
     | ImprintPageMsg ImprintPage.Msg
 
@@ -158,13 +159,20 @@ update msg model =
                                 |> Tuple.second
                                 |> Cmd.map PrivacyPageMsg
 
+                        ImprintPageModel pageModel ->
+                            ImprintPage.update (ImprintPage.LanguageSwitched lang) pageModel
+                                |> Tuple.second
+                                |> Cmd.map ImprintPageMsg
+
                         _ ->
                             Cmd.none
 
                 cmd =
                     Cmd.batch [ mainCmd, pageCmd ]
             in
-            ( { model | i18n = newI18n, messages = Messages.addInfo model.messages (I18n.loadingLang model.i18n) }, cmd )
+            ( { model | i18n = newI18n, messages = Messages.addInfo model.messages (I18n.loadingLang model.i18n) }
+            , cmd
+            )
 
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
@@ -184,6 +192,14 @@ update msg model =
                     Route.parseUrl url
             in
             ( { model | route = newRoute }, Cmd.none )
+                |> initCurrentPage
+
+        ( GoToRoute route, _ ) ->
+            let
+                cmd =
+                    Route.pushUrl route model.navKey
+            in
+            ( model, cmd )
                 |> initCurrentPage
 
         ( PrivacyPageMsg subMsg, PrivacyPageModel pageModel ) ->
@@ -328,8 +344,8 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ]
-                        [ li [] [ a [ href (Route.routeToString Route.Privacy) ] [ text <| I18n.footerPrivacy model.i18n ] ]
-                        , li [] [ a [ href (Route.routeToString Route.Imprint) ] [ text <| I18n.footerImprint model.i18n ] ]
+                        [ li [] [ button [ onClick <| GoToRoute Route.Privacy ] [ text <| I18n.footerPrivacy model.i18n ] ]
+                        , li [] [ button [ onClick <| GoToRoute Route.Imprint ] [ text <| I18n.footerImprint model.i18n ] ]
                         ]
                     ]
                 , div [ class "col" ]
