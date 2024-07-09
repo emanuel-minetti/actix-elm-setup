@@ -21,8 +21,10 @@ test.describe('language switcher', () => {
         const langSwitcher = headerElement.getByRole('combobox');
         await expect(langSwitcher).toHaveValue('en')
         await expect(headerElement).toHaveText(/English/);
+        await expect(headerElement).not.toHaveText(/Englisch/);
         await langSwitcher.selectOption({value: 'de'});
         await expect(langSwitcher).toHaveValue("de")
         await expect(headerElement).toHaveText(/Deutsch/);
+        await expect(headerElement).not.toHaveText(/German/);
     });
 });

@@ -30,4 +30,16 @@ test.describe('page', () => {
     await expect(footerElement.getByText('Privacy Declaration')).toBeVisible();
     await expect(footerElement.getByText('Imprint and Support')).toBeVisible();
   });
+
+  test('has copyright and version info inside footer', async ({ page }) => {
+    const footerElement = page.locator('footer');
+    const copyrightElement = footerElement.getByText('©')
+    await expect(copyrightElement).toBeVisible();
+    await expect(footerElement.getByText('Version:')).toBeVisible();
+
+    const copyrightElementText = await copyrightElement.textContent();
+    const copyrightLastYear = Number(copyrightElementText.slice(-2));
+    const thisYear = new Date().getFullYear() % 100;
+    expect(copyrightLastYear).toBe(thisYear);
+  });
 });

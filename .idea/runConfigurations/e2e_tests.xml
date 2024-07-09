@@ -3,6 +3,7 @@
     <node-interpreter value="project" />
     <playwright-package value="$PROJECT_DIR$/e2e/node_modules/@playwright/test" />
     <working-dir value="$PROJECT_DIR$/e2e" />
+    <cli-options value="--project firefox" />
     <envs />
     <scope-kind value="DIRECTORY" />
     <test-directory value="$PROJECT_DIR$/e2e/tests" />

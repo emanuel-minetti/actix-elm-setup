@@ -1,7 +1,7 @@
 module Messages exposing (Messages, addInfo, buildErrorMessage, removeFirstInfo, viewMessages)
 
 import Html exposing (Html, div, li, text, ul)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, id)
 import Http
 import I18n exposing (I18n)
 
@@ -24,7 +24,7 @@ addInfo messages info =
 
 viewMessages : Messages -> Html msg
 viewMessages messages =
-    div []
+    div [ id "messages" ]
         [ viewInfos messages
         , viewErrors messages
         ]

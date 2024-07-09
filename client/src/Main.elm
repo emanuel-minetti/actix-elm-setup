@@ -3,11 +3,11 @@ module Main exposing (main)
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, href, selected, src, value, width)
+import Html.Attributes exposing (alt, class, height, href, id, selected, src, value, width)
 import Html.Events exposing (onClick, onInput)
 import Http
 import I18n exposing (I18n, Language(..))
-import Messages exposing (Messages, viewMessages)
+import Messages exposing (Messages)
 import Page.Imprint as ImprintPage
 import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route)
@@ -230,7 +230,7 @@ view model =
 viewBody : Model -> List (Html Msg)
 viewBody model =
     [ viewHeader model
-    , viewMessages model.messages
+    , Messages.viewMessages model.messages
     , viewCurrentPage model
     , viewFooter model
     ]
@@ -312,7 +312,7 @@ viewCurrentPage model =
                     ImprintPage.view pageModel
                         |> Html.map ImprintPageMsg
     in
-    div [ class "container" ] [ page ]
+    div [ id "content", class "container" ] [ page ]
 
 
 viewNotFoundPage : Model -> Html msg
@@ -348,6 +348,9 @@ viewFooter model =
                         , li [] [ button [ onClick <| GoToRoute Route.Imprint ] [ text <| I18n.footerImprint model.i18n ] ]
                         ]
                     ]
+                , div [ class "col" ]
+                    --todo get from config
+                    [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
                 , div [ class "col" ]
                     [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
                 ]
