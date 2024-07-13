@@ -14,10 +14,8 @@ pub struct LoginRequest {
 }
 
 pub async fn login(req: web::Json<LoginRequest>) -> HttpResponse {
-
-    let name= req.account.to_string();
     let res = LoginResponse  {
-        name ,
+        name: req.account.to_string(),
         token: "token".to_string()
     };
 
