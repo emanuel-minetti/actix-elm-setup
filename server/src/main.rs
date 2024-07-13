@@ -14,6 +14,7 @@ async fn main() -> std::io::Result<()> {
                     .service(Files::new("/css", "../public/css"))
                     .service(Files::new("/img", "../public/img"))
                     .service(Files::new("/lang", "../public/lang"))
+                    .route("/api", web::post().to(routes::login))
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
                     .route("/", web::get().to(routes::return_index))
                     .route("/{route}", web::get().to(routes::return_index))
