@@ -1,5 +1,25 @@
-use actix_web::{HttpResponse, Responder};
+use actix_web::{HttpResponse, web};
+use serde::{Deserialize, Serialize};
 
-pub async fn login() -> impl Responder {
-    HttpResponse::Ok().body("hallo")
+#[derive(Serialize)]
+struct LoginResponse {
+    name: String,
+    token: String
+}
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    account: String,
+    pw: String
+}
+
+pub async fn login(req: web::Json<LoginRequest>) -> HttpResponse {
+
+    let name= req.account.to_string();
+    let res = LoginResponse  {
+        name ,
+        token: "token".to_string()
+    };
+
+    HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
 }
