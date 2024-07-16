@@ -1,4 +1,5 @@
 ## Server
+- Revert to sqlx.
 - Make login working.
 - Implement (basic) error handling.
 - Implement configuration.
