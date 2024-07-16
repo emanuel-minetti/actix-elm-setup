@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, web};
-// use deadpool_postgres::{Client, GenericClient, Pool};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::{PgPool, query};
 
 #[derive(Serialize)]
 struct LoginResponse {
@@ -15,7 +14,30 @@ pub struct LoginRequest {
     pw: String
 }
 
-// pub async fn login(req: web::Json<LoginRequest>, db_pool: web::Data<Pool>) -> HttpResponse {
+pub async fn login(req: web::Json<LoginRequest>, db_pool: web::Data<PgPool>) -> HttpResponse {
+
+    let row = query!(r#"
+            SELECT pw_hash, name
+            FROM account
+            WHERE account_name = $1
+        "#, req.account)
+        .fetch_one(&**db_pool).await.unwrap();
+
+    let authenticated = bcrypt::verify(&req.pw, row.pw_hash.as_str()).unwrap();
+    let res: LoginResponse;
+
+    if authenticated {
+        res = LoginResponse {
+            name: row.name,
+            token: "".to_string()
+        };
+    }
+    else {
+        res = LoginResponse {
+        name: "".to_string(),
+        token: "You are not logged in".to_string()
+    }; }
+
 //     let client: Client = db_pool.get().await.unwrap();
 //     let stmt = client.prepare(
 //         r#"
@@ -50,5 +72,6 @@ pub struct LoginRequest {
 //         };
 //     }
 //
-//     HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
-// }
+    HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
+
+}
