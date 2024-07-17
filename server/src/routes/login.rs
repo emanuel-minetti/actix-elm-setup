@@ -4,74 +4,46 @@ use sqlx::{PgPool, query};
 
 #[derive(Serialize)]
 struct LoginResponse {
-    name: String,
-    token: String
+    session_id: String,
+    expires_at: Option<i64>,
 }
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
     account: String,
-    pw: String
+    pw: String,
 }
 
 pub async fn login(req: web::Json<LoginRequest>, db_pool: web::Data<PgPool>) -> HttpResponse {
-
-    let row = query!(r#"
-            SELECT pw_hash, name
+    let account_row = query!(r#"
+            SELECT
+                id as account_id,
+                pw_hash,
+                name
             FROM account
             WHERE account_name = $1
         "#, req.account)
-        .fetch_one(&**db_pool).await.unwrap();
+        .fetch_optional(&**db_pool).await.unwrap();
 
-    let authenticated = bcrypt::verify(&req.pw, row.pw_hash.as_str()).unwrap();
+    let authenticated =
+        account_row.is_some()
+            && bcrypt::verify(&req.pw, account_row.as_ref().unwrap().pw_hash.as_str()).unwrap();
     let res: LoginResponse;
 
     if authenticated {
+        let session_row = query!(r#"
+            INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
+        "#, account_row.unwrap().account_id).fetch_one(&**db_pool).await.unwrap();
         res = LoginResponse {
-            name: row.name,
-            token: "".to_string()
+            session_id: session_row.id.to_string(),
+            expires_at: Some(session_row.expires_at.and_utc().timestamp()),
+        };
+    } else {
+        res = LoginResponse {
+            session_id: "".to_string(),
+            expires_at: None,
         };
     }
-    else {
-        res = LoginResponse {
-        name: "".to_string(),
-        token: "You are not logged in".to_string()
-    }; }
 
-//     let client: Client = db_pool.get().await.unwrap();
-//     let stmt = client.prepare(
-//         r#"
-//             SELECT pw_hash, name
-//             FROM account
-//             WHERE account_name = $1
-//         "#
-//     ).await.unwrap();
-//
-//     let rows = client.query(&stmt, &[&req.account]).await.unwrap();
-//
-//     let authenticated = bcrypt::verify(&req.pw, rows[0].get(0)).unwrap();
-//     let mut res = LoginResponse {
-//         name: "".to_string(),
-//         token: "".to_string()
-//     };
-//
-//     if authenticated {
-//         let stmt = client.prepare(
-//             r#"
-//             INSERT INTO session (id, name) VALUES (DEFAULT, 'test') RETURNING id::varchar
-//         "#).await.unwrap();
-//         let session_rows = client.query(&stmt, &[&rows[0].get::<usize, String>(1)]).await.unwrap();
-//         res = LoginResponse  {
-//             name: rows[0].get(1),
-//             token: session_rows[0].get(0)
-//         };
-//     } else {
-//         res = LoginResponse  {
-//             name: req.account.to_string(),
-//             token: "Not logged in".to_string()
-//         };
-//     }
-//
     HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
-
 }

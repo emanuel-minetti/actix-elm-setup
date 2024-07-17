@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
                         .route("/login", web::post().to(routes::login)))
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
                     .route("/", web::get().to(routes::return_index))
-                    .route("/{route}", web::get().to(routes::return_index)),
+                    .route("/{route}", web::get().to(routes::return_index))
             )
     })
     .bind(("127.0.0.1", 8080))?
