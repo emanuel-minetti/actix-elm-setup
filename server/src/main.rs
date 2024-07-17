@@ -4,8 +4,6 @@ use actix_files::Files;
 use actix_web::web::Data;
 use actix_web::{web, HttpServer};
 use sqlx::{Pool, Postgres};
-// use deadpool_postgres::tokio_postgres::NoTls;
-// use deadpool_postgres::{Config as PoolConfig, ManagerConfig, RecyclingMethod, Runtime};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
