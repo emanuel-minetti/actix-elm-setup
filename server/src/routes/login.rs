@@ -1,11 +1,11 @@
-use actix_web::{web, HttpResponse};
 use actix_web::web::Data;
+use actix_web::{web, HttpResponse};
+use base64::engine::general_purpose;
+use base64::Engine;
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use simple_crypt;
 use sqlx::{query, PgPool};
-use base64::{Engine};
-use base64::engine::general_purpose;
-use bytes::Bytes;
 
 #[derive(Serialize)]
 struct LoginResponse {
@@ -55,7 +55,7 @@ pub async fn login(
         .unwrap();
         let session_token_bytes =
             simple_crypt::encrypt(session_row.id.as_ref(), &session_secret).unwrap();
-        let session_token = general_purpose::STANDARD.encode(session_token_bytes);
+        let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
 
         res = LoginResponse {
             session_token,

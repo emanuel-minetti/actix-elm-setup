@@ -1,11 +1,10 @@
 mod routes;
 
 use actix_files::Files;
-use actix_web::web::{ Data};
+use actix_web::web::Data;
 use actix_web::{web, HttpServer};
-use sqlx::{Pool, Postgres};
 use bytes::Bytes;
-
+use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -18,9 +17,12 @@ async fn main() -> std::io::Result<()> {
     let db_user = "aes";
     let db_password = "aes";
 
-    let session_secret = Bytes::from_static([
-        229, 84, 94, 175, 10, 21, 99, 226, 105, 37, 151, 121, 241, 201, 164, 176,
-    ].as_ref());
+    let session_secret = Bytes::from_static(
+        [
+            229, 84, 94, 175, 10, 21, 99, 226, 105, 37, 151, 121, 241, 201, 164, 176,
+        ]
+        .as_ref(),
+    );
 
     let db_url = format!(
         "postgres://{}:{}@{}:{}/{}",
@@ -39,7 +41,11 @@ async fn main() -> std::io::Result<()> {
                     .service(Files::new("/css", "../public/css"))
                     .service(Files::new("/img", "../public/img"))
                     .service(Files::new("/lang", "../public/lang"))
-                    .service(web::scope("/api").route("/login", web::post().to(routes::login)))
+                    .service(
+                        web::scope("/api")
+                            .route("/login", web::post().to(routes::login))
+                            .route("/session", web::get().to(routes::session)),
+                    )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
                     .route("/", web::get().to(routes::return_index))
                     .route("/{route}", web::get().to(routes::return_index)),
