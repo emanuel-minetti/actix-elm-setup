@@ -41,9 +41,11 @@ async fn main() -> std::io::Result<()> {
                     .service(Files::new("/css", "../public/css"))
                     .service(Files::new("/img", "../public/img"))
                     .service(Files::new("/lang", "../public/lang"))
+                    .route("/api/login", web::post().to(routes::login))
                     .service(
                         web::scope("/api")
-                            .route("/login", web::post().to(routes::login))
+                            // TODO introduce middleware
+                            //.wrap(ValidateSession)
                             .route("/session", web::get().to(routes::session)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
