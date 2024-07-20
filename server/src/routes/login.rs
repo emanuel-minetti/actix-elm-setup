@@ -9,7 +9,7 @@ use sqlx::{query, PgPool};
 
 #[derive(Serialize)]
 struct LoginResponse {
-    session_token: String,
+    session_token: Option<String>,
     expires_at: Option<i64>,
 }
 
@@ -25,6 +25,7 @@ pub async fn login(
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
     let account_row = query!(
+        // language=postgresql
         r#"
             SELECT
                 id as account_id,
@@ -45,6 +46,7 @@ pub async fn login(
 
     if authenticated {
         let session_row = query!(
+            // language=postgresql
             r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
         "#,
@@ -58,12 +60,12 @@ pub async fn login(
         let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
 
         res = LoginResponse {
-            session_token,
+            session_token: Some(session_token),
             expires_at: Some(session_row.expires_at.and_utc().timestamp()),
         };
     } else {
         res = LoginResponse {
-            session_token: "".to_string(),
+            session_token: None,
             expires_at: None,
         };
     }

@@ -1,15 +1,22 @@
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::{web, Error};
+use actix_web::{web, Error, HttpMessage};
 use base64::engine::general_purpose;
 use base64::Engine;
 use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
+use sqlx::types::chrono::{NaiveDateTime, Utc};
 use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
 
 pub struct ValidateSession;
+
+#[derive(Clone)]
+pub struct Session {
+    pub account_id: Uuid,
+    pub expires_at: NaiveDateTime,
+}
 
 impl<S, B> Transform<S, ServiceRequest> for ValidateSession
 where
@@ -57,25 +64,58 @@ where
 
             let session_token = req.cookie("session_token").unwrap().value().to_string();
             let session_token_bytes = general_purpose::URL_SAFE.decode(&session_token).unwrap();
-            let session_id =
+            let session_id_bytes =
                 simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret).unwrap();
+            let session_id = Uuid::from_slice(session_id_bytes.as_ref()).unwrap();
 
-            let account_id = query!(
+            let session_row = query!(
+                // language=postgresql
                 r#"
                     SELECT * FROM session WHERE id = $1
                 "#,
-                Uuid::from_slice(session_id.as_ref()).unwrap()
+                session_id
             )
             .fetch_optional(&***db_pool)
             .await
-            .unwrap()
-            .unwrap()
-            .account_id
-            .to_string();
+            .unwrap();
+
+            let logged_in = session_row.is_some()
+                && session_row.as_ref().unwrap().expires_at >= Utc::now().naive_utc();
+
+            if logged_in {
+                let new_session_row = query!(
+                    // language=postgresql
+                    r#"
+                        UPDATE session SET expires_at = DEFAULT
+                            WHERE id = $1 RETURNING account_id, expires_at
+                    "#,
+                    session_id
+                )
+                .fetch_one(&***db_pool)
+                .await
+                .unwrap();
+
+                req.extensions_mut().insert(Some(Session {
+                    account_id: new_session_row.account_id,
+                    expires_at: new_session_row.expires_at,
+                }));
+            } else {
+                req.extensions_mut().insert(None::<Session>);
+            }
+
+            //deleting outdated
+            query!(
+                // language=postgresql
+                r#"
+                        DELETE FROM session WHERE expires_at < CURRENT_TIMESTAMP
+                    "#
+            )
+            .execute(&***db_pool)
+            .await
+            .unwrap();
 
             let res = srv.call(req).await?;
 
-            println!("Hi from ValidateSession to {}", account_id);
             Ok(res)
         })
     }
