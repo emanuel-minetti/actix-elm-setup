@@ -1,5 +1,7 @@
 mod routes;
+mod validate_session;
 
+use crate::validate_session::ValidateSession;
 use actix_files::Files;
 use actix_web::web::Data;
 use actix_web::{web, HttpServer};
@@ -44,8 +46,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/api/login", web::post().to(routes::login))
                     .service(
                         web::scope("/api")
-                            // TODO introduce middleware
-                            //.wrap(ValidateSession)
+                            .wrap(ValidateSession)
                             .route("/session", web::get().to(routes::session)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
