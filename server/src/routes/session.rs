@@ -10,7 +10,7 @@ struct SessionResponse {
     expires_at: Option<i64>,
 }
 
-pub async fn session(
+pub async fn session_handler(
     db_pool: Data<PgPool>,
     session: Option<ReqData<Option<Session>>>,
 ) -> HttpResponse {

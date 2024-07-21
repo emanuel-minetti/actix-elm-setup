@@ -19,7 +19,7 @@ pub struct LoginRequest {
     pw: String,
 }
 
-pub async fn login(
+pub async fn login_handler(
     req: web::Json<LoginRequest>,
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
