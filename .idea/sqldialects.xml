@@ -3,7 +3,10 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/server/migrations/20240716205907_create-account-table.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/server/migrations/20240717153842_create-session-table.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/server/sql-migrations/0001-login.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/server/sql-migrations/create-db.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/server/migrations/20240721232646_add-lang-to-account.sql" dialect="PostgreSQL" />
+  </component>
+  <component name="SqlResolveMappings">
+    <file url="file://$PROJECT_DIR$/server/migrations" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;47b70e10-c6ce-45ca-ac73-863f28bcca02&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;database&quot;,     &quot;node&quot;:{      &quot;name&quot;:{       &quot;@qname&quot;:&quot;aes&quot;      },      &quot;group&quot;:{       &quot;@kind&quot;:&quot;schema&quot;,       &quot;node&quot;:{        &quot;name&quot;:{         &quot;@qname&quot;:&quot;public&quot;        }       }      }     }    }   }  } }}" />
+    <file url="file://$PROJECT_DIR$/server/src" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;47b70e10-c6ce-45ca-ac73-863f28bcca02&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;database&quot;,     &quot;node&quot;:{      &quot;name&quot;:{       &quot;@qname&quot;:&quot;aes&quot;      },      &quot;group&quot;:{       &quot;@kind&quot;:&quot;schema&quot;,       &quot;node&quot;:{        &quot;name&quot;:{         &quot;@qname&quot;:&quot;public&quot;        }       }      }     }    }   }  } }}" />
   </component>
 </project>

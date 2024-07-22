@@ -4,9 +4,17 @@ use actix_web::HttpResponse;
 use serde::Serialize;
 use sqlx::{query, PgPool};
 
+#[derive(sqlx::Type, Serialize, Debug)]
+#[sqlx(type_name = "lang", rename_all = "lowercase")]
+enum Lang {
+    De,
+    En,
+}
+
 #[derive(Serialize)]
 struct SessionResponse {
     name: Option<String>,
+    preferred_lang: Option<Lang>,
     expires_at: Option<i64>,
 }
 
@@ -22,7 +30,10 @@ pub async fn session_handler(
         let account_row = query!(
             // language=postgresql
             r#"
-           SELECT name FROM account WHERE id = $1
+           SELECT
+               name,
+               preferred_language AS "prefered_lang: Lang"
+           FROM account WHERE id = $1
        "#,
             session.clone().unwrap().into_inner().unwrap().account_id
         )
@@ -40,11 +51,13 @@ pub async fn session_handler(
         );
         res = SessionResponse {
             name: Some(account_row.name),
+            preferred_lang: Some(account_row.prefered_lang),
             expires_at,
         }
     } else {
         res = SessionResponse {
             name: None,
+            preferred_lang: None,
             expires_at: None,
         }
     }
