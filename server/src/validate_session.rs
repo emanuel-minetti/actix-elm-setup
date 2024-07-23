@@ -13,7 +13,7 @@ use uuid::Uuid;
 pub struct ValidateSession;
 
 #[derive(Clone)]
-pub struct Session {
+pub struct ServerSession {
     pub account_id: Uuid,
     pub expires_at: NaiveDateTime,
 }
@@ -62,10 +62,17 @@ where
             let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
-            let session_token = req.cookie("session_token").unwrap().value().to_string();
-            let session_token_bytes = general_purpose::URL_SAFE.decode(&session_token).unwrap();
+            let session_token = req
+                .cookie("session_token")
+                .expect("Failed to get session token from cookie.")
+                .value()
+                .to_string();
+            let session_token_bytes = general_purpose::URL_SAFE
+                .decode(&session_token)
+                .expect("Failed decoding base64 encoded session token.");
             let session_id_bytes =
-                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret).unwrap();
+                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)
+                    .expect("Failed decrypting session token.");
             let session_id = Uuid::from_slice(session_id_bytes.as_ref()).unwrap();
 
             let session_row = query!(
@@ -77,10 +84,14 @@ where
             )
             .fetch_optional(&***db_pool)
             .await
-            .unwrap();
+            .expect("Failed to read session from database.");
 
             let logged_in = session_row.is_some()
-                && session_row.as_ref().unwrap().expires_at >= Utc::now().naive_utc();
+                && session_row
+                    .as_ref()
+                    .expect("Failed to get session row from database.")
+                    .expires_at
+                    >= Utc::now().naive_utc();
 
             if logged_in {
                 let new_session_row = query!(
@@ -93,14 +104,14 @@ where
                 )
                 .fetch_one(&***db_pool)
                 .await
-                .unwrap();
+                .expect("");
 
-                req.extensions_mut().insert(Some(Session {
+                req.extensions_mut().insert(Some(ServerSession {
                     account_id: new_session_row.account_id,
                     expires_at: new_session_row.expires_at,
                 }));
             } else {
-                req.extensions_mut().insert(None::<Session>);
+                req.extensions_mut().insert(None::<ServerSession>);
             }
 
             //deleting outdated
@@ -112,7 +123,7 @@ where
             )
             .execute(&***db_pool)
             .await
-            .unwrap();
+            .expect("Failed to read session from database.");
 
             let res = srv.call(req).await?;
 

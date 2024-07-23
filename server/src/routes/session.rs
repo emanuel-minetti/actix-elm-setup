@@ -1,4 +1,4 @@
-use crate::validate_session::Session;
+use crate::validate_session::ServerSession;
 use actix_web::web::{Data, ReqData};
 use actix_web::HttpResponse;
 use serde::Serialize;
@@ -20,7 +20,7 @@ struct SessionResponse {
 
 pub async fn session_handler(
     db_pool: Data<PgPool>,
-    session: Option<ReqData<Option<Session>>>,
+    session: Option<ReqData<Option<ServerSession>>>,
 ) -> HttpResponse {
     let res: SessionResponse;
 
@@ -40,6 +40,7 @@ pub async fn session_handler(
         .fetch_one(&**db_pool)
         .await
         .unwrap();
+
         let expires_at = Some(
             session
                 .unwrap()

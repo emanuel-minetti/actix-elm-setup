@@ -1,13 +1,13 @@
+mod configuration;
 mod routes;
 mod validate_session;
-mod configuration;
 
+use crate::configuration::get_configuration;
 use crate::validate_session::ValidateSession;
 use actix_files::Files;
 use actix_web::web::Data;
 use actix_web::{web, HttpServer};
 use sqlx::{Pool, Postgres};
-use crate::configuration::get_configuration;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,7 +17,9 @@ async fn main() -> std::io::Result<()> {
     let configuration = get_configuration().expect("Couldn't read configuration file.");
     let session_secret = bytes::Bytes::from(configuration.session_secret);
     let db_url = configuration.database.connection_string();
-    let db_pool = Pool::<Postgres>::connect(db_url.as_str()).await.unwrap();
+    let db_pool = Pool::<Postgres>::connect(db_url.as_str())
+        .await
+        .expect("Couldn't connect to database.");
 
     HttpServer::new(move || {
         actix_web::App::new()

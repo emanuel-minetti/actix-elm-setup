@@ -38,7 +38,7 @@ pub async fn login_handler(
     )
     .fetch_optional(&**db_pool)
     .await
-    .unwrap();
+    .expect("Failed to connect to account table.");
 
     let authenticated = account_row.is_some()
         && bcrypt::verify(&req.pw, account_row.as_ref().unwrap().pw_hash.as_str()).unwrap();
@@ -50,13 +50,15 @@ pub async fn login_handler(
             r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
         "#,
-            account_row.unwrap().account_id
+            account_row
+                .expect("Failed to connect to session table.")
+                .account_id
         )
         .fetch_one(&**db_pool)
         .await
-        .unwrap();
-        let session_token_bytes =
-            simple_crypt::encrypt(session_row.id.as_ref(), &session_secret).unwrap();
+        .expect("Failed to get session from table.");
+        let session_token_bytes = simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
+            .expect("Failed to encrypt session token.");
         let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
 
         res = LoginResponse {
