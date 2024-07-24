@@ -1,3 +1,4 @@
+use crate::domain::LoginData;
 use actix_web::web::Data;
 use actix_web::{web, HttpResponse};
 use base64::engine::general_purpose;
@@ -6,7 +7,7 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use simple_crypt;
 use sqlx::{query, PgPool};
-use crate::domain::LoginData;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 struct LoginResponse {
@@ -25,36 +26,24 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
-    let login_request_data = LoginData::parse(req.into_inner());
-    let account_row = query!(
-        // language=postgresql
-        r#"
-            SELECT
-                id as account_id,
-                pw_hash,
-                name
-            FROM account
-            WHERE account_name = $1
-        "#,
-        login_request_data.account_name.as_ref()
-    )
-    .fetch_optional(&**db_pool)
-    .await
-    .expect("Failed to connect to account table.");
+    let login_request_data = match LoginData::parse(req) {
+        Ok(data) => data,
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
 
-    let authenticated = account_row.is_some()
-        && bcrypt::verify(login_request_data.password, account_row.as_ref().unwrap().pw_hash.as_str()).unwrap();
+    let account_id = authenticate(login_request_data, &*db_pool.as_ref())
+        .await
+        .expect("DB Error");
+
     let res: LoginResponse;
 
-    if authenticated {
+    if account_id.is_some() {
         let session_row = query!(
             // language=postgresql
             r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
         "#,
-            account_row
-                .expect("Failed to connect to session table.")
-                .account_id
+            account_id
         )
         .fetch_one(&**db_pool)
         .await
@@ -75,4 +64,27 @@ pub async fn login_handler(
     }
 
     HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
+}
+
+async fn authenticate(cred: LoginData, db_pool: &PgPool) -> Result<Option<Uuid>, sqlx::Error> {
+    let account_row = query!(
+        // language=postgresql
+        r#"
+            SELECT
+                id as account_id,
+                pw_hash,
+                name
+            FROM account
+            WHERE account_name = $1
+        "#,
+        cred.account_name.as_ref()
+    )
+    .fetch_optional(db_pool)
+    .await?;
+
+    if account_row.is_none() {
+        Ok(None)
+    } else {
+        Ok(Some(account_row.unwrap().account_id))
+    }
 }
