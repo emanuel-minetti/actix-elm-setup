@@ -1,4 +1,5 @@
 mod configuration;
+mod domain;
 mod routes;
 mod validate_session;
 

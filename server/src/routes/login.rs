@@ -6,6 +6,7 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use simple_crypt;
 use sqlx::{query, PgPool};
+use crate::domain::LoginData;
 
 #[derive(Serialize)]
 struct LoginResponse {
@@ -15,8 +16,8 @@ struct LoginResponse {
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
-    account: String,
-    pw: String,
+    pub account: String,
+    pub pw: String,
 }
 
 pub async fn login_handler(
@@ -24,6 +25,7 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
+    let login_request_data = LoginData::parse(req.into_inner());
     let account_row = query!(
         // language=postgresql
         r#"
@@ -34,14 +36,14 @@ pub async fn login_handler(
             FROM account
             WHERE account_name = $1
         "#,
-        req.account
+        login_request_data.account_name.as_ref()
     )
     .fetch_optional(&**db_pool)
     .await
     .expect("Failed to connect to account table.");
 
     let authenticated = account_row.is_some()
-        && bcrypt::verify(&req.pw, account_row.as_ref().unwrap().pw_hash.as_str()).unwrap();
+        && bcrypt::verify(login_request_data.password, account_row.as_ref().unwrap().pw_hash.as_str()).unwrap();
     let res: LoginResponse;
 
     if authenticated {
