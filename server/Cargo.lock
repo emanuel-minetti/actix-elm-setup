@@ -2004,6 +2004,7 @@ dependencies = [
  "config",
  "env_logger",
  "futures-util",
+ "regex",
  "serde",
  "serde_json",
  "simple_crypt",

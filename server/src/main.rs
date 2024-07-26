@@ -17,13 +17,14 @@ async fn main() -> std::io::Result<()> {
 
     let configuration = get_configuration().expect("Couldn't read configuration file.");
 
+    let session_secret = bytes::Bytes::from(configuration.session_secret);
+
     let db_url = configuration.database.connection_string();
     let db_pool = Pool::<Postgres>::connect(db_url.as_str())
         .await
         .expect("Couldn't connect to database.");
 
     HttpServer::new(move || {
-        let session_secret = bytes::Bytes::from(configuration.session_secret);
         let login_json_config = web::JsonConfig::default()
             .limit(512)
             .error_handler(|err, _| {

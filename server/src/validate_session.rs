@@ -8,7 +8,9 @@ use sqlx::types::chrono::{NaiveDateTime, Utc};
 use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
+use actix_web::http::header;
 use uuid::Uuid;
+use regex::Regex;
 
 pub struct ValidateSession;
 
@@ -62,11 +64,21 @@ where
             let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
-            let session_token = req
-                .cookie("session_token")
-                .expect("Failed to get session token from cookie.")
-                .value()
+            // TODO extract into function
+            let authorisation_header_value = req
+                .headers().get(header::AUTHORIZATION)
+                .expect("Failed to get authorization header.")
+                .to_str()
+                .expect("Failed to read header.");
+            let match_token = Regex::new(r"Bearer (.+)").unwrap();
+            let session_token = match_token
+                .captures(authorisation_header_value)
+                .expect("Failed to parse the header.")
+                .get(1)
+                .expect("Failed to extract the token from header.")
+                .as_str()
                 .to_string();
+
             let session_token_bytes = general_purpose::URL_SAFE
                 .decode(&session_token)
                 .expect("Failed decoding base64 encoded session token.");
