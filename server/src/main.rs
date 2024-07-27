@@ -7,7 +7,7 @@ use crate::configuration::get_configuration;
 use crate::validate_session::ValidateSession;
 use actix_files::Files;
 use actix_web::web::Data;
-use actix_web::{web, HttpServer, error, HttpResponse};
+use actix_web::{error, web, HttpResponse, HttpServer};
 use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/api/login")
                             .app_data(login_json_config)
                             .app_data(Data::new(session_secret.clone()))
-                            .route("", web::post().to(routes::login_handler))
+                            .route("", web::post().to(routes::login_handler)),
                     )
                     .service(
                         web::scope("/api")
