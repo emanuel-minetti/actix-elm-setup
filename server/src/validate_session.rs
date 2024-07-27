@@ -80,27 +80,27 @@ where
             }
             let authorisation_header_value = authorisation_header.unwrap().to_str();
             if authorisation_header_value.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED,"");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let match_token = Regex::new(r"Bearer (.+)").unwrap();
             let session_token_capture = match_token.captures(authorisation_header_value.unwrap());
             if session_token_capture.is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED,"");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let session_token_match = session_token_capture.unwrap().get(1);
             if session_token_match.is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED,"");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let session_token = session_token_match.unwrap().as_str().to_string();
             let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token);
             if session_token_decode_result.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED,"");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let session_token_bytes = session_token_decode_result.unwrap();
             let session_id_bytes_result =
                 simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret);
             if session_id_bytes_result.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED,"");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let session_id = Uuid::from_slice(session_id_bytes_result.unwrap().as_ref()).unwrap();
 
@@ -117,17 +117,12 @@ where
             if session_row_result_option.is_err() {
                 return return_early(req, StatusCode::INTERNAL_SERVER_ERROR, "No DB connection");
             } else if session_row_result_option.as_ref().unwrap().is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED , "");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
-            // if session_row_result_option.is_err()
-            //     || session_row_result_option.as_ref().unwrap().is_none()
-            // {
-            //     return return_unauthorized(req, "");
-            // }
             let session_row = session_row_result_option.unwrap().unwrap();
             let expired = session_row.expires_at < Utc::now().naive_utc();
             if expired {
-                return return_early(req, StatusCode::UNAUTHORIZED,"Session expired.");
+                return return_early(req, StatusCode::UNAUTHORIZED, "Session expired.");
             } else {
                 let new_session_row = query!(
                     // language=postgresql
@@ -138,12 +133,18 @@ where
                     session_id
                 )
                 .fetch_one(&***db_pool)
-                .await
-                .expect("Failed to update session row.");
+                .await;
+                if new_session_row.is_err() {
+                    return return_early(
+                        req,
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "No DB connection",
+                    );
+                }
 
                 req.extensions_mut().insert(Some(ServerSession {
-                    account_id: new_session_row.account_id,
-                    expires_at: new_session_row.expires_at,
+                    account_id: new_session_row.as_ref().unwrap().account_id,
+                    expires_at: new_session_row.unwrap().expires_at,
                 }));
             }
 
@@ -156,7 +157,8 @@ where
             )
             .execute(&***db_pool)
             .await
-            .expect("Failed to read session from database.");
+            //expecting because no other client or server actions are affected
+            .expect("Failed to delete outdated sessions from database.");
 
             let res = srv.call(req).await?;
 
