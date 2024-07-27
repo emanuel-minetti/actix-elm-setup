@@ -61,11 +61,12 @@ where
         // to use it in the closure
         let srv = self.service.clone();
 
-        fn return_unauthorized<B>(
+        fn return_early<B>(
             req: ServiceRequest,
+            status_code: StatusCode,
             body: &str,
         ) -> Result<ServiceResponse<EitherBody<B, &str>>, Error> {
-            let res = HttpResponse::with_body(StatusCode::UNAUTHORIZED, body);
+            let res = HttpResponse::with_body(status_code, body);
             Ok(req.into_response(res.map_into_right_body()))
         }
 
@@ -75,31 +76,31 @@ where
 
             let authorisation_header = req.headers().get(header::AUTHORIZATION);
             if authorisation_header.is_none() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED, "");
             }
             let authorisation_header_value = authorisation_header.unwrap().to_str();
             if authorisation_header_value.is_err() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED,"");
             }
             let match_token = Regex::new(r"Bearer (.+)").unwrap();
             let session_token_capture = match_token.captures(authorisation_header_value.unwrap());
             if session_token_capture.is_none() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED,"");
             }
             let session_token_match = session_token_capture.unwrap().get(1);
             if session_token_match.is_none() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED,"");
             }
             let session_token = session_token_match.unwrap().as_str().to_string();
             let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token);
             if session_token_decode_result.is_err() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED,"");
             }
             let session_token_bytes = session_token_decode_result.unwrap();
             let session_id_bytes_result =
                 simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret);
             if session_id_bytes_result.is_err() {
-                return return_unauthorized(req, "");
+                return return_early(req, StatusCode::UNAUTHORIZED,"");
             }
             let session_id = Uuid::from_slice(session_id_bytes_result.unwrap().as_ref()).unwrap();
 
@@ -113,15 +114,20 @@ where
             .fetch_optional(&***db_pool)
             .await;
             //TODO handle db error and authentication error differently
-            if session_row_result_option.is_err()
-                || session_row_result_option.as_ref().unwrap().is_none()
-            {
-                return return_unauthorized(req, "");
+            if session_row_result_option.is_err() {
+                return return_early(req, StatusCode::INTERNAL_SERVER_ERROR, "No DB connection");
+            } else if session_row_result_option.as_ref().unwrap().is_none() {
+                return return_early(req, StatusCode::UNAUTHORIZED , "");
             }
+            // if session_row_result_option.is_err()
+            //     || session_row_result_option.as_ref().unwrap().is_none()
+            // {
+            //     return return_unauthorized(req, "");
+            // }
             let session_row = session_row_result_option.unwrap().unwrap();
             let expired = session_row.expires_at < Utc::now().naive_utc();
             if expired {
-                return return_unauthorized(req, "Session expired.");
+                return return_early(req, StatusCode::UNAUTHORIZED,"Session expired.");
             } else {
                 let new_session_row = query!(
                     // language=postgresql
