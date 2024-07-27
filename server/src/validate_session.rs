@@ -1,5 +1,5 @@
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::{web, Error, HttpMessage};
+use actix_web::{web, Error, HttpMessage, HttpResponse};
 use base64::engine::general_purpose;
 use base64::Engine;
 use bytes::Bytes;
@@ -65,11 +65,21 @@ where
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
             // TODO extract into function
+            // let authorisation_header = req
+            //     .headers().get(header::AUTHORIZATION);
+            // if authorisation_header.is_none() {
+            //     return Ok(req.into_response(HttpResponse::Unauthorized().finish().map_into_boxed_body()));
+            // }
+            // let authorisation_header_value = authorisation_header.unwrap()
+            //     .to_str()
+            //     .expect("Failed to read header.");
+
             let authorisation_header_value = req
                 .headers().get(header::AUTHORIZATION)
                 .expect("Failed to get authorization header.")
                 .to_str()
                 .expect("Failed to read header.");
+
             let match_token = Regex::new(r"Bearer (.+)").unwrap();
             let session_token = match_token
                 .captures(authorisation_header_value)
