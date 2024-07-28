@@ -1,4 +1,6 @@
 use crate::domain::LoginData;
+use actix_web::body::BoxBody;
+use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{web, HttpResponse};
 use base64::engine::general_purpose;
@@ -26,24 +28,30 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
-    let login_request_data = match LoginData::parse(req) {
+    let login_data = match LoginData::parse(req) {
         Ok(data) => data,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    let account_id = authenticate(login_request_data, &*db_pool.as_ref())
-        .await
-        .expect("DB Error");
+    let account_id_option = match authenticate(login_data, &*db_pool.as_ref()).await {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::with_body(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                BoxBody::new("DB Error"),
+            )
+        }
+    };
 
     let res: LoginResponse;
 
-    if account_id.is_some() {
+    if account_id_option.is_some() {
         let session_row = query!(
             // language=postgresql
             r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
         "#,
-            account_id
+            account_id_option
         )
         .fetch_one(&**db_pool)
         .await
