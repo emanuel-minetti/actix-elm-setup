@@ -41,7 +41,7 @@ where
 }
 
 pub struct ValidateSessionMiddleware<S> {
-    // wrap with Rc to get static lifetime
+    // wrap with Rc to get static lifetime for async function calls in `call`
     service: Rc<S>,
 }
 
@@ -58,7 +58,7 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        // to use it in the closure
+        // to use it in the closure for async function calls
         let srv = self.service.clone();
 
         fn return_early<B>(
@@ -113,7 +113,6 @@ where
             )
             .fetch_optional(&***db_pool)
             .await;
-            //TODO handle db error and authentication error differently
             if session_row_result_option.is_err() {
                 return return_early(req, StatusCode::INTERNAL_SERVER_ERROR, "No DB connection");
             } else if session_row_result_option.as_ref().unwrap().is_none() {
@@ -161,7 +160,6 @@ where
             .expect("Failed to delete outdated sessions from database.");
 
             let res = srv.call(req).await?;
-
             Ok(res.map_into_left_body())
         })
     }
