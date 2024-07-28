@@ -1,5 +1,6 @@
 ## Server
 - Continue implementing (basic) error handling.
+  - Review `session.rs` and `login.rs`.
             
 - Globally all API responses should contain an `expires_at` field. Maybe also an `error` field.
   - Maybe add a middleware to make sure all API responses follow this requirement and refresh session.
