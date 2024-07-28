@@ -33,8 +33,11 @@ pub async fn login_handler(
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    let account_id_option = match authenticate(login_data, &*db_pool.as_ref()).await {
-        Ok(id) => id,
+    let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
+        Ok(id) => match id {
+            None => return HttpResponse::Unauthorized().finish(),
+            Some(id) => id,
+        },
         Err(_) => {
             return HttpResponse::with_body(
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -43,33 +46,25 @@ pub async fn login_handler(
         }
     };
 
-    let res: LoginResponse;
 
-    if account_id_option.is_some() {
-        let session_row = query!(
-            // language=postgresql
-            r#"
+    let session_row = query!(
+        // language=postgresql
+        r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
         "#,
-            account_id_option
-        )
-        .fetch_one(&**db_pool)
-        .await
-        .expect("Failed to get session from table.");
-        let session_token_bytes = simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
-            .expect("Failed to encrypt session token.");
-        let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
+        account_id
+    )
+    .fetch_one(&**db_pool)
+    .await
+    .expect("Failed to get session from table.");
+    let session_token_bytes = simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
+        .expect("Failed to encrypt session token.");
+    let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
 
-        res = LoginResponse {
-            session_token: Some(session_token),
-            expires_at: Some(session_row.expires_at.and_utc().timestamp()),
-        };
-    } else {
-        res = LoginResponse {
-            session_token: None,
-            expires_at: None,
-        };
-    }
+    let res = LoginResponse {
+        session_token: Some(session_token),
+        expires_at: Some(session_row.expires_at.and_utc().timestamp()),
+    };
 
     HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
 }
