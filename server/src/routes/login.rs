@@ -66,7 +66,7 @@ pub async fn login_handler(
         expires_at: Some(session_row.expires_at.and_utc().timestamp()),
     };
 
-    HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
+    HttpResponse::Ok().json(res)
 }
 
 async fn authenticate(cred: LoginData, db_pool: &PgPool) -> Result<Option<Uuid>, sqlx::Error> {

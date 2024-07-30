@@ -63,5 +63,5 @@ pub async fn session_handler(
         }
     }
 
-    HttpResponse::Ok().body(serde_json::to_string(&res).unwrap())
+    HttpResponse::Ok().json(res)
 }
