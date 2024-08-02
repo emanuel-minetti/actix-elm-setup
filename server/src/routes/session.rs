@@ -1,18 +1,18 @@
-use crate::validate_session::ServerSession;
+use crate::authorisation::ServerSession;
 use actix_web::web::{Data, ReqData};
 use actix_web::HttpResponse;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 
-#[derive(sqlx::Type, Serialize, Debug)]
+#[derive(sqlx::Type, Serialize, Debug, Deserialize)]
 #[sqlx(type_name = "lang", rename_all = "lowercase")]
 enum Lang {
     De,
     En,
 }
 
-#[derive(Serialize)]
-struct SessionResponse {
+#[derive(Serialize, Deserialize)]
+pub struct SessionResponse {
     name: Option<String>,
     preferred_lang: Option<Lang>,
     expires_at: Option<i64>,

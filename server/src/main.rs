@@ -1,10 +1,10 @@
 mod configuration;
 mod domain;
 mod routes;
-mod validate_session;
+mod authorisation;
 
 use crate::configuration::get_configuration;
-use crate::validate_session::ValidateSession;
+use crate::authorisation::Authorisation;
 use actix_files::Files;
 use actix_web::web::Data;
 use actix_web::{error, web, HttpResponse, HttpServer};
@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/api")
                             .app_data(Data::new(session_secret.clone()))
-                            .wrap(ValidateSession)
+                            .wrap(Authorisation)
                             .route("/session", web::get().to(routes::session_handler)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))

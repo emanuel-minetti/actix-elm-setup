@@ -1,4 +1,4 @@
-use actix_web::body::EitherBody;
+use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::{header, StatusCode};
 use actix_web::{web, Error, HttpMessage, HttpResponse};
@@ -11,9 +11,10 @@ use sqlx::types::chrono::{NaiveDateTime, Utc};
 use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub struct ValidateSession;
+pub struct Authorisation;
 
 #[derive(Clone)]
 pub struct ServerSession {
@@ -21,37 +22,37 @@ pub struct ServerSession {
     pub expires_at: NaiveDateTime,
 }
 
-impl<S, B> Transform<S, ServiceRequest> for ValidateSession
+impl<S, B> Transform<S, ServiceRequest> for Authorisation
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
-    B: 'static,
+    B: 'static + MessageBody + std::fmt::Debug,
 {
-    type Response = ServiceResponse<EitherBody<B, &'static str>>;
+    type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
-    type Transform = ValidateSessionMiddleware<S>;
+    type Transform = AuthorisationMiddlewar<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(ValidateSessionMiddleware {
+        ready(Ok(AuthorisationMiddlewar {
             service: service.into(),
         }))
     }
 }
 
-pub struct ValidateSessionMiddleware<S> {
+pub struct AuthorisationMiddlewar<S> {
     // wrap with Rc to get static lifetime for async function calls in `call`
     service: Rc<S>,
 }
 
-impl<S, B> Service<ServiceRequest> for ValidateSessionMiddleware<S>
+impl<S, B> Service<ServiceRequest> for AuthorisationMiddlewar<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
-    B: 'static,
+    B: 'static + MessageBody + std::fmt::Debug,
 {
-    type Response = ServiceResponse<EitherBody<B, &'static str>>;
+    type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
     type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
 
@@ -64,9 +65,9 @@ where
         fn return_early<B>(
             req: ServiceRequest,
             status_code: StatusCode,
-            body: &str,
-        ) -> Result<ServiceResponse<EitherBody<B, &str>>, Error> {
-            let res = HttpResponse::with_body(status_code, body);
+            body: &'static str,
+        ) -> Result<ServiceResponse<EitherBody<B>>, Error> {
+            let res = HttpResponse::with_body(status_code, BoxBody::new(body));
             Ok(req.into_response(res.map_into_right_body()))
         }
 
@@ -159,8 +160,28 @@ where
             //expecting because no other client or server actions are affected
             .expect("Failed to delete outdated sessions from database.");
 
+
+            //call other middleware and handler and get the response
             let res = srv.call(req).await?;
-            Ok(res.map_into_left_body())
+            let request = res.request().clone();
+
+            //wrap json responses into standard response body
+            if res.status() == StatusCode::OK {
+                let body = res.into_body();
+
+                let bytes = body.try_into_bytes().unwrap();
+                let res_body_string =   String::from_utf8(bytes.to_vec()).unwrap() + "Hall0";
+                //todo modify response
+                let resp = HttpResponse::with_body(StatusCode::OK, BoxBody::new(res_body_string));
+                let new_res = ServiceResponse::new(request, resp);
+                Ok(new_res.map_into_right_body())
+            } else {
+                Ok(res.map_into_left_body())            }
         })
     }
+}
+
+#[derive(Serialize, Deserialize)]
+enum ApiResponse {
+    SessionResponse,
 }
