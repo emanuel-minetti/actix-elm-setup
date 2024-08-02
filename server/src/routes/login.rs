@@ -46,7 +46,6 @@ pub async fn login_handler(
         }
     };
 
-
     let session_row = query!(
         // language=postgresql
         r#"

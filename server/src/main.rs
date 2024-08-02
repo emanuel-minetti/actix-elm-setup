@@ -1,10 +1,10 @@
+mod authorisation;
 mod configuration;
 mod domain;
 mod routes;
-mod authorisation;
 
-use crate::configuration::get_configuration;
 use crate::authorisation::Authorisation;
+use crate::configuration::get_configuration;
 use actix_files::Files;
 use actix_web::web::Data;
 use actix_web::{error, web, HttpResponse, HttpServer};

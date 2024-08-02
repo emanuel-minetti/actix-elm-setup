@@ -7,12 +7,13 @@ use base64::Engine;
 use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{NaiveDateTime, Utc};
 use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::routes::SessionResponse;
 
 pub struct Authorisation;
 
@@ -160,28 +161,52 @@ where
             //expecting because no other client or server actions are affected
             .expect("Failed to delete outdated sessions from database.");
 
-
             //call other middleware and handler and get the response
             let res = srv.call(req).await?;
             let request = res.request().clone();
 
             //wrap json responses into standard response body
-            if res.status() == StatusCode::OK {
-                let body = res.into_body();
+            if res.status() == StatusCode::OK
+                && res.headers().get(header::CONTENT_TYPE).is_some()
+                && res.headers().get(header::CONTENT_TYPE).unwrap() == "application/json"
+            {
+                let res_body = res.into_body();
+                let res_body_bytes = res_body.try_into_bytes().unwrap();
+                let res_body_string = String::from_utf8(res_body_bytes.to_vec()).unwrap();
+                let res_body_obj: ApiResponse = res_body_string.as_str().into();
+                let mod_body_obj = ModifiedResponse {
+                    error: Some("".to_string()),
+                    expires_at: 0,
+                    data: res_body_obj,
+                };
 
-                let bytes = body.try_into_bytes().unwrap();
-                let res_body_string =   String::from_utf8(bytes.to_vec()).unwrap() + "Hall0";
                 //todo modify response
-                let resp = HttpResponse::with_body(StatusCode::OK, BoxBody::new(res_body_string));
+                //let resp = HttpResponse::with_body(StatusCode::OK, BoxBody::new(res_body_string));
+                let resp = HttpResponse::build(StatusCode::OK).json(mod_body_obj);
                 let new_res = ServiceResponse::new(request, resp);
                 Ok(new_res.map_into_right_body())
             } else {
-                Ok(res.map_into_left_body())            }
+                Ok(res.map_into_left_body())
+            }
         })
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize, Serialize)]
 enum ApiResponse {
-    SessionResponse,
+    SessionResponse(SessionResponse),
+}
+
+impl From<&str> for ApiResponse {
+    fn from(value: &str) -> Self {
+        let obj: SessionResponse = serde_json::from_str(value).unwrap();
+        ApiResponse::SessionResponse(obj)
+    }
+}
+
+#[derive(Serialize)]
+struct ModifiedResponse {
+    expires_at: i64,
+    error: Option<String>,
+    data: ApiResponse,
 }
