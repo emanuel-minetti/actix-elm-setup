@@ -27,23 +27,23 @@ where
 {
     type Response = ServiceResponse<EitherBody<B>>;
     type Error = Error;
-    type Transform = AuthorisationMiddlewar<S>;
+    type Transform = AuthorisationMiddleware<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthorisationMiddlewar {
+        ready(Ok(AuthorisationMiddleware {
             service: service.into(),
         }))
     }
 }
 
-pub struct AuthorisationMiddlewar<S> {
+pub struct AuthorisationMiddleware<S> {
     // wrap with Rc to get static lifetime for async function calls in `call`
     service: Rc<S>,
 }
 
-impl<S, B> Service<ServiceRequest> for AuthorisationMiddlewar<S>
+impl<S, B> Service<ServiceRequest> for AuthorisationMiddleware<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
