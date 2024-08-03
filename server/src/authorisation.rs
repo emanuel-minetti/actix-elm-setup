@@ -1,3 +1,4 @@
+use crate::routes::SessionResponse;
 use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::{header, StatusCode};
@@ -13,15 +14,10 @@ use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
-use crate::routes::SessionResponse;
 
 pub struct Authorisation;
 
-#[derive(Clone)]
-pub struct ServerSession {
-    pub account_id: Uuid,
-    pub expires_at: NaiveDateTime,
-}
+pub type ServerSession = Uuid;
 
 impl<S, B> Transform<S, ServiceRequest> for Authorisation
 where
@@ -122,6 +118,7 @@ where
             }
             let session_row = session_row_result_option.unwrap().unwrap();
             let expired = session_row.expires_at < Utc::now().naive_utc();
+            let expires_at: NaiveDateTime;
             if expired {
                 return return_early(req, StatusCode::UNAUTHORIZED, "Session expired.");
             } else {
@@ -143,17 +140,16 @@ where
                     );
                 }
 
-                req.extensions_mut().insert(Some(ServerSession {
-                    account_id: new_session_row.as_ref().unwrap().account_id,
-                    expires_at: new_session_row.unwrap().expires_at,
-                }));
+                req.extensions_mut()
+                    .insert(new_session_row.as_ref().unwrap().account_id);
+                expires_at = new_session_row.unwrap().expires_at;
             }
 
             //deleting outdated
             query!(
                 // language=postgresql
                 r#"
-                        DELETE FROM session WHERE expires_at < CURRENT_TIMESTAMP
+                        DELETE FROM session WHERE expires_at < CURRENT_TIMESTAMP + INTERVAL '20 minutes';
                     "#
             )
             .execute(&***db_pool)
@@ -176,12 +172,10 @@ where
                 let res_body_obj: ApiResponse = res_body_string.as_str().into();
                 let mod_body_obj = ModifiedResponse {
                     error: Some("".to_string()),
-                    expires_at: 0,
+                    expires_at: expires_at.and_utc().timestamp(),
                     data: res_body_obj,
                 };
 
-                //todo modify response
-                //let resp = HttpResponse::with_body(StatusCode::OK, BoxBody::new(res_body_string));
                 let resp = HttpResponse::build(StatusCode::OK).json(mod_body_obj);
                 let new_res = ServiceResponse::new(request, resp);
                 Ok(new_res.map_into_right_body())
