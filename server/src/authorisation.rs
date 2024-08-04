@@ -59,6 +59,10 @@ where
         // to use it in the closure for async function calls
         let srv = self.service.clone();
 
+        // grab url path from request to care for 'login'
+        let url_path = req.path().split("/").last().unwrap();
+        println!("Path: {}", url_path);
+
         fn return_early<B>(
             req: ServiceRequest,
             status_code: StatusCode,
@@ -188,13 +192,13 @@ where
 
 #[derive(Deserialize, Serialize)]
 enum ApiResponse {
-    SessionResponse(SessionResponse),
+    Session(SessionResponse),
 }
 
 impl From<&str> for ApiResponse {
     fn from(value: &str) -> Self {
         let obj: SessionResponse = serde_json::from_str(value).unwrap();
-        ApiResponse::SessionResponse(obj)
+        ApiResponse::Session(obj)
     }
 }
 
