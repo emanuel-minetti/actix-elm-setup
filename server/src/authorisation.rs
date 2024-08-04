@@ -1,4 +1,3 @@
-use crate::routes::SessionResponse;
 use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::{header, StatusCode};
@@ -9,11 +8,13 @@ use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use sqlx::types::chrono::{NaiveDateTime, Utc};
+use sqlx::types::chrono::Utc;
 use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
+
+use crate::routes::SessionResponse;
 
 pub struct Authorisation;
 
@@ -60,8 +61,7 @@ where
         let srv = self.service.clone();
 
         // grab url path from request to care for 'login'
-        let url_path = req.path().split("/").last().unwrap();
-        println!("Path: {}", url_path);
+        let url_path = req.path().split("/").last().unwrap().to_owned();
 
         fn return_early<B>(
             req: ServiceRequest,
@@ -73,93 +73,103 @@ where
         }
 
         Box::pin(async move {
-            let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
-            let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
+            let expires_at;
+            if url_path != "login" {
+                let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
+                let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
-            let authorisation_header = req.headers().get(header::AUTHORIZATION);
-            if authorisation_header.is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let authorisation_header_value = authorisation_header.unwrap().to_str();
-            if authorisation_header_value.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let match_token = Regex::new(r"Bearer (.+)").unwrap();
-            let session_token_capture = match_token.captures(authorisation_header_value.unwrap());
-            if session_token_capture.is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let session_token_match = session_token_capture.unwrap().get(1);
-            if session_token_match.is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let session_token = session_token_match.unwrap().as_str().to_string();
-            let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token);
-            if session_token_decode_result.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let session_token_bytes = session_token_decode_result.unwrap();
-            let session_id_bytes_result =
-                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret);
-            if session_id_bytes_result.is_err() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let session_id = Uuid::from_slice(session_id_bytes_result.unwrap().as_ref()).unwrap();
+                let authorisation_header = req.headers().get(header::AUTHORIZATION);
+                if authorisation_header.is_none() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let authorisation_header_value = authorisation_header.unwrap().to_str();
+                if authorisation_header_value.is_err() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let match_token = Regex::new(r"Bearer (.+)").unwrap();
+                let session_token_capture =
+                    match_token.captures(authorisation_header_value.unwrap());
+                if session_token_capture.is_none() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let session_token_match = session_token_capture.unwrap().get(1);
+                if session_token_match.is_none() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let session_token = session_token_match.unwrap().as_str().to_string();
+                let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token);
+                if session_token_decode_result.is_err() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let session_token_bytes = session_token_decode_result.unwrap();
+                let session_id_bytes_result =
+                    simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret);
+                if session_id_bytes_result.is_err() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let session_id =
+                    Uuid::from_slice(session_id_bytes_result.unwrap().as_ref()).unwrap();
 
-            let session_row_result_option = query!(
-                // language=postgresql
-                r#"
-                    SELECT * FROM session WHERE id = $1
-                "#,
-                session_id
-            )
-            .fetch_optional(&***db_pool)
-            .await;
-            if session_row_result_option.is_err() {
-                return return_early(req, StatusCode::INTERNAL_SERVER_ERROR, "No DB connection");
-            } else if session_row_result_option.as_ref().unwrap().is_none() {
-                return return_early(req, StatusCode::UNAUTHORIZED, "");
-            }
-            let session_row = session_row_result_option.unwrap().unwrap();
-            let expired = session_row.expires_at < Utc::now().naive_utc();
-            let expires_at: NaiveDateTime;
-            if expired {
-                return return_early(req, StatusCode::UNAUTHORIZED, "Session expired.");
-            } else {
-                let new_session_row = query!(
+                let session_row_result_option = query!(
                     // language=postgresql
                     r#"
-                        UPDATE session SET expires_at = DEFAULT
-                            WHERE id = $1 RETURNING account_id, expires_at
-                    "#,
+                    SELECT * FROM session WHERE id = $1
+                "#,
                     session_id
                 )
-                .fetch_one(&***db_pool)
+                .fetch_optional(&***db_pool)
                 .await;
-                if new_session_row.is_err() {
+                if session_row_result_option.is_err() {
                     return return_early(
                         req,
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "No DB connection",
                     );
+                } else if session_row_result_option.as_ref().unwrap().is_none() {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "");
+                }
+                let session_row = session_row_result_option.unwrap().unwrap();
+                let expired = session_row.expires_at < Utc::now().naive_utc();
+                if expired {
+                    return return_early(req, StatusCode::UNAUTHORIZED, "Session expired.");
+                } else {
+                    let new_session_row = query!(
+                        // language=postgresql
+                        r#"
+                        UPDATE session SET expires_at = DEFAULT
+                            WHERE id = $1 RETURNING account_id, expires_at
+                    "#,
+                        session_id
+                    )
+                    .fetch_one(&***db_pool)
+                    .await;
+                    if new_session_row.is_err() {
+                        return return_early(
+                            req,
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "No DB connection",
+                        );
+                    }
+
+                    req.extensions_mut()
+                        .insert(new_session_row.as_ref().unwrap().account_id);
+                    expires_at = Some(new_session_row.unwrap().expires_at.and_utc().timestamp());
                 }
 
-                req.extensions_mut()
-                    .insert(new_session_row.as_ref().unwrap().account_id);
-                expires_at = new_session_row.unwrap().expires_at;
-            }
-
-            //deleting outdated
-            query!(
+                //deleting outdated
+                query!(
                 // language=postgresql
                 r#"
                         DELETE FROM session WHERE expires_at < CURRENT_TIMESTAMP + INTERVAL '20 minutes';
                     "#
             )
-            .execute(&***db_pool)
-            .await
-            //expecting because no other client or server actions are affected
-            .expect("Failed to delete outdated sessions from database.");
+                    .execute(&***db_pool)
+                    .await
+                    //expecting because no other client or server actions are affected
+                    .expect("Failed to delete outdated sessions from database.");
+            } else {
+                expires_at = None;
+            }
 
             //call other middleware and handler and get the response
             let res = srv.call(req).await?;
@@ -176,7 +186,7 @@ where
                 let res_body_obj: ApiResponse = res_body_string.as_str().into();
                 let mod_body_obj = ModifiedResponse {
                     error: Some("".to_string()),
-                    expires_at: expires_at.and_utc().timestamp(),
+                    expires_at,
                     data: res_body_obj,
                 };
 
@@ -204,7 +214,7 @@ impl From<&str> for ApiResponse {
 
 #[derive(Serialize)]
 struct ModifiedResponse {
-    expires_at: i64,
+    expires_at: Option<i64>,
     error: Option<String>,
     data: ApiResponse,
 }
