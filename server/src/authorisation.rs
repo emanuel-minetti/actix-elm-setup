@@ -14,7 +14,7 @@ use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
 
-use crate::routes::SessionResponse;
+use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 
 pub struct Authorisation;
 
@@ -73,7 +73,7 @@ where
         }
 
         Box::pin(async move {
-            let expires_at;
+            let mut expires_at;
             if url_path != "login" {
                 let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
                 let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
@@ -153,7 +153,8 @@ where
 
                     req.extensions_mut()
                         .insert(new_session_row.as_ref().unwrap().account_id);
-                    expires_at = Some(new_session_row.unwrap().expires_at.and_utc().timestamp());
+                    expires_at =
+                        new_session_row.unwrap().expires_at.and_utc().timestamp() as ExpiresAt;
                 }
 
                 //deleting outdated
@@ -168,7 +169,7 @@ where
                     //expecting because no other client or server actions are affected
                     .expect("Failed to delete outdated sessions from database.");
             } else {
-                expires_at = None;
+                expires_at = 0;
             }
 
             //call other middleware and handler and get the response
@@ -180,6 +181,11 @@ where
                 && res.headers().get(header::CONTENT_TYPE).is_some()
                 && res.headers().get(header::CONTENT_TYPE).unwrap() == "application/json"
             {
+                if url_path == "login" {
+                    let req = request.clone();
+                    expires_at = *req.extensions().get::<ExpiresAt>().unwrap();
+                }
+
                 let res_body = res.into_body();
                 let res_body_bytes = res_body.try_into_bytes().unwrap();
                 let res_body_string = String::from_utf8(res_body_bytes.to_vec()).unwrap();
@@ -203,18 +209,27 @@ where
 #[derive(Deserialize, Serialize)]
 enum ApiResponse {
     Session(SessionResponse),
+    Login(LoginResponse),
+    None(),
 }
 
 impl From<&str> for ApiResponse {
     fn from(value: &str) -> Self {
-        let obj: SessionResponse = serde_json::from_str(value).unwrap();
-        ApiResponse::Session(obj)
+        let session_result: Result<SessionResponse, _> = serde_json::from_str(value);
+        if session_result.is_ok() {
+            return ApiResponse::Session(session_result.unwrap());
+        }
+        let login_result: Result<LoginResponse, _> = serde_json::from_str(value);
+        if login_result.is_ok() {
+            return ApiResponse::Login(login_result.unwrap());
+        }
+        ApiResponse::None()
     }
 }
 
 #[derive(Serialize)]
 struct ModifiedResponse {
-    expires_at: Option<i64>,
+    expires_at: i64,
     error: Option<String>,
     data: ApiResponse,
 }

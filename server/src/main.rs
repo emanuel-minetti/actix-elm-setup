@@ -40,15 +40,12 @@ async fn main() -> std::io::Result<()> {
                     .service(Files::new("/img", "../public/img"))
                     .service(Files::new("/lang", "../public/lang"))
                     .service(
-                        web::scope("/api/login")
-                            .app_data(login_json_config)
-                            .app_data(Data::new(session_secret.clone()))
-                            .route("", web::post().to(routes::login_handler)),
-                    )
-                    .service(
                         web::scope("/api")
                             .app_data(Data::new(session_secret.clone()))
+                            //todo review
+                            .app_data(login_json_config)
                             .wrap(Authorisation)
+                            .route("/login", web::post().to(routes::login_handler))
                             .route("/session", web::get().to(routes::session_handler)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))

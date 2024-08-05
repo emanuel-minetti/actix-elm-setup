@@ -11,10 +11,10 @@ enum Lang {
     En,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SessionResponse {
-    name: Option<String>,
-    preferred_lang: Option<Lang>,
+    name: String,
+    preferred_lang: Lang,
 }
 
 pub async fn session_handler(
@@ -39,8 +39,8 @@ pub async fn session_handler(
     .unwrap();
 
     res = SessionResponse {
-        name: Some(account_row.name),
-        preferred_lang: Some(account_row.prefered_lang),
+        name: account_row.name,
+        preferred_lang: account_row.prefered_lang,
     };
 
     HttpResponse::Ok().json(res)

@@ -2,7 +2,7 @@ use crate::domain::LoginData;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
 use base64::Engine;
 use bytes::Bytes;
@@ -11,10 +11,10 @@ use simple_crypt;
 use sqlx::{query, PgPool};
 use uuid::Uuid;
 
-#[derive(Serialize)]
-struct LoginResponse {
-    session_token: Option<String>,
-    expires_at: Option<i64>,
+pub type ExpiresAt = i64;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LoginResponse {
+    session_token: String,
 }
 
 #[derive(Deserialize)]
@@ -24,6 +24,7 @@ pub struct LoginRequest {
 }
 
 pub async fn login_handler(
+    request: HttpRequest,
     req: web::Json<LoginRequest>,
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
@@ -59,12 +60,11 @@ pub async fn login_handler(
     let session_token_bytes = simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
         .expect("Failed to encrypt session token.");
     let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
+    request
+        .extensions_mut()
+        .insert::<ExpiresAt>(session_row.expires_at.and_utc().timestamp());
 
-    let res = LoginResponse {
-        session_token: Some(session_token),
-        expires_at: Some(session_row.expires_at.and_utc().timestamp()),
-    };
-
+    let res = LoginResponse { session_token };
     HttpResponse::Ok().json(res)
 }
 
