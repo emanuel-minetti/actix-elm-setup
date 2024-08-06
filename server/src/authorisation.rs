@@ -206,8 +206,8 @@ where
     }
 }
 
-#[derive(Deserialize, Serialize)]
-enum ApiResponse {
+#[derive(Deserialize, Serialize, Debug)]
+pub enum ApiResponse {
     Session(SessionResponse),
     Login(LoginResponse),
     None(),
@@ -215,15 +215,14 @@ enum ApiResponse {
 
 impl From<&str> for ApiResponse {
     fn from(value: &str) -> Self {
-        let session_result: Result<SessionResponse, _> = serde_json::from_str(value);
-        if session_result.is_ok() {
-            return ApiResponse::Session(session_result.unwrap());
+        let api_result = serde_json::from_str::<ApiResponse>(value);
+        println!("Api Response: {:?}", api_result);
+        match serde_json::from_str::<ApiResponse>(value) {
+            Ok(ApiResponse::Session(val)) => ApiResponse::Session(val),
+            Ok(ApiResponse::Login(val)) => ApiResponse::Login(val),
+            Ok(ApiResponse::None()) => ApiResponse::None(),
+            Err(_) => ApiResponse::None(),
         }
-        let login_result: Result<LoginResponse, _> = serde_json::from_str(value);
-        if login_result.is_ok() {
-            return ApiResponse::Login(login_result.unwrap());
-        }
-        ApiResponse::None()
     }
 }
 

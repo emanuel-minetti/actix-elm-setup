@@ -11,6 +11,8 @@ use simple_crypt;
 use sqlx::{query, PgPool};
 use uuid::Uuid;
 
+use crate::authorisation::ApiResponse;
+
 pub type ExpiresAt = i64;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LoginResponse {
@@ -64,7 +66,7 @@ pub async fn login_handler(
         .extensions_mut()
         .insert::<ExpiresAt>(session_row.expires_at.and_utc().timestamp());
 
-    let res = LoginResponse { session_token };
+    let res = ApiResponse::Login(LoginResponse { session_token });
     HttpResponse::Ok().json(res)
 }
 

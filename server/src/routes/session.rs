@@ -1,8 +1,9 @@
-use crate::authorisation::ServerSession;
 use actix_web::web::{Data, ReqData};
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
+
+use crate::authorisation::{ApiResponse, ServerSession};
 
 #[derive(sqlx::Type, Serialize, Debug, Deserialize)]
 #[sqlx(type_name = "lang", rename_all = "lowercase")]
@@ -21,7 +22,6 @@ pub async fn session_handler(
     db_pool: Data<PgPool>,
     session: Option<ReqData<ServerSession>>,
 ) -> HttpResponse {
-    let res: SessionResponse;
     let session = session.unwrap().into_inner();
 
     let account_row = query!(
@@ -38,10 +38,10 @@ pub async fn session_handler(
     .await
     .unwrap();
 
-    res = SessionResponse {
+    let res = ApiResponse::Session(SessionResponse {
         name: account_row.name,
         preferred_lang: account_row.prefered_lang,
-    };
+    });
 
     HttpResponse::Ok().json(res)
 }
