@@ -1,6 +1,4 @@
 use crate::domain::LoginData;
-use actix_web::body::BoxBody;
-use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
@@ -32,25 +30,29 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
+
+    fn return_early(
+        request: &HttpRequest,
+        error: ApiError) -> HttpResponse {
+        request.extensions_mut().insert(error);
+        request.extensions_mut().insert::<ExpiresAt>(0);
+        return HttpResponse::Ok().json(ApiResponse::None());
+    }
+
     let login_data = match LoginData::parse(req) {
         Ok(data) => data,
         Err(_) => {
-            request.extensions_mut().insert(ApiError::Unauthorized);
-            request.extensions_mut().insert::<ExpiresAt>(0);
-            return HttpResponse::Ok().json(ApiResponse::None());
+            return return_early(&request, ApiError::Unauthorized);
         }
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
         Ok(id) => match id {
-            None => return HttpResponse::Unauthorized().finish(),
+            None => return return_early(&request, ApiError::Unauthorized),
             Some(id) => id,
         },
         Err(_) => {
-            return HttpResponse::with_body(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                BoxBody::new("DB Error"),
-            )
+            return return_early(&request, ApiError::DbError)
         }
     };
 

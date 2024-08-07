@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy)]
 pub enum ApiError {
     DbError,
     NotFoundError,
