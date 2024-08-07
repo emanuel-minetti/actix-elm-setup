@@ -1,13 +1,14 @@
 mod authorisation;
 mod configuration;
 mod domain;
+mod error;
 mod routes;
 
 use crate::authorisation::Authorisation;
 use crate::configuration::get_configuration;
 use actix_files::Files;
 use actix_web::web::Data;
-use actix_web::{error, web, HttpResponse, HttpServer};
+use actix_web::{web, HttpResponse, HttpServer};
 use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
@@ -28,7 +29,11 @@ async fn main() -> std::io::Result<()> {
         let login_json_config = web::JsonConfig::default()
             .limit(512)
             .error_handler(|err, _| {
-                error::InternalError::from_response(err, HttpResponse::BadRequest().finish()).into()
+                actix_web::error::InternalError::from_response(
+                    err,
+                    HttpResponse::BadRequest().finish(),
+                )
+                .into()
             });
 
         actix_web::App::new()

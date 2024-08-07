@@ -1,3 +1,5 @@
+use crate::error::ApiError;
+use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::{header, StatusCode};
@@ -13,8 +15,6 @@ use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
-
-use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 
 pub struct Authorisation;
 
@@ -68,6 +68,10 @@ where
             status_code: StatusCode,
             body: &'static str,
         ) -> Result<ServiceResponse<EitherBody<B>>, Error> {
+            req.extensions_mut().insert(ApiError::DbError);
+            //let res = ApiResponse::None();
+            //Ok(req.into_response(res))
+
             let res = HttpResponse::with_body(status_code, BoxBody::new(body));
             Ok(req.into_response(res.map_into_right_body()))
         }
@@ -185,13 +189,17 @@ where
                     let req = request.clone();
                     expires_at = *req.extensions().get::<ExpiresAt>().unwrap();
                 }
-
+                let error = match request.extensions().get::<ApiError>() {
+                    Some(&error) => error.into(),
+                    None => "",
+                }
+                .to_string();
                 let res_body = res.into_body();
                 let res_body_bytes = res_body.try_into_bytes().unwrap();
                 let res_body_string = String::from_utf8(res_body_bytes.to_vec()).unwrap();
                 let res_body_obj: ApiResponse = res_body_string.as_str().into();
                 let mod_body_obj = ModifiedResponse {
-                    error: Some("".to_string()),
+                    error,
                     expires_at,
                     data: res_body_obj,
                 };
@@ -229,6 +237,6 @@ impl From<&str> for ApiResponse {
 #[derive(Serialize)]
 struct ModifiedResponse {
     expires_at: i64,
-    error: Option<String>,
+    error: String,
     data: ApiResponse,
 }

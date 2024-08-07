@@ -12,6 +12,7 @@ use sqlx::{query, PgPool};
 use uuid::Uuid;
 
 use crate::authorisation::ApiResponse;
+use crate::error::ApiError;
 
 pub type ExpiresAt = i64;
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,7 +34,11 @@ pub async fn login_handler(
 ) -> HttpResponse {
     let login_data = match LoginData::parse(req) {
         Ok(data) => data,
-        Err(_) => return HttpResponse::BadRequest().finish(),
+        Err(_) => {
+            request.extensions_mut().insert(ApiError::Unauthorized);
+            request.extensions_mut().insert::<ExpiresAt>(0);
+            return HttpResponse::Ok().json(ApiResponse::None());
+        }
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
