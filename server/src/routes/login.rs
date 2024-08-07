@@ -30,10 +30,7 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
-
-    fn return_early(
-        request: &HttpRequest,
-        error: ApiError) -> HttpResponse {
+    fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
         request.extensions_mut().insert(error);
         request.extensions_mut().insert::<ExpiresAt>(0);
         return HttpResponse::Ok().json(ApiResponse::None());
@@ -51,9 +48,7 @@ pub async fn login_handler(
             None => return return_early(&request, ApiError::Unauthorized),
             Some(id) => id,
         },
-        Err(_) => {
-            return return_early(&request, ApiError::DbError)
-        }
+        Err(_) => return return_early(&request, ApiError::DbError),
     };
 
     let session_row = query!(
