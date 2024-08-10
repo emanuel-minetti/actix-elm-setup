@@ -33,7 +33,7 @@ pub async fn login_handler(
     fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
         request.extensions_mut().insert(error);
         request.extensions_mut().insert::<ExpiresAt>(0);
-        return HttpResponse::Ok().json(ApiResponse::None());
+        HttpResponse::Ok().json(ApiResponse::None())
     }
 
     let login_data = match LoginData::parse(req) {
