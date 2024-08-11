@@ -9,7 +9,7 @@ use simple_crypt;
 use sqlx::{query, PgPool};
 use uuid::Uuid;
 
-use crate::authorisation::ApiResponse;
+use crate::authorisation::HandlerResponse;
 use crate::error::ApiError;
 
 pub type ExpiresAt = i64;
@@ -33,7 +33,7 @@ pub async fn login_handler(
     fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
         request.extensions_mut().insert(error);
         request.extensions_mut().insert::<ExpiresAt>(0);
-        HttpResponse::Ok().json(ApiResponse::None())
+        HttpResponse::Ok().json(HandlerResponse::None())
     }
 
     let login_data = match LoginData::parse(req) {
@@ -68,7 +68,7 @@ pub async fn login_handler(
         .extensions_mut()
         .insert::<ExpiresAt>(session_row.expires_at.and_utc().timestamp());
 
-    let res = ApiResponse::Login(LoginResponse { session_token });
+    let res = HandlerResponse::Login(LoginResponse { session_token });
     HttpResponse::Ok().json(res)
 }
 

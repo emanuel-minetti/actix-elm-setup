@@ -18,8 +18,6 @@ use uuid::Uuid;
 
 pub struct Authorisation;
 
-pub type ServerSession = Uuid;
-
 impl<S, B> Transform<S, ServiceRequest> for Authorisation
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
@@ -147,10 +145,10 @@ where
             if url_path != "login" {
                 let auth_result = authorize(&req).await;
                 if auth_result.is_err() {
-                    let new_body = ModifiedResponse {
+                    let new_body = ApiResponse {
                         expires_at: 0,
                         error: auth_result.err().unwrap().into(),
-                        data: ApiResponse::None(),
+                        data: HandlerResponse::None(),
                     };
                     let new_resp = HttpResponse::Ok().json(new_body);
                     let new_res = ServiceResponse::new(req.request().clone(), new_resp);
@@ -196,8 +194,8 @@ where
                 let res_body = res.into_body();
                 let res_body_bytes = res_body.try_into_bytes().unwrap();
                 let res_body_string = String::from_utf8(res_body_bytes.to_vec()).unwrap();
-                let res_body_obj: ApiResponse = res_body_string.as_str().into();
-                let mod_body_obj = ModifiedResponse {
+                let res_body_obj: HandlerResponse = res_body_string.as_str().into();
+                let mod_body_obj = ApiResponse {
                     error,
                     expires_at,
                     data: res_body_obj,
@@ -213,29 +211,31 @@ where
     }
 }
 
+pub type SessionId = Uuid;
+
 #[derive(Deserialize, Serialize, Debug)]
-pub enum ApiResponse {
+pub enum HandlerResponse {
     Session(SessionResponse),
     Login(LoginResponse),
     None(),
 }
 
-impl From<&str> for ApiResponse {
+impl From<&str> for HandlerResponse {
     fn from(value: &str) -> Self {
-        let api_result = serde_json::from_str::<ApiResponse>(value);
+        let api_result = serde_json::from_str::<HandlerResponse>(value);
         println!("Api Response: {:?}", api_result);
-        match serde_json::from_str::<ApiResponse>(value) {
-            Ok(ApiResponse::Session(val)) => ApiResponse::Session(val),
-            Ok(ApiResponse::Login(val)) => ApiResponse::Login(val),
-            Ok(ApiResponse::None()) => ApiResponse::None(),
-            Err(_) => ApiResponse::None(),
+        match serde_json::from_str::<HandlerResponse>(value) {
+            Ok(HandlerResponse::Session(val)) => HandlerResponse::Session(val),
+            Ok(HandlerResponse::Login(val)) => HandlerResponse::Login(val),
+            Ok(HandlerResponse::None()) => HandlerResponse::None(),
+            Err(_) => HandlerResponse::None(),
         }
     }
 }
 
 #[derive(Serialize)]
-struct ModifiedResponse {
+struct ApiResponse {
     expires_at: i64,
     error: String,
-    data: ApiResponse,
+    data: HandlerResponse,
 }
