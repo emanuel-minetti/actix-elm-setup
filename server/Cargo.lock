@@ -1998,6 +1998,7 @@ version = "0.1.0"
 dependencies = [
  "actix-files",
  "actix-web",
+ "anyhow",
  "base64 0.22.1",
  "bcrypt",
  "bytes",

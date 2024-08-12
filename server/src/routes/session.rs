@@ -1,4 +1,4 @@
-use actix_web::web::{Data, ReqData};
+use actix_web::web::Data;
 use actix_web::HttpResponse;
 use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
@@ -18,12 +18,7 @@ pub struct SessionResponse {
     preferred_lang: Lang,
 }
 
-pub async fn session_handler(
-    db_pool: Data<PgPool>,
-    session: Option<ReqData<SessionId>>,
-) -> HttpResponse {
-    let session = session.unwrap().into_inner();
-
+pub async fn session_handler(db_pool: Data<PgPool>, session_id: SessionId) -> HttpResponse {
     let account_row = query!(
         // language=postgresql
         r#"
@@ -32,7 +27,7 @@ pub async fn session_handler(
                preferred_language AS "prefered_lang: Lang"
            FROM account WHERE id = $1
        "#,
-        session
+        *session_id
     )
     .fetch_one(&**db_pool)
     .await

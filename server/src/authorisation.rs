@@ -1,9 +1,7 @@
-use crate::error::ApiError;
-use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 use actix_web::body::{EitherBody, MessageBody};
-use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::dev::{forward_ready, Payload, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::http::{header, StatusCode};
-use actix_web::{web, Error, HttpMessage, HttpResponse};
+use actix_web::{web, Error, FromRequest, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
 use base64::Engine;
 use bytes::Bytes;
@@ -15,6 +13,9 @@ use sqlx::{query, PgPool};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
+
+use crate::error::ApiError;
+use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 
 pub struct Authorisation;
 
@@ -83,17 +84,11 @@ where
                 return Err(ApiError::Unauthorized);
             }
             let session_token = session_token_match.unwrap().as_str().to_string();
-            let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token);
-            if session_token_decode_result.is_err() {
-                return Err(ApiError::Unauthorized);
-            }
-            let session_token_bytes = session_token_decode_result.unwrap();
+            let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token)?;
+            let session_token_bytes = session_token_decode_result;
             let session_id_bytes_result =
-                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret);
-            if session_id_bytes_result.is_err() {
-                return Err(ApiError::Unauthorized);
-            }
-            let session_id = Uuid::from_slice(session_id_bytes_result.unwrap().as_ref()).unwrap();
+                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)?;
+            let session_id = Uuid::from_slice(session_id_bytes_result.as_ref()).unwrap();
 
             let session_row_result_option = query!(
                 // language=postgresql
@@ -103,13 +98,11 @@ where
                 session_id
             )
             .fetch_optional(&***db_pool)
-            .await;
-            if session_row_result_option.is_err() {
-                return Err(ApiError::DbError);
-            } else if session_row_result_option.as_ref().unwrap().is_none() {
+            .await?;
+            if session_row_result_option.is_none() {
                 return Err(ApiError::Unauthorized);
             }
-            let session_row = session_row_result_option.unwrap().unwrap();
+            let session_row = session_row_result_option.unwrap();
             let expired = session_row.expires_at < Utc::now().naive_utc();
             if expired {
                 Err(ApiError::Expired)
@@ -123,22 +116,14 @@ where
                     session_id
                 )
                 .fetch_one(&***db_pool)
-                .await;
-                if updated_session_row.is_err() {
-                    return Err(ApiError::DbError);
-                }
+                .await?;
 
                 req.extensions_mut()
-                    .insert(updated_session_row.as_ref().unwrap().account_id);
+                    .insert(SessionId(updated_session_row.account_id));
 
-                Ok(updated_session_row
-                    .unwrap()
-                    .expires_at
-                    .and_utc()
-                    .timestamp() as ExpiresAt)
+                Ok(updated_session_row.expires_at.and_utc().timestamp() as ExpiresAt)
             }
         }
-
 
         Box::pin(async move {
             let mut expires_at;
@@ -152,7 +137,7 @@ where
                     };
                     let new_resp = HttpResponse::Ok().json(new_body);
                     let new_res = ServiceResponse::new(req.request().clone(), new_resp);
-                    return Ok(new_res.map_into_right_body())
+                    return Ok(new_res.map_into_right_body());
                 } else {
                     expires_at = auth_result.unwrap()
                 }
@@ -211,7 +196,29 @@ where
     }
 }
 
-pub type SessionId = Uuid;
+#[derive(Clone)]
+pub struct SessionId(Uuid);
+
+impl FromRequest for SessionId {
+    type Error = ApiError;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        let session_id_option: Option<SessionId> = req.extensions().get().cloned();
+        let result = match session_id_option {
+            None => Err(ApiError::Unauthorized),
+            Some(session_id) => Ok(session_id),
+        };
+        ready(result)
+    }
+}
+
+impl std::ops::Deref for SessionId {
+    type Target = Uuid;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum HandlerResponse {
@@ -234,8 +241,8 @@ impl From<&str> for HandlerResponse {
 }
 
 #[derive(Serialize)]
-struct ApiResponse {
-    expires_at: i64,
-    error: String,
-    data: HandlerResponse,
+pub struct ApiResponse {
+    pub expires_at: i64,
+    pub error: String,
+    pub data: HandlerResponse,
 }
