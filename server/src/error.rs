@@ -1,10 +1,10 @@
-use crate::authorisation::{ApiResponse, HandlerResponse};
-use actix_web::body::BoxBody;
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
 use anyhow::Error;
 use base64::DecodeError;
 use std::fmt::{Display, Formatter};
+use actix_web::http::StatusCode;
+use actix_web::{HttpResponse, ResponseError};
+use actix_web::body::BoxBody;
+use crate::authorisation::{ApiResponse, HandlerResponse};
 
 #[derive(Clone, Copy, Debug)]
 pub enum ApiError {
@@ -67,6 +67,7 @@ impl Display for ApiError {
     }
 }
 
+// needed for middleware
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         StatusCode::OK
