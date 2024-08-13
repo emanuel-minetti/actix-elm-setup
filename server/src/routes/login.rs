@@ -32,7 +32,9 @@ pub async fn login_handler(
 ) -> HttpResponse {
     fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
         request.extensions_mut().insert(error);
-        request.extensions_mut().insert::<ExpiresAt>(0);
+        if request.path().split("/").last().unwrap() == "login" {
+            request.extensions_mut().insert::<ExpiresAt>(0);
+        }
         HttpResponse::Ok().json(HandlerResponse::None())
     }
 
