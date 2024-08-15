@@ -10,7 +10,7 @@ use sqlx::{query, PgPool};
 use uuid::Uuid;
 
 use crate::authorisation::HandlerResponse;
-use crate::error::ApiError;
+use crate::error::{return_early, ApiError};
 
 pub type ExpiresAt = i64;
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,14 +30,6 @@ pub async fn login_handler(
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
-    fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
-        request.extensions_mut().insert(error);
-        if request.path().split("/").last().unwrap() == "login" {
-            request.extensions_mut().insert::<ExpiresAt>(0);
-        }
-        HttpResponse::Ok().json(HandlerResponse::None())
-    }
-
     let login_data = match LoginData::parse(req) {
         Ok(data) => data,
         Err(_) => {
@@ -53,7 +45,7 @@ pub async fn login_handler(
         Err(_) => return return_early(&request, ApiError::DbError),
     };
 
-    let session_row = query!(
+    let session_row = match query!(
         // language=postgresql
         r#"
             INSERT INTO session (account_id) VALUES ($1) RETURNING id, expires_at
@@ -62,9 +54,14 @@ pub async fn login_handler(
     )
     .fetch_one(&**db_pool)
     .await
-    .expect("Failed to get session from table.");
-    let session_token_bytes = simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
-        .expect("Failed to encrypt session token.");
+    {
+        Ok(row) => row,
+        Err(_) => return return_early(&request, ApiError::DbError),
+    };
+    let session_token_bytes = match simple_crypt::encrypt(session_row.id.as_ref(), &session_secret) {
+        Ok(bytes) => bytes,
+        Err(_) => return return_early(&request, ApiError::Unauthorized),
+    };
     let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
     request
         .extensions_mut()

@@ -1,10 +1,19 @@
+use crate::authorisation::{ApiResponse, HandlerResponse};
+use crate::routes::ExpiresAt;
+use actix_web::body::BoxBody;
+use actix_web::http::StatusCode;
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Error;
 use base64::DecodeError;
 use std::fmt::{Display, Formatter};
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
-use actix_web::body::BoxBody;
-use crate::authorisation::{ApiResponse, HandlerResponse};
+
+pub fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
+    request.extensions_mut().insert(error);
+    if request.path().split("/").last().unwrap() == "login" {
+        request.extensions_mut().insert::<ExpiresAt>(0);
+    }
+    HttpResponse::Ok().json(HandlerResponse::None())
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum ApiError {
@@ -43,6 +52,7 @@ impl Into<String> for ApiError {
     }
 }
 
+// all following is needed for middleware
 impl From<DecodeError> for ApiError {
     fn from(_: DecodeError) -> Self {
         ApiError::Unauthorized
@@ -67,7 +77,6 @@ impl Display for ApiError {
     }
 }
 
-// needed for middleware
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         StatusCode::OK
