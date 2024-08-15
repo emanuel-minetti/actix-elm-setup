@@ -3,7 +3,7 @@ use actix_web::dev::{forward_ready, Payload, Service, ServiceRequest, ServiceRes
 use actix_web::http::{header, StatusCode};
 use actix_web::{web, Error, FromRequest, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
-use base64::Engine;
+use base64::{DecodeError, Engine};
 use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
 use regex::Regex;
@@ -14,7 +14,7 @@ use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
 
-use crate::error::ApiError;
+use crate::error::{ApiError, ApiErrorType};
 use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 
 pub struct Authorisation;
@@ -62,35 +62,40 @@ where
         // grab url path from request to care for 'login'
         let url_path = req.path().split("/").last().unwrap().to_owned();
 
-        async fn authorize(req: &ServiceRequest) -> Result<ExpiresAt, ApiError> {
+        async fn authorize(req: &ServiceRequest) -> Result<ExpiresAt, ApiErrorType> {
             let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
             let authorisation_header = req.headers().get(header::AUTHORIZATION);
             if authorisation_header.is_none() {
-                return Err(ApiError::Unauthorized);
+                return Err(ApiErrorType::Unauthorized);
             }
             let authorisation_header_value = authorisation_header.unwrap().to_str();
             if authorisation_header_value.is_err() {
-                return Err(ApiError::Unauthorized);
+                return Err(ApiErrorType::Unauthorized);
             }
             let match_token = Regex::new(r"Bearer (.+)").unwrap();
             let session_token_capture = match_token.captures(authorisation_header_value.unwrap());
             if session_token_capture.is_none() {
-                return Err(ApiError::Unauthorized);
+                return Err(ApiErrorType::Unauthorized);
             }
             let session_token_match = session_token_capture.unwrap().get(1);
             if session_token_match.is_none() {
-                return Err(ApiError::Unauthorized);
+                return Err(ApiErrorType::Unauthorized);
             }
             let session_token = session_token_match.unwrap().as_str().to_string();
-            let session_token_decode_result = general_purpose::URL_SAFE.decode(&session_token)?;
-            let session_token_bytes = session_token_decode_result;
-            let session_id_bytes_result =
-                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)?;
-            let session_id = Uuid::from_slice(session_id_bytes_result.as_ref()).unwrap();
+            let session_token_bytes = match general_purpose::URL_SAFE.decode(&session_token) {
+                Ok(bytes) => bytes,
+                Err(_) => return Err(ApiErrorType::Unauthorized),
+            };
+            let session_id_bytes =
+                match simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret) {
+                    Ok(bytes) => bytes,
+                    Err(_) => return Err(ApiErrorType::Unauthorized),
+                };
+            let session_id = Uuid::from_slice(session_id_bytes.as_ref()).unwrap();
 
-            let session_row_result_option = query!(
+            let session_row_option = query!(
                 // language=postgresql
                 r#"
                     SELECT * FROM session WHERE id = $1
@@ -99,13 +104,13 @@ where
             )
             .fetch_optional(&***db_pool)
             .await?;
-            if session_row_result_option.is_none() {
-                return Err(ApiError::Unauthorized);
+            if session_row_option.is_none() {
+                return Err(ApiErrorType::Unauthorized);
             }
-            let session_row = session_row_result_option.unwrap();
+            let session_row = session_row_option.unwrap();
             let expired = session_row.expires_at < Utc::now().naive_utc();
             if expired {
-                Err(ApiError::Expired)
+                Err(ApiErrorType::Expired)
             } else {
                 let updated_session_row = query!(
                     // language=postgresql
@@ -172,7 +177,7 @@ where
                     expires_at = *req.extensions().get::<ExpiresAt>().unwrap();
                 }
                 let error = match request.extensions().get::<ApiError>() {
-                    Some(&error) => error.into(),
+                    Some(&ref error) => error.error.into(),
                     None => "",
                 }
                 .to_string();
@@ -206,7 +211,10 @@ impl FromRequest for SessionId {
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         let session_id_option: Option<SessionId> = req.extensions().get().cloned();
         let result = match session_id_option {
-            None => Err(ApiError::Unauthorized),
+            None => Err(ApiError {
+                req: req.clone(),
+                error: ApiErrorType::Unauthorized,
+            }),
             Some(session_id) => Ok(session_id),
         };
         ready(result)

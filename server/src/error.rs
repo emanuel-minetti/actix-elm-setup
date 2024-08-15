@@ -7,8 +7,9 @@ use anyhow::Error;
 use base64::DecodeError;
 use std::fmt::{Display, Formatter};
 
-pub fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
-    request.extensions_mut().insert(error);
+pub fn return_early(error: ApiError) -> HttpResponse {
+    let request = error.req.clone();
+    error.req.extensions_mut().insert(error.clone());
     if request.path().split("/").last().unwrap() == "login" {
         request.extensions_mut().insert::<ExpiresAt>(0);
     }
@@ -16,7 +17,7 @@ pub fn return_early(request: &HttpRequest, error: ApiError) -> HttpResponse {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum ApiError {
+pub enum ApiErrorType {
     DbError,
     NotFoundError,
     Unauthorized,
@@ -24,14 +25,20 @@ pub enum ApiError {
     Expired,
 }
 
-impl Into<&str> for ApiError {
+#[derive(Debug, Clone)]
+pub struct ApiError {
+    pub req: HttpRequest,
+    pub error: ApiErrorType,
+}
+
+impl Into<&str> for ApiErrorType {
     fn into(self) -> &'static str {
         match self {
-            ApiError::DbError => "DB Error",
-            ApiError::NotFoundError => "Not DFound",
-            ApiError::Unauthorized => "Unauthorized",
-            ApiError::Expired => "Expired",
-            ApiError::Unexpected(message) => {
+            ApiErrorType::DbError => "DB Error",
+            ApiErrorType::NotFoundError => "Not DFound",
+            ApiErrorType::Unauthorized => "Unauthorized",
+            ApiErrorType::Expired => "Expired",
+            ApiErrorType::Unexpected(message) => {
                 let msg = message.to_owned();
                 if msg.starts_with("Failed to encrypt data") {
                     "Unauthorized"
@@ -45,7 +52,7 @@ impl Into<&str> for ApiError {
     }
 }
 
-impl Into<String> for ApiError {
+impl Into<String> for ApiErrorType {
     fn into(self) -> String {
         let string_slice: &str = self.into();
         string_slice.to_string()
@@ -53,23 +60,23 @@ impl Into<String> for ApiError {
 }
 
 // all following is needed for middleware
-impl From<DecodeError> for ApiError {
-    fn from(_: DecodeError) -> Self {
-        ApiError::Unauthorized
-    }
-}
-
-impl From<sqlx::Error> for ApiError {
+// impl From<DecodeError> for ApiError {
+//     fn from(_: DecodeError) -> Self {
+//         ApiError::Unauthorized
+//     }
+// }
+//
+impl From<sqlx::Error> for ApiErrorType {
     fn from(_: sqlx::Error) -> Self {
-        ApiError::DbError
+        ApiErrorType::DbError
     }
 }
-
-impl From<Error> for ApiError {
-    fn from(error: Error) -> Self {
-        ApiError::Unexpected(error.to_string().leak())
-    }
-}
+//
+// impl From<Error> for ApiError {
+//     fn from(error: Error) -> Self {
+//         ApiError::Unexpected(error.to_string().leak())
+//     }
+// }
 
 impl Display for ApiError {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {

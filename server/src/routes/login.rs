@@ -10,7 +10,7 @@ use sqlx::{query, PgPool};
 use uuid::Uuid;
 
 use crate::authorisation::HandlerResponse;
-use crate::error::{return_early, ApiError};
+use crate::error::{return_early, ApiError, ApiErrorType};
 
 pub type ExpiresAt = i64;
 #[derive(Serialize, Deserialize, Debug)]
@@ -26,23 +26,37 @@ pub struct LoginRequest {
 
 pub async fn login_handler(
     request: HttpRequest,
-    req: web::Json<LoginRequest>,
+    req_json_body: web::Json<LoginRequest>,
     db_pool: Data<PgPool>,
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
-    let login_data = match LoginData::parse(req) {
+    let req = request.clone();
+    let login_data = match LoginData::parse(req_json_body) {
         Ok(data) => data,
         Err(_) => {
-            return return_early(&request, ApiError::Unauthorized);
+            return return_early(ApiError {
+                req,
+                error: ApiErrorType::Unauthorized,
+            });
         }
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
         Ok(id) => match id {
-            None => return return_early(&request, ApiError::Unauthorized),
+            None => {
+                return return_early(ApiError {
+                    req,
+                    error: ApiErrorType::Unauthorized,
+                })
+            }
             Some(id) => id,
         },
-        Err(_) => return return_early(&request, ApiError::DbError),
+        Err(_) => {
+            return return_early(ApiError {
+                req,
+                error: ApiErrorType::DbError,
+            })
+        }
     };
 
     let session_row = match query!(
@@ -56,11 +70,22 @@ pub async fn login_handler(
     .await
     {
         Ok(row) => row,
-        Err(_) => return return_early(&request, ApiError::DbError),
+        Err(_) => {
+            return return_early(ApiError {
+                req,
+                error: ApiErrorType::DbError,
+            })
+        }
     };
-    let session_token_bytes = match simple_crypt::encrypt(session_row.id.as_ref(), &session_secret) {
+    let session_token_bytes = match simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
+    {
         Ok(bytes) => bytes,
-        Err(_) => return return_early(&request, ApiError::Unauthorized),
+        Err(_) => {
+            return return_early(ApiError {
+                req,
+                error: ApiErrorType::Unauthorized,
+            })
+        }
     };
     let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
     request
