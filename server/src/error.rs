@@ -6,12 +6,12 @@ use actix_web::{HttpMessage, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Error;
 use base64::DecodeError;
 use std::fmt::{Display, Formatter};
+use crate::domain::LoginDataError;
 
 pub fn return_early(error: ApiError) -> HttpResponse {
-    let request = error.req.clone();
     error.req.extensions_mut().insert(error.clone());
-    if request.path().split("/").last().unwrap() == "login" {
-        request.extensions_mut().insert::<ExpiresAt>(0);
+    if error.req.path().split("/").last().unwrap() == "login" {
+        error.req.extensions_mut().insert::<ExpiresAt>(0);
     }
     HttpResponse::Ok().json(HandlerResponse::None())
 }
@@ -23,12 +23,6 @@ pub enum ApiErrorType {
     Unauthorized,
     Unexpected(&'static str),
     Expired,
-}
-
-#[derive(Debug, Clone)]
-pub struct ApiError {
-    pub req: HttpRequest,
-    pub error: ApiErrorType,
 }
 
 impl Into<&str> for ApiErrorType {
@@ -60,23 +54,35 @@ impl Into<String> for ApiErrorType {
 }
 
 // all following is needed for middleware
-// impl From<DecodeError> for ApiError {
-//     fn from(_: DecodeError) -> Self {
-//         ApiError::Unauthorized
-//     }
-// }
-//
+impl From<DecodeError> for ApiErrorType {
+    fn from(_: DecodeError) -> Self {
+        ApiErrorType::Unauthorized
+    }
+}
+
 impl From<sqlx::Error> for ApiErrorType {
     fn from(_: sqlx::Error) -> Self {
         ApiErrorType::DbError
     }
 }
-//
-// impl From<Error> for ApiError {
-//     fn from(error: Error) -> Self {
-//         ApiError::Unexpected(error.to_string().leak())
-//     }
-// }
+
+impl From<LoginDataError> for ApiErrorType {
+    fn from(_: LoginDataError) -> Self {
+        ApiErrorType::Unauthorized
+    }
+}
+
+impl From<Error> for ApiErrorType {
+    fn from(error: Error) -> Self {
+        ApiErrorType::Unexpected(error.to_string().leak())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ApiError {
+    pub req: HttpRequest,
+    pub error: ApiErrorType,
+}
 
 impl Display for ApiError {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {

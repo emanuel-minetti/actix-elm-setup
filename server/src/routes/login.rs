@@ -31,32 +31,21 @@ pub async fn login_handler(
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
     let req = request.clone();
+    let into_api_error = |error: ApiErrorType| -> ApiError {
+        (|req| { ApiError { req, error } })(req)
+    };
+
     let login_data = match LoginData::parse(req_json_body) {
         Ok(data) => data,
-        Err(_) => {
-            return return_early(ApiError {
-                req,
-                error: ApiErrorType::Unauthorized,
-            });
+        Err(error) => {
+            return return_early(into_api_error(error.into()));
         }
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
-        Ok(id) => match id {
-            None => {
-                return return_early(ApiError {
-                    req,
-                    error: ApiErrorType::Unauthorized,
-                })
-            }
-            Some(id) => id,
-        },
-        Err(_) => {
-            return return_early(ApiError {
-                req,
-                error: ApiErrorType::DbError,
-            })
-        }
+        Ok(Some(id)) => id,
+        Ok(None) => return return_early(into_api_error(ApiErrorType::Unauthorized.into())),
+        Err(error) => return return_early(into_api_error(error.into()))
     };
 
     let session_row = match query!(
@@ -70,22 +59,12 @@ pub async fn login_handler(
     .await
     {
         Ok(row) => row,
-        Err(_) => {
-            return return_early(ApiError {
-                req,
-                error: ApiErrorType::DbError,
-            })
-        }
+        Err(error) => return return_early(into_api_error(error.into()))
     };
     let session_token_bytes = match simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
     {
         Ok(bytes) => bytes,
-        Err(_) => {
-            return return_early(ApiError {
-                req,
-                error: ApiErrorType::Unauthorized,
-            })
-        }
+        Err(_) => return return_early(into_api_error(ApiErrorType::Unauthorized)),
     };
     let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
     request
@@ -115,6 +94,7 @@ async fn authenticate(cred: LoginData, db_pool: &PgPool) -> Result<Option<Uuid>,
     if account_row.is_none() {
         Ok(None)
     } else {
+        //TODO AUTHENTICATE HERE!!
         Ok(Some(account_row.unwrap().account_id))
     }
 }
