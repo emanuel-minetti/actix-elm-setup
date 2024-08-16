@@ -1,4 +1,5 @@
 use crate::authorisation::{ApiResponse, HandlerResponse};
+use crate::domain::LoginDataError;
 use crate::routes::ExpiresAt;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
@@ -6,7 +7,6 @@ use actix_web::{HttpMessage, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Error;
 use base64::DecodeError;
 use std::fmt::{Display, Formatter};
-use crate::domain::LoginDataError;
 
 pub fn return_early(error: ApiError) -> HttpResponse {
     error.req.extensions_mut().insert(error.clone());

@@ -3,7 +3,7 @@ use actix_web::dev::{forward_ready, Payload, Service, ServiceRequest, ServiceRes
 use actix_web::http::{header, StatusCode};
 use actix_web::{web, Error, FromRequest, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
-use base64::{Engine};
+use base64::Engine;
 use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
 use regex::Regex;
@@ -85,7 +85,8 @@ where
             }
             let session_token = session_token_match.unwrap().as_str().to_string();
             let session_token_bytes = general_purpose::URL_SAFE.decode(&session_token)?;
-            let session_id_bytes = simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)?;
+            let session_id_bytes =
+                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)?;
             let session_id = Uuid::from_slice(session_id_bytes.as_ref()).unwrap();
 
             let session_row_option = query!(
