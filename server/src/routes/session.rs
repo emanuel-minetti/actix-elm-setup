@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 
 use crate::authorisation::{HandlerResponse, SessionId};
-use crate::error::{return_early, ApiError, ApiErrorType};
+use crate::error::{return_early, ApiError};
 
 #[derive(sqlx::Type, Serialize, Debug, Deserialize)]
 #[sqlx(type_name = "lang", rename_all = "lowercase")]
@@ -24,6 +24,7 @@ pub async fn session_handler(
     session_id: SessionId,
     request: HttpRequest,
 ) -> HttpResponse {
+    let into_api_error = ApiError::get_into(&request);
     let account_row = match query!(
         // language=postgresql
         r#"
@@ -38,11 +39,8 @@ pub async fn session_handler(
     .await
     {
         Ok(row) => row,
-        Err(_) => {
-            return return_early(ApiError {
-                req: request.clone(),
-                error: ApiErrorType::Unauthorized,
-            })
+        Err(error) => {
+            return return_early(into_api_error(error.into()));
         }
     };
 
