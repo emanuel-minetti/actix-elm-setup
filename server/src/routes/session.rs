@@ -39,9 +39,7 @@ pub async fn session_handler(
     .await
     {
         Ok(row) => row,
-        Err(error) => {
-            return return_early(into_api_error(error.into()));
-        }
+        Err(error) => return return_early(into_api_error(error.into())),
     };
 
     let res = HandlerResponse::Session(SessionResponse {

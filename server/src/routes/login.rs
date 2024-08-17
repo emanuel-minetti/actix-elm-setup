@@ -35,9 +35,7 @@ pub async fn login_handler(
 
     let login_data = match LoginData::parse(req_json_body) {
         Ok(data) => data,
-        Err(error) => {
-            return return_early(into_api_error(error.into()));
-        }
+        Err(error) => return return_early(into_api_error(error.into())),
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
