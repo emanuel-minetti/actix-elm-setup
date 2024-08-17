@@ -32,7 +32,7 @@ pub async fn login_handler(
     session_secret: Data<Bytes>,
 ) -> HttpResponse {
     let req = request.clone();
-    let into_api_error = |error: ApiErrorType| -> ApiError { (|req| ApiError { req, error })(req) };
+    let into_api_error = ApiError::get_into(req);
 
     let login_data = match LoginData::parse(req_json_body) {
         Ok(data) => data,

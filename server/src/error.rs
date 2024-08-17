@@ -84,6 +84,12 @@ pub struct ApiError {
     pub error: ApiErrorType,
 }
 
+impl ApiError {
+    pub fn get_into(req: HttpRequest) -> impl Fn(ApiErrorType) -> ApiError {
+        move |error| -> ApiError { (|req| ApiError { req, error })(req.clone()) }
+    }
+}
+
 impl Display for ApiError {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         Ok(println!("{:?}", self))
