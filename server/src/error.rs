@@ -85,7 +85,7 @@ pub struct ApiError {
 }
 
 impl ApiError {
-    pub fn get_into(req: HttpRequest) -> impl Fn(ApiErrorType) -> ApiError {
+    pub fn get_into(req: &HttpRequest) -> impl Fn(ApiErrorType) -> ApiError + '_ {
         move |error| -> ApiError { (|req| ApiError { req, error })(req.clone()) }
     }
 }
