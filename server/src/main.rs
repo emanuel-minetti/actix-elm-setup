@@ -1,12 +1,12 @@
+mod api_error;
 mod authorisation;
 mod configuration;
-mod domain;
-mod error;
 mod routes;
+mod validation;
 
+use crate::api_error::{ApiError, ApiErrorType};
 use crate::authorisation::Authorisation;
 use crate::configuration::get_configuration;
-use crate::error::{ApiError, ApiErrorType};
 use crate::routes::ExpiresAt;
 use actix_files::Files;
 use actix_web::web::Data;

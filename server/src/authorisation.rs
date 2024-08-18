@@ -14,7 +14,7 @@ use std::future::{ready, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
 
-use crate::error::{ApiError, ApiErrorType};
+use crate::api_error::{ApiError, ApiErrorType};
 use crate::routes::{ExpiresAt, LoginResponse, SessionResponse};
 
 pub struct Authorisation;

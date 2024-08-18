@@ -1,6 +1,6 @@
 use crate::authorisation::{ApiResponse, HandlerResponse};
-use crate::domain::LoginDataError;
 use crate::routes::ExpiresAt;
+use crate::validation::LoginDataError;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, ResponseError};

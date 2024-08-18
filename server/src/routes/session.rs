@@ -3,8 +3,8 @@ use actix_web::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 
+use crate::api_error::{return_early, ApiError};
 use crate::authorisation::{HandlerResponse, SessionId};
-use crate::error::{return_early, ApiError};
 
 #[derive(sqlx::Type, Serialize, Debug, Deserialize)]
 #[sqlx(type_name = "lang", rename_all = "lowercase")]

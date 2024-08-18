@@ -1,4 +1,4 @@
-use crate::domain::LoginData;
+use crate::validation::LoginData;
 use actix_web::web::Data;
 use actix_web::{web, HttpMessage, HttpRequest, HttpResponse};
 use base64::engine::general_purpose;
@@ -10,8 +10,8 @@ use simple_crypt;
 use sqlx::{query, PgPool};
 use uuid::Uuid;
 
+use crate::api_error::{return_early, ApiError, ApiErrorType};
 use crate::authorisation::HandlerResponse;
-use crate::error::{return_early, ApiError, ApiErrorType};
 
 pub type ExpiresAt = i64;
 #[derive(Serialize, Deserialize, Debug)]
