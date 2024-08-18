@@ -3,6 +3,7 @@ mod authorisation;
 mod configuration;
 mod routes;
 mod validation;
+mod logging;
 
 use crate::api_error::{ApiError, ApiErrorType};
 use crate::authorisation::Authorisation;
