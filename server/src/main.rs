@@ -6,9 +6,11 @@ mod routes;
 
 use crate::authorisation::Authorisation;
 use crate::configuration::get_configuration;
+use crate::error::{ApiError, ApiErrorType};
+use crate::routes::ExpiresAt;
 use actix_files::Files;
 use actix_web::web::Data;
-use actix_web::{web, HttpResponse, HttpServer};
+use actix_web::{web, HttpMessage, HttpServer};
 use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
@@ -26,14 +28,15 @@ async fn main() -> std::io::Result<()> {
         .expect("Couldn't connect to database.");
 
     HttpServer::new(move || {
-        let login_json_config = web::JsonConfig::default()
+        let json_parse_config = web::JsonConfig::default()
             .limit(512)
-            .error_handler(|err, _| {
-                actix_web::error::InternalError::from_response(
-                    err,
-                    HttpResponse::BadRequest().finish(),
-                )
-                .into()
+            .content_type(|mime| mime == "application/json")
+            .content_type_required(true)
+            .error_handler(|_, req| {
+                let api_error = ApiError::get_into(req)(ApiErrorType::BadRequest);
+                req.extensions_mut().insert(api_error.clone());
+                req.extensions_mut().insert::<ExpiresAt>(0);
+                api_error.error.into()
             });
 
         actix_web::App::new()
@@ -47,11 +50,11 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/api")
                             .app_data(Data::new(session_secret.clone()))
-                            //todo review
-                            .app_data(login_json_config)
+                            .app_data(json_parse_config.clone())
                             .wrap(Authorisation)
                             .route("/login", web::post().to(routes::login_handler))
-                            .route("/session", web::get().to(routes::session_handler)),
+                            .route("/session", web::get().to(routes::session_handler))
+                            .route("/{route}", web::get().to(routes::not_found_handler)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
                     .route("/", web::get().to(routes::return_index))

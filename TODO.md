@@ -1,6 +1,5 @@
 ## Server
 - Continue implementing (basic) error handling.
-  - Add 'Not Found'.
   - Implement (basic) logging.
     - Turn all (or most) `internal-server-error`s and login related messages into log messages and send no message.
 

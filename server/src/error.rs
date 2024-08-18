@@ -18,6 +18,7 @@ pub fn return_early(error: ApiError) -> HttpResponse {
 
 #[derive(Clone, Copy, Debug)]
 pub enum ApiErrorType {
+    BadRequest,
     DbError,
     NotFoundError,
     Unauthorized,
@@ -28,8 +29,9 @@ pub enum ApiErrorType {
 impl Into<&str> for ApiErrorType {
     fn into(self) -> &'static str {
         match self {
+            ApiErrorType::BadRequest => "Bad Request",
             ApiErrorType::DbError => "DB Error",
-            ApiErrorType::NotFoundError => "Not DFound",
+            ApiErrorType::NotFoundError => "Not found requested API endpoint",
             ApiErrorType::Unauthorized => "Unauthorized",
             ApiErrorType::Expired => "Expired",
             ApiErrorType::Unexpected(message) => {
@@ -53,7 +55,6 @@ impl Into<String> for ApiErrorType {
     }
 }
 
-// all following is needed for middleware
 impl From<DecodeError> for ApiErrorType {
     fn from(_: DecodeError) -> Self {
         ApiErrorType::Unauthorized
@@ -78,6 +79,12 @@ impl From<Error> for ApiErrorType {
     }
 }
 
+impl Display for ApiErrorType {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
+        Ok(println!("{:?}", self))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ApiError {
     pub req: HttpRequest,
@@ -96,6 +103,7 @@ impl Display for ApiError {
     }
 }
 
+// needed for middleware
 impl ResponseError for ApiError {
     fn status_code(&self) -> StatusCode {
         StatusCode::OK
@@ -107,6 +115,18 @@ impl ResponseError for ApiError {
             error: self.to_string(),
             data: HandlerResponse::None(),
         };
+        HttpResponse::build(self.status_code()).json(body)
+    }
+}
+
+// needed for initial json validation (see login_json_config)
+impl ResponseError for ApiErrorType {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::OK
+    }
+
+    fn error_response(&self) -> HttpResponse<BoxBody> {
+        let body = HandlerResponse::None();
         HttpResponse::build(self.status_code()).json(body)
     }
 }
