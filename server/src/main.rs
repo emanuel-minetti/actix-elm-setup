@@ -28,18 +28,18 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Couldn't connect to database.");
 
-    HttpServer::new(move || {
-        let json_parse_config = web::JsonConfig::default()
-            .limit(512)
-            .content_type(|mime| mime == "application/json")
-            .content_type_required(true)
-            .error_handler(|_, req| {
-                let api_error = ApiError::get_into(req)(ApiErrorType::BadRequest);
-                req.extensions_mut().insert(api_error.clone());
-                req.extensions_mut().insert::<ExpiresAt>(0);
-                api_error.error.into()
-            });
+    let json_parse_config = web::JsonConfig::default()
+        .limit(512)
+        .content_type(|mime| mime == "application/json")
+        .content_type_required(true)
+        .error_handler(|_, req| {
+            let api_error = ApiError::get_into(req)(ApiErrorType::BadRequest);
+            req.extensions_mut().insert(api_error.clone());
+            req.extensions_mut().insert::<ExpiresAt>(0);
+            api_error.error.into()
+        });
 
+    HttpServer::new(move || {
         actix_web::App::new()
             .app_data(Data::new(db_pool.clone()))
             .service(
