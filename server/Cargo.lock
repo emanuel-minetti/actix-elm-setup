@@ -2034,6 +2034,7 @@ dependencies = [
  "config",
  "env_logger",
  "futures-util",
+ "log",
  "regex",
  "serde",
  "serde_json",

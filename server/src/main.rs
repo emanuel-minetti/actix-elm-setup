@@ -1,13 +1,14 @@
 mod api_error;
 mod authorisation;
 mod configuration;
+mod logging;
 mod routes;
 mod validation;
-mod logging;
 
 use crate::api_error::{ApiError, ApiErrorType};
 use crate::authorisation::Authorisation;
 use crate::configuration::get_configuration;
+use crate::logging::Logger;
 use crate::routes::ExpiresAt;
 use actix_files::Files;
 use actix_web::web::Data;
@@ -16,8 +17,7 @@ use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "debug");
-    env_logger::init();
+    Logger::init().expect("Couldn't initialize logger");
 
     let configuration = get_configuration().expect("Couldn't read configuration file.");
 
