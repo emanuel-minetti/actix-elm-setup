@@ -3,6 +3,7 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
+    pub log: LogSettings,
     pub application_port: u16,
     pub session_secret: Vec<u8>,
 }
@@ -23,6 +24,12 @@ impl DatabaseSettings {
             self.username, self.password, self.host, self.port, self.database_name
         )
     }
+}
+
+#[derive(Deserialize)]
+pub struct LogSettings {
+    pub max_level: String,
+    pub path: String
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

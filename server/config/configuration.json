@@ -1,28 +1,15 @@
 {
   "application_port": 8080,
-  "session_secret": [
-    229,
-    84,
-    94,
-    175,
-    10,
-    21,
-    99,
-    226,
-    105,
-    37,
-    151,
-    121,
-    241,
-    201,
-    64,
-    176
-  ],
+  "session_secret": [229, 84, 94, 175, 10, 21, 99, 226, 105, 37, 151, 121, 241, 201, 64, 176],
   "database": {
     "host": "localhost",
     "port": 5432,
     "username": "aes",
     "password": "aes",
     "database_name": "aes"
+  },
+  "log": {
+    "max_level": "DEBUG",
+    "path": "./log"
   }
 }

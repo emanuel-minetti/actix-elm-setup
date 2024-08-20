@@ -10,8 +10,8 @@ impl log::Log for Logger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let now = Utc::now().to_string();
-            println!("Soso{} [{}]: {}", record.level(), now, record.args())
+            let now = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f");
+            println!("{} [{}]: {}", now, record.level(), record.args())
         }
     }
 
@@ -20,6 +20,6 @@ impl log::Log for Logger {
 
 impl Logger {
     pub fn init() -> Result<(), SetLoggerError> {
-        log::set_boxed_logger(Box::new(Logger)).map(|()| log::set_max_level(LevelFilter::Info))
+        log::set_boxed_logger(Box::new(Logger)).map(|()| log::set_max_level(LevelFilter::Debug))
     }
 }
