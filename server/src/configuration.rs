@@ -1,9 +1,11 @@
-use serde::Deserialize;
+use std::str::FromStr;
+use serde::{Deserialize, Deserializer};
+use serde::de::Error;
 
 #[derive(Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub log: LogSettings,
+    pub log: Box<LogSettings>,
     pub application_port: u16,
     pub session_secret: Vec<u8>,
 }
@@ -28,8 +30,20 @@ impl DatabaseSettings {
 
 #[derive(Deserialize)]
 pub struct LogSettings {
-    pub max_level: String,
+    #[serde(deserialize_with = "string_to_level")]
+    pub max_level: log::Level,
     pub path: String
+}
+
+fn string_to_level<'de, D>(deserializer: D) -> Result<log::Level, D::Error>
+where
+    D: Deserializer<'de>
+{
+    let string:String = Deserialize::deserialize(deserializer)?;
+    match log::Level::from_str(string.as_str()) {
+        Ok(l) => Ok(l),
+        Err(e) => Err(Error::custom(e.to_string()))
+    }
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
