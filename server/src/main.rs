@@ -17,10 +17,9 @@ use sqlx::{Pool, Postgres};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    Logger::init().expect("Couldn't initialize logger");
-
     let configuration = get_configuration().expect("Couldn't read configuration file.");
 
+    Logger::init(configuration.log).expect("Couldn't initialize logger");
     let session_secret = bytes::Bytes::from(configuration.session_secret);
 
     let db_url = configuration.database.connection_string();

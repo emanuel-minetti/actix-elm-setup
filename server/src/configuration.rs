@@ -1,11 +1,11 @@
-use std::str::FromStr;
-use serde::{Deserialize, Deserializer};
 use serde::de::Error;
+use serde::{Deserialize, Deserializer};
+use std::str::FromStr;
 
 #[derive(Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub log: Box<LogSettings>,
+    pub log: LogSettings,
     pub application_port: u16,
     pub session_secret: Vec<u8>,
 }
@@ -30,19 +30,20 @@ impl DatabaseSettings {
 
 #[derive(Deserialize)]
 pub struct LogSettings {
-    #[serde(deserialize_with = "string_to_level")]
+    #[serde(deserialize_with = "string_to_level_filter")]
     pub max_level: log::Level,
-    pub path: String
+    #[serde(rename = "path")]
+    pub path_string: String,
 }
 
-fn string_to_level<'de, D>(deserializer: D) -> Result<log::Level, D::Error>
+fn string_to_level_filter<'de, D>(deserializer: D) -> Result<log::Level, D::Error>
 where
-    D: Deserializer<'de>
+    D: Deserializer<'de>,
 {
-    let string:String = Deserialize::deserialize(deserializer)?;
+    let string: String = Deserialize::deserialize(deserializer)?;
     match log::Level::from_str(string.as_str()) {
         Ok(l) => Ok(l),
-        Err(e) => Err(Error::custom(e.to_string()))
+        Err(e) => Err(Error::custom(e.to_string())),
     }
 }
 

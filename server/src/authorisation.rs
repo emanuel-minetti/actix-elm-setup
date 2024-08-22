@@ -231,8 +231,6 @@ pub enum HandlerResponse {
 
 impl From<&str> for HandlerResponse {
     fn from(value: &str) -> Self {
-        let api_result = serde_json::from_str::<HandlerResponse>(value);
-        println!("Api Response: {:?}", api_result);
         match serde_json::from_str::<HandlerResponse>(value) {
             Ok(HandlerResponse::Session(val)) => HandlerResponse::Session(val),
             Ok(HandlerResponse::Login(val)) => HandlerResponse::Login(val),
