@@ -1,20 +1,12 @@
-use actix_web::dev::Path;
 use crate::configuration::LogSettings;
+use actix_web::dev::Path;
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use sqlx::types::chrono::Utc;
 
 pub struct Logger {
     level: Level,
-    path: Path<String>
+    path: Path<String>,
 }
-
-// pub struct Logger(LogSettings);
-
-// impl AsRef<LogSettings> for Logger {
-//     fn as_ref(&self) -> &LogSettings {
-//         &self.0
-//     }
-// }
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &Metadata) -> bool {
@@ -32,15 +24,13 @@ impl log::Log for Logger {
 }
 
 impl Logger {
-
     fn new(settings: LogSettings) -> Box<Self> {
         Box::new(Logger {
             level: settings.max_level,
-            path: Path::new(settings.path_string)
+            path: Path::new(settings.path_string),
         })
     }
     pub fn init(config: LogSettings) -> Result<(), SetLoggerError> {
-        log::set_boxed_logger(Self::new(config))
-            .map(|()| log::set_max_level(LevelFilter::Debug))
+        log::set_boxed_logger(Self::new(config)).map(|()| log::set_max_level(LevelFilter::Debug))
     }
 }
