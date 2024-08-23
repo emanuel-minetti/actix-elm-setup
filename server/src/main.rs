@@ -38,15 +38,21 @@ async fn main() -> std::io::Result<()> {
             api_error.error.into()
         });
 
+    fn serve_static_dir(dir_string: &str) -> Files {
+        let mount_path = "/".to_owned() + dir_string;
+        let serve_from = "../public/".to_owned() + dir_string;
+        Files::new(&*mount_path, serve_from)
+    }
+
     HttpServer::new(move || {
         actix_web::App::new()
             .app_data(Data::new(db_pool.clone()))
             .service(
                 web::scope("")
-                    .service(Files::new("/js", "../public/js"))
-                    .service(Files::new("/css", "../public/css"))
-                    .service(Files::new("/img", "../public/img"))
-                    .service(Files::new("/lang", "../public/lang"))
+                    .service(serve_static_dir("js"))
+                    .service(serve_static_dir("css"))
+                    .service(serve_static_dir("img"))
+                    .service(serve_static_dir("lang"))
                     .service(
                         web::scope("/api")
                             .app_data(Data::new(session_secret.clone()))

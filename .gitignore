@@ -2,3 +2,4 @@
 /client/node_modules/
 /client/elm-stuff
 /client/src/I18n.elm
+/log/
