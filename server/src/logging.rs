@@ -4,7 +4,7 @@ use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use sqlx::types::chrono::Utc;
 use std::fs::{read_dir, remove_file, File};
 use std::io::Write;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::time::SystemTime;
 
 pub struct Logger {
@@ -62,7 +62,8 @@ impl Logger {
                         .timestamp()
                         .try_into()
                         .unwrap()
-            }).for_each(move |file| {remove_file::<PathBuf>(file.unwrap().path()).unwrap()});
+            })
+            .for_each(move |file| remove_file::<PathBuf>(file.unwrap().path()).unwrap());
         Box::new(Logger {
             level: settings.max_level,
             file,

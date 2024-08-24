@@ -5,6 +5,7 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use bcrypt::verify;
 use bytes::Bytes;
+use log::{log, Level};
 use serde::{Deserialize, Serialize};
 use simple_crypt;
 use sqlx::{query, PgPool};
@@ -21,7 +22,7 @@ pub struct LoginResponse {
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
-    pub account: String,
+    pub account: Option<String>,
     pub pw: String,
 }
 
@@ -35,7 +36,15 @@ pub async fn login_handler(
 
     let login_data = match LoginData::parse(req_json_body) {
         Ok(data) => data,
-        Err(error) => return return_early(into_api_error(error.into())),
+        Err(error) => {
+            log!(
+                Level::Warn,
+                "Error: {:?}, IP: {:?}",
+                &error,
+                request.peer_addr().unwrap().ip()
+            );
+            return return_early(into_api_error(ApiErrorType::Unauthorized));
+        }
     };
 
     let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
