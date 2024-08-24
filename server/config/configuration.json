@@ -10,6 +10,7 @@
   },
   "log": {
     "max_level": "DEBUG",
-    "path": "../log/"
+    "path": "../log/",
+    "days_to_keep": 2
   }
 }

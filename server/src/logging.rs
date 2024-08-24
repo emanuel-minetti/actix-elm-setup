@@ -4,6 +4,7 @@ use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use sqlx::types::chrono::Utc;
 use std::fs::{read_dir, remove_file, File};
 use std::io::Write;
+use std::path::{PathBuf};
 use std::time::SystemTime;
 
 pub struct Logger {
@@ -41,28 +42,27 @@ impl Logger {
             .create(true)
             .open(file_path)
             .expect("Unable to open log file");
-        // TODO delete outdated
-        // let filtered_log_files = read_dir(settings.path_string)
-        //     .unwrap()
-        //     .filter(move |entry| {
-        //         entry
-        //             .as_ref()
-        //             .unwrap()
-        //             .metadata()
-        //             .unwrap()
-        //             .created()
-        //             .unwrap()
-        //             .duration_since(SystemTime::UNIX_EPOCH)
-        //             .unwrap()
-        //             .as_secs()
-        //             <= today
-        //                 .checked_sub_days(Days::new(8))
-        //                 .unwrap()
-        //                 .timestamp()
-        //                 .try_into()
-        //                 .unwrap()
-        //     });
-        // filtered_log_files.for_each(move |file| { remove_file(file.unwrap().into()).expect("panic message");});
+        // delete outdated
+        let _filtered_log_files = read_dir(settings.path_string)
+            .unwrap()
+            .filter(move |entry| {
+                entry
+                    .as_ref()
+                    .unwrap()
+                    .metadata()
+                    .unwrap()
+                    .created()
+                    .unwrap()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+                    <= today
+                        .checked_sub_days(Days::new(settings.days_to_keep))
+                        .unwrap()
+                        .timestamp()
+                        .try_into()
+                        .unwrap()
+            }).for_each(move |file| {remove_file::<PathBuf>(file.unwrap().path()).unwrap()});
         Box::new(Logger {
             level: settings.max_level,
             file,

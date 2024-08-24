@@ -34,6 +34,7 @@ pub struct LogSettings {
     pub max_level: log::Level,
     #[serde(rename = "path")]
     pub path_string: String,
+    pub days_to_keep: u64,
 }
 
 fn string_to_level_filter<'de, D>(deserializer: D) -> Result<log::Level, D::Error>
