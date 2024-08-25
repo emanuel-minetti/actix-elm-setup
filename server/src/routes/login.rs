@@ -23,7 +23,7 @@ pub struct LoginResponse {
 #[derive(Deserialize)]
 pub struct LoginRequest {
     pub account: Option<String>,
-    pub pw: String,
+    pub pw: Option<String>,
 }
 
 pub async fn login_handler(
@@ -47,10 +47,33 @@ pub async fn login_handler(
         }
     };
 
-    let account_id = match authenticate(login_data, &*db_pool.as_ref()).await {
+    let account_id = match authenticate(&login_data, &*db_pool.as_ref()).await {
         Ok(Some(id)) => id,
-        Ok(None) => return return_early(into_api_error(ApiErrorType::Unauthorized.into())),
-        Err(error) => return return_early(into_api_error(error.into())),
+        Ok(None) => {
+            log!(
+                Level::Warn,
+                "Error: Invalid Credentials, Account name: {:?}, IP: {:?}",
+                login_data.account_name,
+                request.peer_addr().unwrap().ip()
+            );
+            return return_early(into_api_error(ApiErrorType::Unauthorized.into()));
+        }
+        Err(error) => {
+            if error == ApiErrorType::DbError {
+                log!(
+                    Level::Error,
+                    "Error: {}, while authenticating credentials, Data: {:?}",
+                    error,
+                    login_data
+                )
+            }
+            log!(
+                Level::Warn,
+                "Error: Invalid Credentials, Account name: {:?}",
+                login_data.account_name
+            );
+            return return_early(into_api_error(error.into()));
+        }
     };
 
     let session_row = match query!(
@@ -64,12 +87,28 @@ pub async fn login_handler(
     .await
     {
         Ok(row) => row,
-        Err(error) => return return_early(into_api_error(error.into())),
+        Err(error) => {
+            log!(
+                Level::Error,
+                "Error: {}, while inserting session row, Data: {:?}",
+                error,
+                account_id
+            );
+            return return_early(into_api_error(error.into()));
+        }
     };
     let session_token_bytes = match simple_crypt::encrypt(session_row.id.as_ref(), &session_secret)
     {
         Ok(bytes) => bytes,
-        Err(_) => return return_early(into_api_error(ApiErrorType::Unauthorized)),
+        Err(error) => {
+            log!(
+                Level::Error,
+                "Error: {}, while encrypting session uuid, Data: {}",
+                error,
+                session_row.id
+            );
+            return return_early(into_api_error(ApiErrorType::Unauthorized));
+        }
     };
     let session_token = general_purpose::URL_SAFE.encode(session_token_bytes);
     request
@@ -77,10 +116,11 @@ pub async fn login_handler(
         .insert::<ExpiresAt>(session_row.expires_at.and_utc().timestamp());
 
     let res = HandlerResponse::Login(LoginResponse { session_token });
+    log!(Level::Info, "Logged in: {:?}", login_data.account_name);
     HttpResponse::Ok().json(res)
 }
 
-async fn authenticate(cred: LoginData, db_pool: &PgPool) -> Result<Option<Uuid>, ApiErrorType> {
+async fn authenticate(cred: &LoginData, db_pool: &PgPool) -> Result<Option<Uuid>, ApiErrorType> {
     let account_row = query!(
         // language=postgresql
         r#"
@@ -100,7 +140,7 @@ async fn authenticate(cred: LoginData, db_pool: &PgPool) -> Result<Option<Uuid>,
         Ok(None)
     } else {
         match verify(
-            cred.password,
+            cred.password.clone(),
             account_row.as_ref().unwrap().pw_hash.as_str(),
         ) {
             Ok(true) => Ok(Some(account_row.unwrap().account_id)),

@@ -16,7 +16,7 @@ pub fn return_early(error: ApiError) -> HttpResponse {
     HttpResponse::Ok().json(HandlerResponse::None())
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ApiErrorType {
     BadRequest,
     DbError,
