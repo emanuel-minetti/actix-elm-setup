@@ -195,7 +195,7 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SessionId(Uuid);
 
 impl FromRequest for SessionId {

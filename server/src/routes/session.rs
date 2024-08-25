@@ -1,5 +1,6 @@
 use actix_web::web::Data;
 use actix_web::{HttpRequest, HttpResponse};
+use log::{log, Level};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 
@@ -39,7 +40,15 @@ pub async fn session_handler(
     .await
     {
         Ok(row) => row,
-        Err(error) => return return_early(into_api_error(error.into())),
+        Err(error) => {
+            log!(
+                Level::Error,
+                "Error: {}, while retrieving account, Data: {:?}",
+                error,
+                session_id
+            );
+            return return_early(into_api_error(error.into()));
+        }
     };
 
     let res = HandlerResponse::Session(SessionResponse {
