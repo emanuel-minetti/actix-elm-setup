@@ -116,7 +116,7 @@ pub async fn login_handler(
         .insert::<ExpiresAt>(session_row.expires_at.and_utc().timestamp());
 
     let res = HandlerResponse::Login(LoginResponse { session_token });
-    log!(Level::Info, "Logged in: {:?}", login_data.account_name);
+    log!(Level::Info, "Logged in: {:?}", login_data.account_name.as_ref());
     HttpResponse::Ok().json(res)
 }
 

@@ -1,7 +1,4 @@
 ## Server
-- Continue implementing (basic) error handling.
-  - Turn all (or most) `internal-server-error`s and login related messages into log messages and send no message.
-
 - Use rust integration tests (for selected use cases).
 - Maybe use some CI tools to guide deployment.
 

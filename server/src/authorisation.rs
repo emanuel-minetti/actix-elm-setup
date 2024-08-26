@@ -6,6 +6,7 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use bytes::Bytes;
 use futures_util::future::LocalBoxFuture;
+use log::{log, Level};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::Utc;
@@ -66,30 +67,84 @@ where
             let session_secret = req.app_data::<web::Data<Bytes>>().unwrap();
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
 
-            let authorisation_header = req.headers().get(header::AUTHORIZATION);
-            if authorisation_header.is_none() {
-                return Err(ApiErrorType::Unauthorized);
-            }
-            let authorisation_header_value = authorisation_header.unwrap().to_str();
-            if authorisation_header_value.is_err() {
-                return Err(ApiErrorType::Unauthorized);
-            }
+            let authorisation_header = match req.headers().get(header::AUTHORIZATION) {
+                Some(header) => header,
+                None => {
+                        log!(
+                            Level::Warn,
+                            "Error: Authorization header missing, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                        return Err(ApiErrorType::Unauthorized);
+                }
+            };
+            let authorisation_header_value = match authorisation_header.to_str() {
+                Ok(value) => value,
+                Err(_) => {
+                        log!(
+                            Level::Warn,
+                            "Error: Authorization header is no UTF8-String, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                        return Err(ApiErrorType::Unauthorized);
+                }
+            };
             let match_token = Regex::new(r"Bearer (.+)").unwrap();
-            let session_token_capture = match_token.captures(authorisation_header_value.unwrap());
-            if session_token_capture.is_none() {
-                return Err(ApiErrorType::Unauthorized);
-            }
-            let session_token_match = session_token_capture.unwrap().get(1);
-            if session_token_match.is_none() {
-                return Err(ApiErrorType::Unauthorized);
-            }
-            let session_token = session_token_match.unwrap().as_str().to_string();
-            let session_token_bytes = general_purpose::URL_SAFE.decode(&session_token)?;
-            let session_id_bytes =
-                simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret)?;
-            let session_id = Uuid::from_slice(session_id_bytes.as_ref()).unwrap();
-
-            let session_row_option = query!(
+            let session_token_capture = match match_token.captures(authorisation_header_value) {
+                Some(capture) => capture,
+                None => {
+                        log!(
+                            Level::Warn,
+                            "Error: Authorization header has no `Bearer` token, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                        return Err(ApiErrorType::Unauthorized);
+                }
+            };
+            let session_token = match session_token_capture.get(1) {
+                Some(capture) =>  capture.as_str().to_string(),
+                None => {
+                        log!(
+                            Level::Warn,
+                            "Error: Found no `Bearer` token, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                        return Err(ApiErrorType::Unauthorized);
+                }
+            };
+            let session_token_bytes = match general_purpose::URL_SAFE.decode(&session_token) {
+                Ok(bytes) => bytes,
+                Err(_) => {
+                    log!(
+                            Level::Warn,
+                            "Error: Failed to base64 decode session token, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                    return Err(ApiErrorType::Unauthorized);
+                }
+            };
+            let session_id = match simple_crypt::decrypt(session_token_bytes.as_ref(), &session_secret) {
+                Ok(bytes) => match Uuid::from_slice(bytes.as_ref()) {
+                    Ok(uuid) => uuid,
+                    Err(_) => {
+                        log!(
+                            Level::Error,
+                            "Error: Failed to find Uuid in session id, data: {:?}",
+                            session_token_bytes
+                        );
+                        return Err(ApiErrorType::Unauthorized);
+                    }
+                },
+                Err(_) => {
+                    log!(
+                            Level::Warn,
+                            "Error: Failed to decrypt session token, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                    return Err(ApiErrorType::Unauthorized);
+                }
+            };
+            let session_row = match query!(
                 // language=postgresql
                 r#"
                     SELECT * FROM session WHERE id = $1
@@ -97,16 +152,31 @@ where
                 session_id
             )
             .fetch_optional(&***db_pool)
-            .await?;
-            if session_row_option.is_none() {
-                return Err(ApiErrorType::Unauthorized);
-            }
-            let session_row = session_row_option.unwrap();
+            .await {
+                Ok(Some(row)) => row,
+                Ok(None) => {
+                    log!(
+                            Level::Warn,
+                            "Error: Failed to find session, IP: {:?}",
+                            req.peer_addr().unwrap().ip()
+                        );
+                    return Err(ApiErrorType::Unauthorized);
+                }
+                Err(error) => {
+                    log!(
+                    Level::Error,
+                    "Error: {}, while finding session, Data: {:?}",
+                    error,
+                    session_id
+                );
+                    return Err(ApiErrorType::DbError);
+                }
+            };
             let expired = session_row.expires_at < Utc::now().naive_utc();
             if expired {
                 Err(ApiErrorType::Expired)
             } else {
-                let updated_session_row = query!(
+                let updated_session_row = match query!(
                     // language=postgresql
                     r#"
                         UPDATE session SET expires_at = DEFAULT
@@ -115,7 +185,18 @@ where
                     session_id
                 )
                 .fetch_one(&***db_pool)
-                .await?;
+                .await {
+                    Ok(row) => row,
+                    Err(error) => {
+                        log!(
+                    Level::Error,
+                    "Error: {}, while updating session, Data: {:?}",
+                    error,
+                    session_id
+                );
+                        return Err(ApiErrorType::DbError);
+                    }
+                };
 
                 req.extensions_mut()
                     .insert(SessionId(updated_session_row.account_id));
@@ -146,16 +227,31 @@ where
 
             //deleting outdated
             let db_pool = req.app_data::<web::Data<PgPool>>().unwrap();
-            query!(
+            match query!(
                 // language=postgresql
                 r#"
                         DELETE FROM session WHERE expires_at < CURRENT_TIMESTAMP + INTERVAL '20 minutes';
-                    "#
+                "#
                 )
                 .execute(&***db_pool)
-                .await
-                //expecting because no other client or server actions are affected
-                .expect("Failed to delete outdated sessions from database.");
+                .await {
+                Ok(_) => (),
+                Err(error) => {
+                    log!(
+                    Level::Error,
+                    "Error: {}, while deleting sessions",
+                    error,
+                );
+                    let new_body = ApiResponse {
+                        expires_at: 0,
+                        error: ApiErrorType::DbError.into(),
+                        data: HandlerResponse::None(),
+                    };
+                    let new_resp = HttpResponse::Ok().json(new_body);
+                    let new_res = ServiceResponse::new(req.request().clone(), new_resp);
+                    return Ok(new_res.map_into_right_body());
+                }
+            }
 
             //call other middleware and handler and get the response
             let res = srv.call(req).await?;

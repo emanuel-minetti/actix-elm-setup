@@ -1,11 +1,9 @@
 use crate::authorisation::{ApiResponse, HandlerResponse};
 use crate::routes::ExpiresAt;
-use crate::validation::LoginDataError;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Error;
-use base64::DecodeError;
 use std::fmt::{Display, Formatter};
 
 pub fn return_early(error: ApiError) -> HttpResponse {
@@ -36,13 +34,9 @@ impl Into<&str> for ApiErrorType {
             ApiErrorType::Expired => "Expired",
             ApiErrorType::Unexpected(message) => {
                 let msg = message.to_owned();
-                if msg.starts_with("Failed to encrypt data") {
-                    "Unauthorized"
-                } else {
                     let new_msg = format!("Unexpected Error: {}", msg);
                     let text = new_msg.leak();
                     text
-                }
             }
         }
     }
@@ -55,21 +49,9 @@ impl Into<String> for ApiErrorType {
     }
 }
 
-impl From<DecodeError> for ApiErrorType {
-    fn from(_: DecodeError) -> Self {
-        ApiErrorType::Unauthorized
-    }
-}
-
 impl From<sqlx::Error> for ApiErrorType {
     fn from(_: sqlx::Error) -> Self {
         ApiErrorType::DbError
-    }
-}
-
-impl From<LoginDataError> for ApiErrorType {
-    fn from(_: LoginDataError) -> Self {
-        ApiErrorType::Unauthorized
     }
 }
 
