@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Array exposing (Array)
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (..)
@@ -21,8 +22,16 @@ type PageModel
     | ImprintPageModel ImprintPage.Model
 
 
+type alias Session =
+    { name : String
+    , preferred_lang : I18n.Language
+    , expires_at : Int
+    }
+
+
 type alias Model =
-    { user : Maybe String
+    { auth_token : Maybe String
+    , session : Maybe Session
     , i18n : I18n
     , messages : Messages
     , route : Route
@@ -41,7 +50,7 @@ type Msg
     | ImprintPageMsg ImprintPage.Msg
 
 
-main : Program String Model Msg
+main : Program (Array String) Model Msg
 main =
     Browser.application
         { init = init
@@ -53,11 +62,11 @@ main =
         }
 
 
-init : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         preferredLangFromBrowser =
-            flags
+            Maybe.withDefault "en" <| Array.get 0 flags
 
         preferredLang =
             Maybe.withDefault I18n.En <| I18n.languageFromString preferredLangFromBrowser
@@ -65,11 +74,17 @@ init flags url key =
         i18n =
             I18n.init { lang = preferredLang, path = "lang" }
 
+        sessionTokenFromBrowser =
+            Maybe.withDefault "" <| Array.get 1 flags
+
         initialRoute =
             Route.parseUrl url
 
         initialModel =
-            { user = Just "Emu"
+            { auth_token = Nothing
+            , session = Nothing
+
+            --, user = Just "Emu"
             , i18n = i18n
             , messages =
                 { infos = [ "Loading Translations ..." ]
@@ -85,6 +100,9 @@ init flags url key =
             , I18n.loadError GotTranslations i18n
             , I18n.loadFooter GotTranslations i18n
             ]
+
+        --_ =
+        --    Debug.log "From Elm: " sessionTokenFromBrowser
     in
     ( initialModel
     , Cmd.batch initialCmds
@@ -262,12 +280,12 @@ viewHeader model =
 
 viewLoginText : Model -> Html msg
 viewLoginText model =
-    case model.user of
+    case model.session of
         Nothing ->
             text (I18n.notLoggedIn model.i18n)
 
-        Just userName ->
-            text (I18n.loggedInAs model.i18n ++ userName)
+        Just session ->
+            text (I18n.loggedInAs model.i18n ++ session.name)
 
 
 viewSelectOptions : Model -> List (Html Msg)
