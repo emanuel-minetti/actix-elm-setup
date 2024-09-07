@@ -8,11 +8,12 @@ import Html.Attributes exposing (alt, class, height, href, id, selected, src, va
 import Html.Events exposing (onClick, onInput)
 import Http
 import I18n exposing (I18n, Language(..))
+import Json.Decode exposing (Decoder, Value, field, int, map2, map3, string)
 import Messages exposing (Messages)
 import Page.Imprint as ImprintPage
 import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route)
-import Url exposing (Url)
+import Url exposing (Protocol(..), Url)
 
 
 type PageModel
@@ -42,6 +43,7 @@ type alias Model =
 
 type Msg
     = GotTranslations (Result Http.Error (I18n -> I18n))
+    | GotSession (Result Http.Error ApiResponse)
     | SwitchLanguage String
     | UrlChanged Url
     | LinkClicked UrlRequest
@@ -74,8 +76,21 @@ init flags url key =
         i18n =
             I18n.init { lang = preferredLang, path = "lang" }
 
+        i18nCmds =
+            [ I18n.loadHeader GotTranslations i18n
+            , I18n.loadError GotTranslations i18n
+            , I18n.loadFooter GotTranslations i18n
+            ]
+
         sessionTokenFromBrowser =
             Maybe.withDefault "" <| Array.get 1 flags
+
+        sessionCmd =
+            if sessionTokenFromBrowser == "" then
+                Cmd.none
+
+            else
+                getSession sessionTokenFromBrowser
 
         initialRoute =
             Route.parseUrl url
@@ -96,13 +111,7 @@ init flags url key =
             }
 
         initialCmds =
-            [ I18n.loadHeader GotTranslations i18n
-            , I18n.loadError GotTranslations i18n
-            , I18n.loadFooter GotTranslations i18n
-            ]
-
-        --_ =
-        --    Debug.log "From Elm: " sessionTokenFromBrowser
+            sessionCmd :: i18nCmds
     in
     ( initialModel
     , Cmd.batch initialCmds
@@ -161,6 +170,26 @@ update msg model =
                     updateI18n model.i18n
             in
             ( { model | i18n = newI18n, messages = Messages.removeFirstInfo model.messages }, Cmd.none )
+
+        ( GotSession (Ok resp), _ ) ->
+            let
+                _ =
+                    Debug.log "From Elm: " resp.data
+
+                session =
+                    Nothing
+            in
+            ( { model | session = session }, Cmd.none )
+
+        ( GotSession (Err resp), _ ) ->
+            let
+                _ =
+                    Debug.log "Error from Elm: " resp
+
+                session =
+                    Nothing
+            in
+            ( { model | session = session }, Cmd.none )
 
         ( SwitchLanguage langString, _ ) ->
             let
@@ -374,3 +403,67 @@ viewFooter model =
                 ]
             ]
         ]
+
+
+getSession : String -> Cmd Msg
+getSession sessionToken =
+    let
+        headers =
+            [ Http.header "Accept" "application/json", Http.header "Authorization" ("Bearer " ++ sessionToken) ]
+    in
+    Http.request
+        { method = "GET"
+        , url = "http://localhost:8080/api/session"
+        , headers = headers
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotSession apiResponseDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+type alias ApiResponse =
+    { expires : Int
+    , error : String
+    , data : SessionResponseData
+    }
+
+
+apiResponseDecoder : Decoder ApiResponse
+apiResponseDecoder =
+    map3 ApiResponse
+        (field "expires_at" int)
+        (field "error" string)
+        (field "data" sessionResponseDataDecoder)
+
+
+
+--type ApiResponseData
+--    = LoginResponseData String
+--    | SessionResponseData
+--
+--
+
+
+type alias SessionResponseData =
+    { name : String
+    , lang : String
+    }
+
+
+sessionResponseDataDecoder : Decoder SessionResponseData
+sessionResponseDataDecoder =
+    field "Session"
+        (map2 SessionResponseData
+            (field "name" string)
+            (field "preferred_lang" string)
+        )
+
+
+
+--map2 SessionResponseData
+--    (field "name" string)
+--    (field "preferred_lang" string)
+--loginResponseDataDecoder : Decoder LoginResponseData
+--loginResponseDataDecoder =
+--    LoginResponseData (field "session_token" string)
