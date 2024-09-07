@@ -176,8 +176,20 @@ update msg model =
                 _ =
                     Debug.log "From Elm: " resp.data
 
+                name =
+                    resp.data.name
+
+                langFromSession =
+                    resp.data.lang
+
+                preferredLang =
+                    Maybe.withDefault I18n.En <| I18n.languageFromString langFromSession
+
+                expires =
+                    resp.expires
+
                 session =
-                    Nothing
+                    Just (Session name preferredLang expires)
             in
             ( { model | session = session }, Cmd.none )
 
@@ -458,12 +470,3 @@ sessionResponseDataDecoder =
             (field "name" string)
             (field "preferred_lang" string)
         )
-
-
-
---map2 SessionResponseData
---    (field "name" string)
---    (field "preferred_lang" string)
---loginResponseDataDecoder : Decoder LoginResponseData
---loginResponseDataDecoder =
---    LoginResponseData (field "session_token" string)
