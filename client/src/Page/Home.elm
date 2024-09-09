@@ -25,6 +25,7 @@ init i18n =
             , errors = []
             }
       }
+      --todo localize
     , I18n.loadImprint GotTranslations i18n
     )
 

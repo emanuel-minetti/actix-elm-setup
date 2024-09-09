@@ -179,34 +179,31 @@ update msg model =
             ( { model | i18n = newI18n, messages = Messages.removeFirstInfo model.messages }, Cmd.none )
 
         ( GotSession (Ok resp), _ ) ->
-            let
-                sessionResponseData =
-                    case resp.data of
-                        SessionResponseData srd ->
-                            srd
+            case resp.data of
+                SessionResponseData srd ->
+                    let
+                        name =
+                            srd.name
 
-                        _ ->
-                            { name = "", lang = "En" }
+                        langFromSession =
+                            srd.lang
 
-                name =
-                    sessionResponseData.name
+                        preferredLang =
+                            Maybe.withDefault I18n.En <| I18n.languageFromString <| String.toLower langFromSession
 
-                langFromSession =
-                    sessionResponseData.lang
+                        expires =
+                            resp.expires
 
-                preferredLang =
-                    Maybe.withDefault I18n.En <| I18n.languageFromString <| String.toLower langFromSession
+                        session =
+                            Just (Session name preferredLang expires)
 
-                expires =
-                    resp.expires
+                        preferredLangString =
+                            String.toLower <| I18n.languageToString preferredLang
+                    in
+                    ( { model | session = session }, run (SwitchLanguage preferredLangString) )
 
-                session =
-                    Just (Session name preferredLang expires)
-
-                preferredLangString =
-                    String.toLower <| I18n.languageToString preferredLang
-            in
-            ( { model | session = session }, run (SwitchLanguage preferredLangString) )
+                _ ->
+                    ( model, Cmd.none )
 
         ( GotSession (Err resp), _ ) ->
             let
@@ -391,8 +388,6 @@ viewCurrentPage model =
                     HomePage.view pageModel
                         |> Html.map HomePageMsg
 
-                --HomePageModel ->
-                --    viewHomePage model
                 PrivacyPageModel pageModel ->
                     PrivacyPage.view pageModel
                         |> Html.map PrivacyPageMsg
@@ -407,24 +402,6 @@ viewCurrentPage model =
 viewNotFoundPage : Model -> Html msg
 viewNotFoundPage _ =
     h3 [] [ text "Oops! The page you requested was not found!" ]
-
-
-
---viewHomePage : Model -> Html msg
---viewHomePage _ =
---    div []
---        [ h1 [] [ text "Welcome to Emu's Homepage!" ]
---        , p []
---            [ text "Emus Test nanu Inc. (stock symbol "
---            , strong [] [ text "DMI" ]
---            , text <|
---                """
---                    ) is a micro-cap regional paper and office
---                    supply distributor with an emphasis on servicing
---                    small-business clients.
---                    """
---            ]
---        ]
 
 
 viewFooter : Model -> Html Msg
