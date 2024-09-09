@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Array exposing (Array)
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
@@ -8,11 +9,11 @@ import Html.Attributes exposing (alt, class, height, href, id, selected, src, va
 import Html.Events exposing (onClick, onInput)
 import Http
 import I18n exposing (I18n, Language(..))
-import Json.Decode exposing (Decoder, Value, field, int, map2, map3, string)
 import Messages exposing (Messages)
 import Page.Imprint as ImprintPage
 import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route)
+import Task
 import Url exposing (Protocol(..), Url)
 
 
@@ -173,25 +174,33 @@ update msg model =
 
         ( GotSession (Ok resp), _ ) ->
             let
-                _ =
-                    Debug.log "From Elm: " resp.data
+                sessionResponseData =
+                    case resp.data of
+                        SessionResponseData srd ->
+                            srd
+
+                        _ ->
+                            { name = "", lang = "En" }
 
                 name =
-                    resp.data.name
+                    sessionResponseData.name
 
                 langFromSession =
-                    resp.data.lang
+                    sessionResponseData.lang
 
                 preferredLang =
-                    Maybe.withDefault I18n.En <| I18n.languageFromString langFromSession
+                    Maybe.withDefault I18n.En <| I18n.languageFromString <| String.toLower langFromSession
 
                 expires =
                     resp.expires
 
                 session =
                     Just (Session name preferredLang expires)
+
+                preferredLangString =
+                    String.toLower <| I18n.languageToString preferredLang
             in
-            ( { model | session = session }, Cmd.none )
+            ( { model | session = session }, run (SwitchLanguage preferredLangString) )
 
         ( GotSession (Err resp), _ ) ->
             let
@@ -277,6 +286,11 @@ update msg model =
 
         ( _, _ ) ->
             ( model, Cmd.none )
+
+
+run : msg -> Cmd msg
+run m =
+    Task.perform (always m) (Task.succeed ())
 
 
 view : Model -> Document Msg
@@ -432,41 +446,3 @@ getSession sessionToken =
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-type alias ApiResponse =
-    { expires : Int
-    , error : String
-    , data : SessionResponseData
-    }
-
-
-apiResponseDecoder : Decoder ApiResponse
-apiResponseDecoder =
-    map3 ApiResponse
-        (field "expires_at" int)
-        (field "error" string)
-        (field "data" sessionResponseDataDecoder)
-
-
-
---type ApiResponseData
---    = LoginResponseData String
---    | SessionResponseData
---
---
-
-
-type alias SessionResponseData =
-    { name : String
-    , lang : String
-    }
-
-
-sessionResponseDataDecoder : Decoder SessionResponseData
-sessionResponseDataDecoder =
-    field "Session"
-        (map2 SessionResponseData
-            (field "name" string)
-            (field "preferred_lang" string)
-        )
