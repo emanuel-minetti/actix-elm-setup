@@ -10,6 +10,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import I18n exposing (I18n, Language(..))
 import Messages exposing (Messages)
+import Page.Home as HomePage
 import Page.Imprint as ImprintPage
 import Page.Privacy as PrivacyPage exposing (Msg(..))
 import Route exposing (Route)
@@ -19,7 +20,7 @@ import Url exposing (Protocol(..), Url)
 
 type PageModel
     = NotFoundPageModel
-    | HomePageModel
+    | HomePageModel HomePage.Model
     | PrivacyPageModel PrivacyPage.Model
     | ImprintPageModel ImprintPage.Model
 
@@ -49,6 +50,7 @@ type Msg
     | UrlChanged Url
     | LinkClicked UrlRequest
     | GoToRoute Route
+    | HomePageMsg HomePage.Msg
     | PrivacyPageMsg PrivacyPage.Msg
     | ImprintPageMsg ImprintPage.Msg
 
@@ -129,7 +131,11 @@ initCurrentPage ( model, existingCmds ) =
                     ( NotFoundPageModel, Cmd.none )
 
                 Route.Home ->
-                    ( HomePageModel, Cmd.none )
+                    let
+                        ( pageModel, pageCmds ) =
+                            HomePage.init model.i18n
+                    in
+                    ( HomePageModel pageModel, Cmd.map HomePageMsg pageCmds )
 
                 Route.Privacy ->
                     let
@@ -270,6 +276,13 @@ update msg model =
             ( model, cmd )
                 |> initCurrentPage
 
+        ( HomePageMsg subMsg, HomePageModel pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmd ) =
+                    HomePage.update subMsg pageModel
+            in
+            ( { model | pageModel = HomePageModel updatedPageModel }, Cmd.map HomePageMsg updatedCmd )
+
         ( PrivacyPageMsg subMsg, PrivacyPageModel pageModel ) ->
             let
                 ( updatedPageModel, updatedCmd ) =
@@ -374,9 +387,12 @@ viewCurrentPage model =
                 NotFoundPageModel ->
                     viewNotFoundPage model
 
-                HomePageModel ->
-                    viewHomePage model
+                HomePageModel pageModel ->
+                    HomePage.view pageModel
+                        |> Html.map HomePageMsg
 
+                --HomePageModel ->
+                --    viewHomePage model
                 PrivacyPageModel pageModel ->
                     PrivacyPage.view pageModel
                         |> Html.map PrivacyPageMsg
@@ -393,21 +409,22 @@ viewNotFoundPage _ =
     h3 [] [ text "Oops! The page you requested was not found!" ]
 
 
-viewHomePage : Model -> Html msg
-viewHomePage _ =
-    div []
-        [ h1 [] [ text "Welcome to Emu's Homepage!" ]
-        , p []
-            [ text "Emus Test nanu Inc. (stock symbol "
-            , strong [] [ text "DMI" ]
-            , text <|
-                """
-                    ) is a micro-cap regional paper and office
-                    supply distributor with an emphasis on servicing
-                    small-business clients.
-                    """
-            ]
-        ]
+
+--viewHomePage : Model -> Html msg
+--viewHomePage _ =
+--    div []
+--        [ h1 [] [ text "Welcome to Emu's Homepage!" ]
+--        , p []
+--            [ text "Emus Test nanu Inc. (stock symbol "
+--            , strong [] [ text "DMI" ]
+--            , text <|
+--                """
+--                    ) is a micro-cap regional paper and office
+--                    supply distributor with an emphasis on servicing
+--                    small-business clients.
+--                    """
+--            ]
+--        ]
 
 
 viewFooter : Model -> Html Msg
