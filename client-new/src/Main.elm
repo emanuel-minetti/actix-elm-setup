@@ -6,13 +6,13 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import I18Next exposing (Translations, t, translationsDecoder)
+import I18Next exposing (Translations, initialTranslations, t, translationsDecoder)
 import Url exposing (Url)
 
 
 type alias Model =
     { lang : String
-    , t : Maybe Translations
+    , t : Translations
     }
 
 
@@ -54,7 +54,7 @@ init flags _ _ =
 
         initialModel =
             { lang = lang
-            , t = Nothing
+            , t = initialTranslations
             }
     in
     ( initialModel, loadTranslation lang )
@@ -69,7 +69,7 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok translation ->
-                    ( { model | t = Just translation }, Cmd.none )
+                    ( { model | t = translation }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -108,13 +108,6 @@ view model =
                 ]
             ]
         , div [ class "container" ]
-            [ text <|
-                case model.t of
-                    Nothing ->
-                        "" ++ model.lang
-
-                    Just res ->
-                        t res "yourPreferredLang" ++ model.lang
-            ]
+            [ text <| t model.t "yourPreferredLang" ++ model.lang ]
         ]
     }
