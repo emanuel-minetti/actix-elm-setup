@@ -6,7 +6,7 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import I18Next exposing (Translations, initialTranslations, t, translationsDecoder)
+import I18Next exposing (Delims(..), Translations, initialTranslations, translationsDecoder)
 import Url exposing (Url)
 
 
@@ -108,6 +108,6 @@ view model =
                 ]
             ]
         , div [ class "container" ]
-            [ text <| t model.t "yourPreferredLang" ++ model.lang ]
+            [ text <| I18Next.tr model.t Curly "yourPreferredLang" [ ( "lang", model.lang ) ] ]
         ]
     }

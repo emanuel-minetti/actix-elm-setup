@@ -1,3 +1,3 @@
 {
-  "yourPreferredLang" : "Ihre bevorzugte Sprache: "
+  "yourPreferredLang" : "Ihre bevorzugte Sprache: {{lang}}"
 }
