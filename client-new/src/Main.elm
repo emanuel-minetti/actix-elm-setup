@@ -7,6 +7,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
 import I18Next exposing (Delims(..), Translations, initialTranslations, translationsDecoder)
+import Translations.Main as I18n
 import Url exposing (Url)
 
 
@@ -108,6 +109,6 @@ view model =
                 ]
             ]
         , div [ class "container" ]
-            [ text <| I18Next.tr model.t Curly "yourPreferredLang" [ ( "lang", model.lang ) ] ]
+            [ text <| I18n.yourPreferredLang model.t model.lang ]
         ]
     }

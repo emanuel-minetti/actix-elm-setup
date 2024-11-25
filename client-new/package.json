@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "postbuild": "ncp web/ ../public/ && ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css && ncp i18n/ ../public/lang/",
+    "prebuild": "npm run generate-translations",
     "build": "elm make src/Main.elm --output ../public/js/elm.js",
+    "postbuild": "npm run copyWeb && npm run copyBootstrap && npm run copyI18n",
+    "generate-translations": "elm-i18next-gen -s i18n/main.en.json -t src -o",
+    "copyWeb": "ncp web/ ../public/",
+    "copyBootstrap": "ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",
+    "copyI18n": "ncp i18n/ ../public/lang/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -12,5 +17,8 @@
   "description": "",
   "dependencies": {
     "bootstrap": "^5.3.3"
+  },
+  "devDependencies": {
+    "elm-i18next-gen": "^1.1.0"
   }
 }

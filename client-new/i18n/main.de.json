@@ -1,3 +1,5 @@
 {
-  "yourPreferredLang" : "Ihre bevorzugte Sprache: {{lang}}"
+  "Main": {
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+  }
 }
