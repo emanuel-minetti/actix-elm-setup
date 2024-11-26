@@ -5,6 +5,7 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onInput)
 import Http
 import I18Next exposing (Delims(..), Translations, initialTranslations, translationsDecoder)
 import Translations.Main as I18n
@@ -21,6 +22,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | GotTranslation (Result Http.Error Translations)
+    | SwitchLanguage String
 
 
 main : Program (Array String) Model Msg
@@ -72,6 +74,13 @@ update msg model =
                 Ok translation ->
                     ( { model | t = translation }, Cmd.none )
 
+        SwitchLanguage newValue ->
+            let
+                _ =
+                    Debug.log newValue ""
+            in
+            ( { model | lang = newValue }, loadTranslation newValue )
+
         _ ->
             ( model, Cmd.none )
 
@@ -109,6 +118,11 @@ view model =
                 ]
             ]
         , div [ class "container" ]
-            [ text <| I18n.yourPreferredLang model.t model.lang ]
+            [ text <| I18n.yourPreferredLang model.t model.lang
+            , select [ class "form-select", onInput SwitchLanguage ]
+                [ option [ value "de" ] [ text "de" ]
+                , option [ value "en" ] [ text "en" ]
+                ]
+            ]
         ]
     }
