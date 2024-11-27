@@ -8,12 +8,13 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Http
 import I18Next exposing (Delims(..), Translations, initialTranslations, translationsDecoder)
+import Lang exposing (Lang)
 import Translations.Main as I18n
 import Url exposing (Url)
 
 
 type alias Model =
-    { lang : String
+    { lang : Lang
     , t : Translations
     }
 
@@ -41,7 +42,7 @@ init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags _ _ =
     let
         defaultLang =
-            "en"
+            "de"
 
         langFromBrowser =
             Array.get 0 flags
@@ -49,11 +50,7 @@ init flags _ _ =
                 |> String.slice 0 2
 
         lang =
-            if langFromBrowser == "en" || langFromBrowser == "de" then
-                langFromBrowser
-
-            else
-                defaultLang
+            Lang.fromString langFromBrowser
 
         initialModel =
             { lang = lang
@@ -76,20 +73,20 @@ update msg model =
 
         SwitchLanguage newValue ->
             let
-                _ =
-                    Debug.log newValue ""
+                lang =
+                    Lang.fromString newValue
             in
-            ( { model | lang = newValue }, loadTranslation newValue )
+            ( { model | lang = lang }, loadTranslation lang )
 
         _ ->
             ( model, Cmd.none )
 
 
-loadTranslation : String -> Cmd Msg
+loadTranslation : Lang -> Cmd Msg
 loadTranslation lang =
     Http.request
         { method = "GET"
-        , url = "http://127.0.0.1:8080/lang/main." ++ lang ++ ".json"
+        , url = "http://127.0.0.1:8080/lang/translation." ++ Lang.toValue lang ++ ".json"
         , headers = [ Http.header "Accept" "application/json" ]
         , body = Http.emptyBody
         , expect = Http.expectJson GotTranslation translationsDecoder
@@ -118,11 +115,24 @@ view model =
                 ]
             ]
         , div [ class "container" ]
-            [ text <| I18n.yourPreferredLang model.t model.lang
-            , select [ class "form-select", onInput SwitchLanguage ]
-                [ option [ value "de" ] [ text "de" ]
-                , option [ value "en" ] [ text "en" ]
-                ]
+            [ text <| I18n.yourPreferredLang model.t <| Lang.toValue model.lang
+            , select [ class "form-select", onInput SwitchLanguage ] <|
+                viewLangOptions model
             ]
         ]
     }
+
+
+viewLangOptions : Model -> List (Html Msg)
+viewLangOptions model =
+    let
+        langToText lang =
+            Lang.toText lang
+
+        isSelected lang =
+            lang == model.lang
+
+        langToOption lang =
+            option [ value <| Lang.toValue lang, selected <| isSelected lang ] [ text <| langToText lang model.t ]
+    in
+    List.map langToOption Lang.getLangs
