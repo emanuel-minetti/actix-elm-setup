@@ -1,6 +1,9 @@
 {
   "Main": {
-    "yourPreferredLang": "Your preferred Language: {{lang}}"
+    "LoggedInText": "You're not logged in",
+    "yourPreferredLang": "Your preferred Language: {{lang}}",
+    "footerPrivacy": "Privacy Declaration",
+    "footerImprint": "Imprint"
   },
   "Lang": {
     "german": "German",

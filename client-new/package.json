@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "prebuild": "npm run generate-translations",
+    "prebuild": "npm run generateTranslations",
     "build": "elm make src/Main.elm --output ../public/js/elm.js",
     "postbuild": "npm run copyWeb && npm run copyBootstrap && npm run copyI18n",
-    "generate-translations": "elm-i18next-gen -s i18n/translation.en.json -t src -o",
+    "generateTranslations": "elm-i18next-gen -s i18n/translation.de.json -t src -o",
     "copyWeb": "ncp web/ ../public/",
     "copyBootstrap": "ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",
     "copyI18n": "ncp i18n/ ../public/lang/",

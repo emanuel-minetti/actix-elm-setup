@@ -1,6 +1,9 @@
 {
   "Main": {
-    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+    "LoggedInText": "Sie sind nicht angemeldet",
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}",
+    "footerPrivacy": "Datenschutz-Erklärung",
+    "footerImprint": "Impressum"
   },
   "Lang": {
     "german": "Deutsch",

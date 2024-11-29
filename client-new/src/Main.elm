@@ -7,15 +7,14 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Http
-import I18Next exposing (Delims(..), Translations, initialTranslations, translationsDecoder)
-import Lang exposing (Lang)
+import I18Next exposing (Delims(..), Translations, translationsDecoder)
+import Locale exposing (Locale)
 import Translations.Main as I18n
 import Url exposing (Url)
 
 
 type alias Model =
-    { lang : Lang
-    , t : Translations
+    { locale : Locale
     }
 
 
@@ -41,23 +40,10 @@ main =
 init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags _ _ =
     let
-        defaultLang =
-            "de"
-
-        langFromBrowser =
-            Array.get 0 flags
-                |> Maybe.withDefault defaultLang
-                |> String.slice 0 2
-
-        lang =
-            Lang.fromString langFromBrowser
-
-        initialModel =
-            { lang = lang
-            , t = initialTranslations
-            }
+        initialLocale =
+            Locale.initialLocale flags
     in
-    ( initialModel, loadTranslation lang )
+    ( { locale = initialLocale }, loadTranslation initialLocale )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,24 +55,28 @@ update msg model =
                     ( model, Cmd.none )
 
                 Ok translation ->
-                    ( { model | t = translation }, Cmd.none )
+                    let
+                        locale =
+                            Locale.changeTranslations model.locale translation
+                    in
+                    ( { model | locale = locale }, Cmd.none )
 
         SwitchLanguage newValue ->
             let
-                lang =
-                    Lang.fromString newValue
+                locale =
+                    Locale.changeLang model.locale newValue
             in
-            ( { model | lang = lang }, loadTranslation lang )
+            ( { model | locale = locale }, loadTranslation model.locale )
 
         _ ->
             ( model, Cmd.none )
 
 
-loadTranslation : Lang -> Cmd Msg
-loadTranslation lang =
+loadTranslation : Locale -> Cmd Msg
+loadTranslation locale =
     Http.request
         { method = "GET"
-        , url = "http://127.0.0.1:8080/lang/translation." ++ Lang.toValue lang ++ ".json"
+        , url = "http://127.0.0.1:8080/lang/translation." ++ Locale.toValue locale ++ ".json"
         , headers = [ Http.header "Accept" "application/json" ]
         , body = Http.emptyBody
         , expect = Http.expectJson GotTranslation translationsDecoder
@@ -98,41 +88,71 @@ loadTranslation lang =
 view : Model -> Document Msg
 view model =
     { title = "Actix Elm Setup"
-    , body =
-        [ div []
-            [ div [ class "jumbotron" ]
-                [ h1 [] [ text "Welcome to Dunder Mifflin!" ]
-                , p []
-                    [ text "Dunder Mifflin Inc. (stock symbol "
-                    , strong [] [ text "DMI" ]
-                    , text <|
-                        """
-                                         ) is a micro-cap regional paper and office
-                                         supply distributor with an emphasis on servicing
-                                         small-business clients.
-                                         """
+    , body = [ viewHeader model, viewContent model, viewFooter model ]
+    }
+
+
+viewHeader : Model -> Html Msg
+viewHeader model =
+    header []
+        [ nav [ class "navbar bg-body-tertiary" ]
+            [ div [ class "container-fluid" ]
+                [ a
+                    [ class "navbar-brand", href "/" ]
+                    [ img
+                        [ src "img/logo-color.png"
+                        , alt "Logo"
+                        , width 30
+                        , height 24
+                        , class "d-inline-block align-text-top me-3"
+                        ]
+                        []
+                    , text "Actix Elm Setup"
                     ]
+                , span [ class "navbar-text" ] [ text <| I18n.loggedInText model.locale.t ]
+                , select [ onInput SwitchLanguage ] <| viewLangOptions model
                 ]
             ]
-        , div [ class "container" ]
-            [ text <| I18n.yourPreferredLang model.t <| Lang.toValue model.lang
-            , select [ class "form-select", onInput SwitchLanguage ] <|
-                viewLangOptions model
+        ]
+
+
+viewContent : Model -> Html Msg
+viewContent model =
+    div [ class "container" ]
+        [ text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale ]
+
+
+viewFooter : Model -> Html Msg
+viewFooter model =
+    footer [ class "bg-body-tertiary" ]
+        [ div [ class "container-fluid" ]
+            [ div [ class "row align-items-start" ]
+                [ div [ class "col" ]
+                    [ ul [ class "list-unstyled" ]
+                        [ li [] [ button [] [ text <| I18n.footerPrivacy model.locale.t ] ]
+                        , li [] [ button [] [ text <| I18n.footerImprint model.locale.t ] ]
+                        ]
+                    ]
+                , div [ class "col" ]
+                    --todo get from config
+                    [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
+                , div [ class "col" ]
+                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
+                ]
             ]
         ]
-    }
 
 
 viewLangOptions : Model -> List (Html Msg)
 viewLangOptions model =
     let
-        langToText lang =
-            Lang.toText lang
+        localeToText locale =
+            Locale.toText locale
 
-        isSelected lang =
-            lang == model.lang
+        isSelected locale =
+            locale == model.locale
 
-        langToOption lang =
-            option [ value <| Lang.toValue lang, selected <| isSelected lang ] [ text <| langToText lang model.t ]
+        langToOption locale =
+            option [ value <| Locale.toValue locale, selected <| isSelected locale ] [ text <| localeToText locale ]
     in
-    List.map langToOption Lang.getLangs
+    List.map langToOption Locale.getLocaleOptions
