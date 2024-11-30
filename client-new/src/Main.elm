@@ -150,9 +150,9 @@ viewLangOptions model =
             Locale.toText locale
 
         isSelected locale =
-            locale == model.locale
+            locale.lang == model.locale.lang
 
         langToOption locale =
-            option [ value <| Locale.toValue locale, selected <| isSelected locale ] [ text <| localeToText locale ]
+            option [ value <| Locale.toValue locale, selected <| isSelected locale ] [ text <| localeToText locale model.locale.t ]
     in
     List.map langToOption Locale.getLocaleOptions

@@ -61,14 +61,14 @@ toValue locale =
             "en"
 
 
-toText : Locale -> String
-toText locale =
+toText : Locale -> Translations -> String
+toText locale translations =
     case locale.lang of
         De ->
-            I18n.german locale.t
+            I18n.german translations
 
         En ->
-            I18n.english locale.t
+            I18n.english translations
 
 
 type Lang
