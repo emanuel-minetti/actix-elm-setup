@@ -66,7 +66,7 @@ update msg model =
                 locale =
                     Locale.changeLang model.locale newValue
             in
-            ( { model | locale = locale }, loadTranslation model.locale )
+            ( { model | locale = locale }, loadTranslation locale )
 
         _ ->
             ( model, Cmd.none )
