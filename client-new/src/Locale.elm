@@ -1,8 +1,6 @@
-module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, toText, toValue, update, viewLangOptions)
+module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, toText, toValue, update)
 
 import Array exposing (Array)
-import Html exposing (Html, option, text)
-import Html.Attributes exposing (selected, value)
 import Http
 import I18Next exposing (Translations, initialTranslations, translationsDecoder)
 import Translations.Lang as I18n
@@ -147,16 +145,17 @@ loadTranslation locale =
         }
 
 
-viewLangOptions : Locale -> List (Html msg)
-viewLangOptions locale =
-    let
-        localeToText newLocale =
-            toText newLocale
 
-        isSelected newLocale =
-            newLocale.lang == locale.lang
-
-        langToOption newLocale =
-            option [ value <| toValue newLocale, selected <| isSelected newLocale ] [ text <| localeToText locale locale.t ]
-    in
-    List.map langToOption getLocaleOptions
+--viewLangOptions : Locale -> List (Html msg)
+--viewLangOptions locale =
+--    let
+--        localeToText newLocale =
+--            toText newLocale
+--
+--        isSelected newLocale =
+--            newLocale.lang == locale.lang
+--
+--        langToOption newLocale =
+--            option [ value <| toValue newLocale, selected <| isSelected newLocale ] [ text <| localeToText newLocale locale.t ]
+--    in
+--    List.map langToOption getLocaleOptions
