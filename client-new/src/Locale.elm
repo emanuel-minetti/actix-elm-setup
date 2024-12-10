@@ -1,4 +1,4 @@
-module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, toText, toValue, update)
+module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, loadTranslation, toText, toValue, update)
 
 import Array exposing (Array)
 import Http

@@ -6,8 +6,6 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Http
-import I18Next exposing (Delims(..), Translations, translationsDecoder)
 import Locale exposing (Locale)
 import Translations.Main as I18n
 import Url exposing (Url)
@@ -21,8 +19,7 @@ type alias Model =
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
-    | GotTranslation (Result Http.Error Translations)
-    | GotTranslationFromInit Locale.Msg
+    | GotTranslation Locale.Msg
     | SwitchLanguage String
 
 
@@ -44,32 +41,20 @@ init flags _ _ =
         ( locale, localeCmd ) =
             Locale.init flags
     in
-    ( Model locale, Cmd.map GotTranslationFromInit localeCmd )
+    ( Model locale, Cmd.map GotTranslation localeCmd )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotTranslation result ->
-            case result of
-                Err _ ->
-                    ( model, Cmd.none )
-
-                Ok translation ->
-                    let
-                        locale =
-                            Locale.changeTranslations model.locale translation
-                    in
-                    ( { model | locale = locale }, Cmd.none )
-
         SwitchLanguage newValue ->
             let
                 locale =
                     Locale.changeLang model.locale newValue
             in
-            ( { model | locale = locale }, loadTranslation locale )
+            ( { model | locale = locale }, Cmd.map GotTranslation <| Locale.loadTranslation locale )
 
-        GotTranslationFromInit localeCmd ->
+        GotTranslation localeCmd ->
             let
                 ( locale, _ ) =
                     Locale.update localeCmd model.locale
@@ -78,19 +63,6 @@ update msg model =
 
         _ ->
             ( model, Cmd.none )
-
-
-loadTranslation : Locale -> Cmd Msg
-loadTranslation locale =
-    Http.request
-        { method = "GET"
-        , url = "http://127.0.0.1:8080/lang/translation." ++ Locale.toValue locale ++ ".json"
-        , headers = [ Http.header "Accept" "application/json" ]
-        , body = Http.emptyBody
-        , expect = Http.expectJson GotTranslation translationsDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
 
 
 view : Model -> Document Msg
