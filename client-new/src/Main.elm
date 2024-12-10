@@ -90,7 +90,7 @@ viewHeader model =
                     , text "Actix Elm Setup"
                     ]
                 , span [ class "navbar-text" ] [ text <| I18n.loggedInText model.locale.t ]
-                , select [ onInput SwitchLanguage ] <| viewLangOptions model
+                , select [ onInput SwitchLanguage ] <| Locale.viewLangOptions model.locale
                 ]
             ]
         ]
@@ -121,18 +121,3 @@ viewFooter model =
                 ]
             ]
         ]
-
-
-viewLangOptions : Model -> List (Html Msg)
-viewLangOptions model =
-    let
-        localeToText locale =
-            Locale.toText locale
-
-        isSelected locale =
-            locale.lang == model.locale.lang
-
-        langToOption locale =
-            option [ value <| Locale.toValue locale, selected <| isSelected locale ] [ text <| localeToText locale model.locale.t ]
-    in
-    List.map langToOption Locale.getLocaleOptions

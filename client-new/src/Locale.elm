@@ -1,6 +1,8 @@
-module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, loadTranslation, toText, toValue, update)
+module Locale exposing (Locale, Msg(..), changeLang, init, initialLocale, loadTranslation, toValue, update, viewLangOptions)
 
 import Array exposing (Array)
+import Html exposing (Html, option, text)
+import Html.Attributes exposing (selected, value)
 import Http
 import I18Next exposing (Translations, initialTranslations, translationsDecoder)
 import Translations.Lang as I18n
@@ -14,7 +16,6 @@ type alias Locale =
 
 type Msg
     = GotTranslation (Result Http.Error Translations)
-    | SwitchLanguage String
 
 
 init : Array String -> ( Locale, Cmd Msg )
@@ -40,13 +41,6 @@ update msg locale =
                             changeTranslations locale translation
                     in
                     ( newLocale, Cmd.none )
-
-        SwitchLanguage newValue ->
-            let
-                newLocale =
-                    changeLang locale newValue
-            in
-            ( newLocale, loadTranslation newLocale )
 
 
 initialLocale : Array String -> Locale
@@ -145,17 +139,16 @@ loadTranslation locale =
         }
 
 
+viewLangOptions : Locale -> List (Html msg)
+viewLangOptions locale =
+    let
+        localeToText newLocale =
+            toText newLocale
 
---viewLangOptions : Locale -> List (Html msg)
---viewLangOptions locale =
---    let
---        localeToText newLocale =
---            toText newLocale
---
---        isSelected newLocale =
---            newLocale.lang == locale.lang
---
---        langToOption newLocale =
---            option [ value <| toValue newLocale, selected <| isSelected newLocale ] [ text <| localeToText newLocale locale.t ]
---    in
---    List.map langToOption getLocaleOptions
+        isSelected newLocale =
+            newLocale.lang == locale.lang
+
+        langToOption newLocale =
+            option [ value <| toValue newLocale, selected <| isSelected newLocale ] [ text <| localeToText newLocale locale.t ]
+    in
+    List.map langToOption getLocaleOptions
