@@ -22,6 +22,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | GotTranslation (Result Http.Error Translations)
+    | GotTranslationFromInit Locale.Msg
     | SwitchLanguage String
 
 
@@ -40,10 +41,10 @@ main =
 init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags _ _ =
     let
-        initialLocale =
-            Locale.initialLocale flags
+        ( locale, localeCmd ) =
+            Locale.init flags
     in
-    ( { locale = initialLocale }, loadTranslation initialLocale )
+    ( Model locale, Cmd.map GotTranslationFromInit localeCmd )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,6 +68,13 @@ update msg model =
                     Locale.changeLang model.locale newValue
             in
             ( { model | locale = locale }, loadTranslation locale )
+
+        GotTranslationFromInit localeCmd ->
+            let
+                ( locale, _ ) =
+                    Locale.update localeCmd model.locale
+            in
+            ( { model | locale = locale }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )

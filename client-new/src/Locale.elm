@@ -1,7 +1,10 @@
-module Locale exposing (Locale, changeLang, changeTranslations, getLocaleOptions, initialLocale, toText, toValue)
+module Locale exposing (Locale, Msg(..), changeLang, changeTranslations, getLocaleOptions, init, initialLocale, toText, toValue, update, viewLangOptions)
 
 import Array exposing (Array)
-import I18Next exposing (Translations, initialTranslations)
+import Html exposing (Html, option, text)
+import Html.Attributes exposing (selected, value)
+import Http
+import I18Next exposing (Translations, initialTranslations, translationsDecoder)
 import Translations.Lang as I18n
 
 
@@ -9,6 +12,43 @@ type alias Locale =
     { lang : Lang
     , t : Translations
     }
+
+
+type Msg
+    = GotTranslation (Result Http.Error Translations)
+    | SwitchLanguage String
+
+
+init : Array String -> ( Locale, Cmd Msg )
+init flags =
+    let
+        newLocale =
+            initialLocale flags
+    in
+    ( newLocale, loadTranslation newLocale )
+
+
+update : Msg -> Locale -> ( Locale, Cmd Msg )
+update msg locale =
+    case msg of
+        GotTranslation result ->
+            case result of
+                Err _ ->
+                    ( locale, Cmd.none )
+
+                Ok translation ->
+                    let
+                        newLocale =
+                            changeTranslations locale translation
+                    in
+                    ( newLocale, Cmd.none )
+
+        SwitchLanguage newValue ->
+            let
+                newLocale =
+                    changeLang locale newValue
+            in
+            ( newLocale, loadTranslation newLocale )
 
 
 initialLocale : Array String -> Locale
@@ -92,3 +132,31 @@ fromString string =
 
         _ ->
             De
+
+
+loadTranslation : Locale -> Cmd Msg
+loadTranslation locale =
+    Http.request
+        { method = "GET"
+        , url = "http://127.0.0.1:8080/lang/translation." ++ toValue locale ++ ".json"
+        , headers = [ Http.header "Accept" "application/json" ]
+        , body = Http.emptyBody
+        , expect = Http.expectJson GotTranslation translationsDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+viewLangOptions : Locale -> List (Html msg)
+viewLangOptions locale =
+    let
+        localeToText newLocale =
+            toText newLocale
+
+        isSelected newLocale =
+            newLocale.lang == locale.lang
+
+        langToOption newLocale =
+            option [ value <| toValue newLocale, selected <| isSelected newLocale ] [ text <| localeToText locale locale.t ]
+    in
+    List.map langToOption getLocaleOptions
