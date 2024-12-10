@@ -1,9 +1,11 @@
 {
   "Main": {
     "LoggedInText": "Sie sind nicht angemeldet",
-    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}",
-    "footerPrivacy": "Datenschutz-Erklärung",
-    "footerImprint": "Impressum"
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+  },
+  "Route": {
+    "Privacy": "Datenschutz-Erklärung",
+    "Imprint": "Impressum"
   },
   "Lang": {
     "german": "Deutsch",

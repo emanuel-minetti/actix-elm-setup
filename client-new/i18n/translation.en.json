@@ -1,9 +1,11 @@
 {
   "Main": {
     "LoggedInText": "You're not logged in",
-    "yourPreferredLang": "Your preferred Language: {{lang}}",
-    "footerPrivacy": "Privacy Declaration",
-    "footerImprint": "Imprint"
+    "yourPreferredLang": "Your preferred Language: {{lang}}"
+  },
+  "Route": {
+    "Privacy": "Privacy Declaration",
+    "Imprint": "Imprint"
   },
   "Lang": {
     "german": "German",

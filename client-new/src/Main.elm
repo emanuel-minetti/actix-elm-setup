@@ -7,12 +7,15 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Locale exposing (Locale)
+import Route exposing (Route)
 import Translations.Main as I18n
 import Url exposing (Url)
 
 
 type alias Model =
     { locale : Locale
+    , route : Route
+    , navKey : Nav.Key
     }
 
 
@@ -36,17 +39,41 @@ main =
 
 
 init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags _ _ =
+init flags url navKey =
     let
         ( locale, localeCmd ) =
             Locale.init flags
+
+        model =
+            { locale = locale
+            , route = Route.parseUrl url
+            , navKey = navKey
+            }
+
+        cmds =
+            [ Cmd.map GotTranslation localeCmd ]
     in
-    ( Model locale, Cmd.map GotTranslation localeCmd )
+    ( model, Cmd.batch cmds )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ClickedLink urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+
+                Browser.External url ->
+                    ( model, Nav.load url )
+
+        ChangedUrl url ->
+            let
+                newRoute =
+                    Route.parseUrl url
+            in
+            ( { model | route = newRoute }, Cmd.none )
+
         SwitchLanguage newValue ->
             let
                 locale =
@@ -60,9 +87,6 @@ update msg model =
                     Locale.update localeCmd model.locale
             in
             ( { model | locale = locale }, Cmd.none )
-
-        _ ->
-            ( model, Cmd.none )
 
 
 view : Model -> Document Msg
@@ -108,11 +132,7 @@ viewFooter model =
         [ div [ class "container-fluid" ]
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
-                    [ ul [ class "list-unstyled" ]
-                        [ li [] [ button [] [ text <| I18n.footerPrivacy model.locale.t ] ]
-                        , li [] [ button [] [ text <| I18n.footerImprint model.locale.t ] ]
-                        ]
-                    ]
+                    [ ul [ class "list-unstyled" ] <| viewFooterLinks model.locale ]
                 , div [ class "col" ]
                     --todo get from config
                     [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
@@ -121,3 +141,15 @@ viewFooter model =
                 ]
             ]
         ]
+
+
+viewFooterLinks : Locale -> List (Html Msg)
+viewFooterLinks locale =
+    let
+        routes =
+            [ Route.Privacy, Route.Imprint ]
+
+        routeToItem route =
+            li [] [ a [ href <| Route.routeToHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.routeToText route locale ] ] ]
+    in
+    List.map routeToItem routes
