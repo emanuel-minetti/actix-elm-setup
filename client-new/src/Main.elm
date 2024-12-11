@@ -5,25 +5,24 @@ import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
 import Locale exposing (Locale)
-import Route exposing (Route)
+import Page
+import Route exposing (Route(..))
+import Session exposing (Session)
 import Translations.Main as I18n
 import Url exposing (Url)
 
 
 type alias Model =
-    { locale : Locale
-    , route : Route
-    , navKey : Nav.Key
-    }
+    Session
 
 
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
-    | GotTranslation Locale.Msg
-    | SwitchLanguage String
+    | GotTranslationFromLocale Locale.Msg
+    | GotTranslationFromPage Page.Msg
+    | SwitchLanguage Page.Msg
 
 
 main : Program (Array String) Model Msg
@@ -51,7 +50,7 @@ init flags url navKey =
             }
 
         cmds =
-            [ Cmd.map GotTranslation localeCmd ]
+            [ Cmd.map GotTranslationFromLocale localeCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -74,56 +73,65 @@ update msg model =
             in
             ( { model | route = newRoute }, Cmd.none )
 
-        SwitchLanguage newValue ->
-            let
-                locale =
-                    Locale.changeLang model.locale newValue
-            in
-            ( { model | locale = locale }, Cmd.map GotTranslation <| Locale.loadTranslation locale )
-
-        GotTranslation localeCmd ->
+        GotTranslationFromLocale localeCmd ->
             let
                 ( locale, _ ) =
                     Locale.update localeCmd model.locale
             in
             ( { model | locale = locale }, Cmd.none )
 
+        SwitchLanguage pageCmd ->
+            let
+                ( session, newPageCmd ) =
+                    Page.update pageCmd model
+            in
+            ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
+
+        GotTranslationFromPage pageCmd ->
+            let
+                ( session, _ ) =
+                    Page.update pageCmd model
+            in
+            ( { model | locale = session.locale }, Cmd.none )
+
 
 view : Model -> Document Msg
 view model =
     { title = "Actix Elm Setup"
-    , body = [ viewHeader model, viewContent model, viewFooter model ]
+    , body = [ Html.map SwitchLanguage <| Page.viewHeader model, viewContent model, viewFooter model ]
     }
-
-
-viewHeader : Model -> Html Msg
-viewHeader model =
-    header []
-        [ nav [ class "navbar bg-body-tertiary" ]
-            [ div [ class "container-fluid" ]
-                [ a
-                    [ class "navbar-brand", href "/" ]
-                    [ img
-                        [ src "img/logo-color.png"
-                        , alt "Logo"
-                        , width 30
-                        , height 24
-                        , class "d-inline-block align-text-top me-3"
-                        ]
-                        []
-                    , text "Actix Elm Setup"
-                    ]
-                , span [ class "navbar-text" ] [ text <| I18n.loggedInText model.locale.t ]
-                , select [ onInput SwitchLanguage ] <| Locale.viewLangOptions model.locale
-                ]
-            ]
-        ]
 
 
 viewContent : Model -> Html Msg
 viewContent model =
-    div [ class "container" ]
-        [ text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale ]
+    case model.route of
+        Home ->
+            div [ class "container" ]
+                [ text "Das ist Home"
+                , br [] []
+                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
+                ]
+
+        NotFound ->
+            div [ class "container" ]
+                [ text "Das ist NotFound"
+                , br [] []
+                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
+                ]
+
+        Privacy ->
+            div [ class "container" ]
+                [ text "Das ist Privacy"
+                , br [] []
+                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
+                ]
+
+        Imprint ->
+            div [ class "container" ]
+                [ text "Das ist Imprint"
+                , br [] []
+                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
+                ]
 
 
 viewFooter : Model -> Html Msg
