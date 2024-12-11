@@ -80,19 +80,19 @@ update msg model =
             in
             ( { model | locale = locale }, Cmd.none )
 
-        SwitchLanguage pageCmd ->
-            let
-                ( session, newPageCmd ) =
-                    Page.update pageCmd model
-            in
-            ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
-
         GotTranslationFromPage pageCmd ->
             let
                 ( session, _ ) =
                     Page.update pageCmd model
             in
             ( { model | locale = session.locale }, Cmd.none )
+
+        SwitchLanguage pageCmd ->
+            let
+                ( session, newPageCmd ) =
+                    Page.update pageCmd model
+            in
+            ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
 
 
 view : Model -> Document Msg
