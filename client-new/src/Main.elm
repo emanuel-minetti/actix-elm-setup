@@ -150,6 +150,6 @@ viewFooterLinks locale =
             [ Route.Privacy, Route.Imprint ]
 
         routeToItem route =
-            li [] [ a [ href <| Route.routeToHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.routeToText route locale ] ] ]
+            li [] [ a [ href <| Route.toHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ] ]
     in
     List.map routeToItem routes

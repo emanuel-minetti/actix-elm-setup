@@ -1,4 +1,4 @@
-module Route exposing (Route(..), parseUrl, routeToHref, routeToText)
+module Route exposing (Route(..), parseUrl, toHref, toText)
 
 import Locale exposing (Locale)
 import Translations.Route as I18n
@@ -33,8 +33,8 @@ matchRoute =
         ]
 
 
-routeToHref : Route -> String
-routeToHref route =
+toHref : Route -> String
+toHref route =
     case route of
         Privacy ->
             "/privacy"
@@ -46,8 +46,8 @@ routeToHref route =
             "/"
 
 
-routeToText : Route -> Locale -> String
-routeToText route locale =
+toText : Route -> Locale -> String
+toText route locale =
     case route of
         Privacy ->
             I18n.privacy locale.t
