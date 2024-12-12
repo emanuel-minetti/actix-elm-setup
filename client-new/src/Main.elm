@@ -23,6 +23,7 @@ type Msg
     | GotTranslationFromLocale Locale.Msg
     | GotTranslationFromPage Page.Msg
     | SwitchLanguage Page.Msg
+    | None Page.Msg
 
 
 main : Program (Array String) Model Msg
@@ -94,11 +95,14 @@ update msg model =
             in
             ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
 
+        None _ ->
+            ( model, Cmd.none )
+
 
 view : Model -> Document Msg
 view model =
     { title = "Actix Elm Setup"
-    , body = [ Html.map SwitchLanguage <| Page.viewHeader model, viewContent model, viewFooter model ]
+    , body = [ Html.map SwitchLanguage <| Page.viewHeader model, viewContent model, Html.map None <| Page.viewFooter model ]
     }
 
 
@@ -132,32 +136,3 @@ viewContent model =
                 , br [] []
                 , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
                 ]
-
-
-viewFooter : Model -> Html Msg
-viewFooter model =
-    footer [ class "bg-body-tertiary" ]
-        [ div [ class "container-fluid" ]
-            [ div [ class "row align-items-start" ]
-                [ div [ class "col" ]
-                    [ ul [ class "list-unstyled" ] <| viewFooterLinks model.locale ]
-                , div [ class "col" ]
-                    --todo get from config
-                    [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
-                , div [ class "col" ]
-                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
-                ]
-            ]
-        ]
-
-
-viewFooterLinks : Locale -> List (Html Msg)
-viewFooterLinks locale =
-    let
-        routes =
-            [ Route.Privacy, Route.Imprint ]
-
-        routeToItem route =
-            li [] [ a [ href <| Route.toHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ] ]
-    in
-    List.map routeToItem routes

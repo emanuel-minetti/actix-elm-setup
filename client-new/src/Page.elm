@@ -1,12 +1,13 @@
-module Page exposing (Msg(..), update, viewHeader)
+module Page exposing (Msg(..), update, viewFooter, viewHeader)
 
 --import Browser exposing (Document)
 --import Route
 
-import Html exposing (Html, a, div, header, img, nav, select, span, text)
+import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Html.Events exposing (onInput)
-import Locale
+import Locale exposing (Locale)
+import Route
 import Session exposing (Session)
 import Translations.Main as I18n
 
@@ -64,3 +65,32 @@ viewHeader session =
                 ]
             ]
         ]
+
+
+viewFooter : Session -> Html Msg
+viewFooter model =
+    footer [ class "bg-body-tertiary" ]
+        [ div [ class "container-fluid" ]
+            [ div [ class "row align-items-start" ]
+                [ div [ class "col" ]
+                    [ ul [ class "list-unstyled" ] <| viewFooterLinks model.locale ]
+                , div [ class "col" ]
+                    --todo get from config
+                    [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
+                , div [ class "col" ]
+                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
+                ]
+            ]
+        ]
+
+
+viewFooterLinks : Locale -> List (Html Msg)
+viewFooterLinks locale =
+    let
+        routes =
+            [ Route.Privacy, Route.Imprint ]
+
+        routeToItem route =
+            li [] [ a [ href <| Route.toHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ] ]
+    in
+    List.map routeToItem routes
