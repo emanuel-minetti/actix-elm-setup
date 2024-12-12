@@ -4,12 +4,10 @@ import Array exposing (Array)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
 import Html exposing (..)
-import Html.Attributes exposing (..)
 import Locale exposing (Locale)
 import Page
 import Route exposing (Route(..))
 import Session exposing (Session)
-import Translations.Main as I18n
 import Url exposing (Url)
 
 
@@ -22,8 +20,7 @@ type Msg
     | ClickedLink Browser.UrlRequest
     | GotTranslationFromLocale Locale.Msg
     | GotTranslationFromPage Page.Msg
-    | SwitchLanguage Page.Msg
-    | None Page.Msg
+    | PageMsg Page.Msg
 
 
 main : Program (Array String) Model Msg
@@ -88,51 +85,23 @@ update msg model =
             in
             ( { model | locale = session.locale }, Cmd.none )
 
-        SwitchLanguage pageCmd ->
-            let
-                ( session, newPageCmd ) =
-                    Page.update pageCmd model
-            in
-            ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
+        PageMsg pageMsg ->
+            case pageMsg of
+                Page.SwitchLanguage _ ->
+                    let
+                        ( session, newPageCmd ) =
+                            Page.update pageMsg model
+                    in
+                    ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
 
-        None _ ->
-            ( model, Cmd.none )
+                Page.GotTranslation _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Document Msg
 view model =
-    { title = "Actix Elm Setup"
-    , body = [ Html.map SwitchLanguage <| Page.viewHeader model, viewContent model, Html.map None <| Page.viewFooter model ]
-    }
-
-
-viewContent : Model -> Html Msg
-viewContent model =
-    case model.route of
-        Home ->
-            div [ class "container" ]
-                [ text "Das ist Home"
-                , br [] []
-                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
-                ]
-
-        NotFound ->
-            div [ class "container" ]
-                [ text "Das ist NotFound"
-                , br [] []
-                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
-                ]
-
-        Privacy ->
-            div [ class "container" ]
-                [ text "Das ist Privacy"
-                , br [] []
-                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
-                ]
-
-        Imprint ->
-            div [ class "container" ]
-                [ text "Das ist Imprint"
-                , br [] []
-                , text <| I18n.yourPreferredLang model.locale.t <| Locale.toValue model.locale
-                ]
+    let
+        { title, body } =
+            Page.view model
+    in
+    { title = title, body = List.map (Html.map PageMsg) body }

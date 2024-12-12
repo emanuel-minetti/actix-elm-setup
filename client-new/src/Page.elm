@@ -1,23 +1,20 @@
-module Page exposing (Msg(..), update, viewFooter, viewHeader)
+module Page exposing (Msg(..), update, view)
 
---import Browser exposing (Document)
---import Route
-
+import Browser exposing (Document)
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Html.Events exposing (onInput)
 import Locale exposing (Locale)
-import Route
+import Route exposing (Route(..))
 import Session exposing (Session)
 import Translations.Main as I18n
 
 
-
---view : Session -> Document msg
---view session =
---    { title = Route.toText session.route session.locale
---    , body = [ viewHeader session ]
---    }
+view : Session -> Document Msg
+view session =
+    { title = Route.toText session.route session.locale
+    , body = [ viewHeader session, viewContent session, viewFooter session ]
+    }
 
 
 type Msg
@@ -65,6 +62,38 @@ viewHeader session =
                 ]
             ]
         ]
+
+
+viewContent : Session -> Html Msg
+viewContent session =
+    case session.route of
+        Home ->
+            div [ class "container" ]
+                [ text "Das ist Home"
+                , br [] []
+                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                ]
+
+        NotFound ->
+            div [ class "container" ]
+                [ text "Das ist NotFound"
+                , br [] []
+                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                ]
+
+        Privacy ->
+            div [ class "container" ]
+                [ text "Das ist Privacy"
+                , br [] []
+                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                ]
+
+        Imprint ->
+            div [ class "container" ]
+                [ text "Das ist Imprint"
+                , br [] []
+                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                ]
 
 
 viewFooter : Session -> Html Msg
