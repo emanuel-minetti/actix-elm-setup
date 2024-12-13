@@ -38,13 +38,17 @@ main =
 init : Array String -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
     let
+        defaultLangString =
+            "de"
+
         ( locale, localeCmd ) =
-            Locale.init flags
+            Locale.init <| Maybe.withDefault defaultLangString <| Array.get 0 flags
 
         model =
             { locale = locale
             , route = Route.parseUrl url
             , navKey = navKey
+            , user = Nothing
             }
 
         cmds =

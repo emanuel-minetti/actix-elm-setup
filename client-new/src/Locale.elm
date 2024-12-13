@@ -1,6 +1,5 @@
-module Locale exposing (Locale, Msg(..), changeLang, init, initialLocale, loadTranslation, toValue, update, viewLangOptions)
+module Locale exposing (Lang(..), Locale, Msg(..), changeLang, init, initialLocale, loadTranslation, toValue, update, viewLangOptions)
 
-import Array exposing (Array)
 import Html exposing (Html, option, text)
 import Html.Attributes exposing (selected, value)
 import Http
@@ -18,11 +17,11 @@ type Msg
     = GotTranslation (Result Http.Error Translations)
 
 
-init : Array String -> ( Locale, Cmd Msg )
-init flags =
+init : String -> ( Locale, Cmd Msg )
+init flag =
     let
         newLocale =
-            initialLocale flags
+            initialLocale flag
     in
     ( newLocale, loadTranslation newLocale )
 
@@ -43,15 +42,11 @@ update msg locale =
                     ( newLocale, Cmd.none )
 
 
-initialLocale : Array String -> Locale
-initialLocale flags =
+initialLocale : String -> Locale
+initialLocale flag =
     let
-        defaultLangString =
-            "de"
-
         langFromBrowser =
-            Array.get 0 flags
-                |> Maybe.withDefault defaultLangString
+            flag
                 |> String.slice 0 2
 
         lang =
