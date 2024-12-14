@@ -1,4 +1,15 @@
-module Locale exposing (Lang(..), Locale, Msg(..), changeLang, init, initialLocale, loadTranslation, toValue, update, viewLangOptions)
+module Locale exposing
+    ( Lang(..)
+    , Locale
+    , Msg(..)
+    , changeLang
+    , init
+    , langFromString
+    , loadTranslation
+    , toValue
+    , update
+    , viewLangOptions
+    )
 
 import Html exposing (Html, option, text)
 import Html.Attributes exposing (selected, value)
@@ -50,7 +61,7 @@ initialLocale flag =
                 |> String.slice 0 2
 
         lang =
-            fromString langFromBrowser
+            langFromString langFromBrowser
     in
     { lang = lang, t = initialTranslations }
 
@@ -68,7 +79,7 @@ changeLang : Locale -> String -> Locale
 changeLang locale string =
     let
         lang =
-            fromString string
+            langFromString string
     in
     { locale | lang = lang }
 
@@ -108,8 +119,8 @@ getLangList =
     [ De, En ]
 
 
-fromString : String -> Lang
-fromString string =
+langFromString : String -> Lang
+langFromString string =
     case string of
         "de" ->
             De

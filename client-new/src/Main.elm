@@ -9,6 +9,7 @@ import Page
 import Route exposing (Route(..))
 import Session exposing (Session)
 import Url exposing (Url)
+import User
 
 
 type alias Model =
@@ -21,6 +22,7 @@ type Msg
     | GotTranslationFromLocale Locale.Msg
     | GotTranslationFromPage Page.Msg
     | PageMsg Page.Msg
+    | GotUserFromInit User.Msg
 
 
 main : Program (Array String) Model Msg
@@ -41,18 +43,35 @@ init flags url navKey =
         defaultLangString =
             "de"
 
+        langFromBrowser =
+            Maybe.withDefault defaultLangString <| Array.get 0 flags
+
         ( locale, localeCmd ) =
-            Locale.init <| Maybe.withDefault defaultLangString <| Array.get 0 flags
+            Locale.init langFromBrowser
+
+        tokenFromBrowser =
+            Maybe.withDefault "" <| Array.get 1 flags
+
+        ( maybeUser, userCmd ) =
+            if String.length tokenFromBrowser > 0 then
+                let
+                    ( maybeUserFromUser, newUserCmd ) =
+                        User.init tokenFromBrowser
+                in
+                ( Just maybeUserFromUser, newUserCmd )
+
+            else
+                ( Nothing, Cmd.none )
 
         model =
             { locale = locale
             , route = Route.parseUrl url
             , navKey = navKey
-            , user = Nothing
+            , user = maybeUser
             }
 
         cmds =
-            [ Cmd.map GotTranslationFromLocale localeCmd ]
+            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map GotUserFromInit userCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -100,6 +119,9 @@ update msg model =
 
                 Page.GotTranslation _ ->
                     ( model, Cmd.none )
+
+        GotUserFromInit _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Document Msg

@@ -103,9 +103,9 @@ viewFooter model =
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ] <| viewFooterLinks model.locale ]
-                , div [ class "col" ]
-                    --todo get from config
-                    [ span [ class "float-end" ] [ text "Version: 0.0.0" ] ]
+                , div [ class "col text-center" ]
+                    --todo get from config api
+                    [ span [] [ text "Version: 0.0.0" ] ]
                 , div [ class "col" ]
                     [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
                 ]
