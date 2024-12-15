@@ -1,7 +1,7 @@
-module User exposing (Msg(..), User, get, init)
+module User exposing (Msg(..), User, init, update)
 
+import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
-import Json.Decode as D
 import Locale exposing (Lang)
 
 
@@ -17,27 +17,38 @@ type Msg
     = GotApiResponse (Result Http.Error ApiResponse)
 
 
-init : String -> ( User, Cmd Msg )
+init : String -> ( Maybe User, Cmd Msg )
 init token =
     let
         msg =
             loadSession token
     in
-    ( initialUser, msg )
+    ( Nothing, msg )
 
 
-initialUser : User
-initialUser =
-    User "" (Locale.langFromString "") "" 0
+update : Msg -> String -> ( Maybe User, Cmd Msg )
+update msg token =
+    case msg of
+        GotApiResponse result ->
+            case result of
+                Err _ ->
+                    ( Nothing, Cmd.none )
 
+                Ok apiResponse ->
+                    case apiResponse.data of
+                        SessionResponseData serverSession ->
+                            let
+                                newUser =
+                                    { name = serverSession.name
+                                    , preferredLang = Locale.langFromString serverSession.lang
+                                    , token = token
+                                    , sessionExpiresAt = apiResponse.expires
+                                    }
+                            in
+                            ( Just newUser, Cmd.none )
 
-get : String -> ServerSession -> User
-get token serverSession =
-    { name = serverSession.name
-    , preferredLang = Locale.langFromString serverSession.preferredLang
-    , token = token
-    , sessionExpiresAt = 0
-    }
+                        _ ->
+                            ( Nothing, Cmd.none )
 
 
 loadSession : String -> Cmd Msg
@@ -51,26 +62,3 @@ loadSession token =
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-type alias ServerSession =
-    { name : String
-    , preferredLang : String
-    }
-
-
-sessionDecoder : D.Decoder ServerSession
-sessionDecoder =
-    D.map2 ServerSession (D.field "name" D.string) (D.field "preferred_lang" D.string)
-
-
-type alias ApiResponse =
-    { expiresAt : Int
-    , error : String
-    , data : ServerSession
-    }
-
-
-apiResponseDecoder : D.Decoder ApiResponse
-apiResponseDecoder =
-    D.map3 ApiResponse (D.field "expires_at" D.int) (D.field "error" D.string) (D.field "data" sessionDecoder)

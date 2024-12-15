@@ -54,11 +54,7 @@ init flags url navKey =
 
         ( maybeUser, userCmd ) =
             if String.length tokenFromBrowser > 0 then
-                let
-                    ( maybeUserFromUser, newUserCmd ) =
-                        User.init tokenFromBrowser
-                in
-                ( Just maybeUserFromUser, newUserCmd )
+                User.init tokenFromBrowser
 
             else
                 ( Nothing, Cmd.none )
@@ -120,7 +116,10 @@ update msg model =
                 Page.GotTranslation _ ->
                     ( model, Cmd.none )
 
-        GotUserFromInit _ ->
+        GotUserFromInit userMsg ->
+            --let
+            --    (user, _) =
+            --        User.update userMsg
             ( model, Cmd.none )
 
 
