@@ -17,22 +17,26 @@ type Msg
     = GotApiResponse (Result Http.Error ApiResponse)
 
 
-init : String -> ( Maybe User, Cmd Msg )
+init : String -> ( User, Cmd Msg )
 init token =
     let
         msg =
-            loadSession token
+            if String.length token > 0 then
+                loadSession token
+
+            else
+                Cmd.none
     in
-    ( Nothing, msg )
+    ( User "" (Locale.langFromString "") token 0, msg )
 
 
-update : Msg -> String -> ( Maybe User, Cmd Msg )
-update msg token =
+update : Msg -> User -> ( User, Cmd Msg )
+update msg user =
     case msg of
         GotApiResponse result ->
             case result of
                 Err _ ->
-                    ( Nothing, Cmd.none )
+                    ( user, Cmd.none )
 
                 Ok apiResponse ->
                     case apiResponse.data of
@@ -41,14 +45,14 @@ update msg token =
                                 newUser =
                                     { name = serverSession.name
                                     , preferredLang = Locale.langFromString serverSession.lang
-                                    , token = token
+                                    , token = user.token
                                     , sessionExpiresAt = apiResponse.expires
                                     }
                             in
-                            ( Just newUser, Cmd.none )
+                            ( newUser, Cmd.none )
 
                         _ ->
-                            ( Nothing, Cmd.none )
+                            ( user, Cmd.none )
 
 
 loadSession : String -> Cmd Msg

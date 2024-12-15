@@ -1,6 +1,7 @@
 {
   "Main": {
-    "LoggedInText": "You're not logged in",
+    "notLoggedInText": "You're not logged in",
+    "loggedInText": "You're logged in as {{name}}",
     "yourPreferredLang": "Your preferred Language: {{lang}}"
   },
   "Route": {

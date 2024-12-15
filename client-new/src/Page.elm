@@ -57,11 +57,27 @@ viewHeader session =
                         []
                     , text "Actix Elm Setup"
                     ]
-                , span [ class "navbar-text" ] [ text <| I18n.loggedInText session.locale.t ]
+                , span [ class "navbar-text" ] [ viewLoggedInText session ]
                 , select [ onInput SwitchLanguage ] <| Locale.viewLangOptions session.locale
                 ]
             ]
         ]
+
+
+viewLoggedInText : Session -> Html Msg
+viewLoggedInText session =
+    let
+        loggedIn =
+            Session.isLoggedIn session
+
+        loggedInText =
+            if not loggedIn then
+                I18n.notLoggedInText session.locale.t
+
+            else
+                I18n.loggedInText session.locale.t session.user.name
+    in
+    text loggedInText
 
 
 viewContent : Session -> Html Msg

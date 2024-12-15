@@ -1,4 +1,4 @@
-module Session exposing (Session)
+module Session exposing (Session, isLoggedIn)
 
 import Browser.Navigation as Nav
 import Locale exposing (Locale)
@@ -10,5 +10,10 @@ type alias Session =
     { locale : Locale
     , route : Route
     , navKey : Nav.Key
-    , user : Maybe User
+    , user : User
     }
+
+
+isLoggedIn : Session -> Bool
+isLoggedIn session =
+    String.length session.user.name > 0

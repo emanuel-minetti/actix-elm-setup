@@ -52,18 +52,14 @@ init flags url navKey =
         tokenFromBrowser =
             Maybe.withDefault "" <| Array.get 1 flags
 
-        ( maybeUser, userCmd ) =
-            if String.length tokenFromBrowser > 0 then
-                User.init tokenFromBrowser
-
-            else
-                ( Nothing, Cmd.none )
+        ( user, userCmd ) =
+            User.init tokenFromBrowser
 
         model =
             { locale = locale
             , route = Route.parseUrl url
             , navKey = navKey
-            , user = maybeUser
+            , user = user
             }
 
         cmds =
@@ -117,10 +113,11 @@ update msg model =
                     ( model, Cmd.none )
 
         GotUserFromInit userMsg ->
-            --let
-            --    (user, _) =
-            --        User.update userMsg
-            ( model, Cmd.none )
+            let
+                ( newUser, _ ) =
+                    User.update userMsg model.user
+            in
+            ( { model | user = newUser }, Cmd.none )
 
 
 view : Model -> Document Msg

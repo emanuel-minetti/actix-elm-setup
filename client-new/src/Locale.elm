@@ -121,7 +121,7 @@ getLangList =
 
 langFromString : String -> Lang
 langFromString string =
-    case string of
+    case String.toLower string of
         "de" ->
             De
 
