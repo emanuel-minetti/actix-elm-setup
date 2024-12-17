@@ -22,7 +22,7 @@ type Msg
     | GotTranslationFromLocale Locale.Msg
     | GotTranslationFromPage Page.Msg
     | PageMsg Page.Msg
-    | GotUserFromInit User.Msg
+    | UserMsg User.Msg
 
 
 main : Program (Array String) Model Msg
@@ -63,7 +63,7 @@ init flags url navKey =
             }
 
         cmds =
-            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map GotUserFromInit userCmd ]
+            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -112,12 +112,28 @@ update msg model =
                 Page.GotTranslation _ ->
                     ( model, Cmd.none )
 
-        GotUserFromInit userMsg ->
-            let
-                ( newUser, _ ) =
-                    User.update userMsg model.user
-            in
-            ( { model | user = newUser }, Cmd.none )
+        UserMsg userMsg ->
+            case userMsg of
+                User.GotApiResponse _ ->
+                    let
+                        ( newUser, userCmd ) =
+                            User.update userMsg model.user
+                    in
+                    ( { model | user = newUser }, Cmd.map UserMsg userCmd )
+
+                User.GotTranslationFromLocale _ ->
+                    let
+                        ( newUser, _ ) =
+                            User.update userMsg model.user
+
+                        newModel =
+                            if model.locale == newUser.preferredLocale then
+                                { model | user = newUser }
+
+                            else
+                                { model | user = newUser, locale = newUser.preferredLocale }
+                    in
+                    ( newModel, Cmd.none )
 
 
 view : Model -> Document Msg

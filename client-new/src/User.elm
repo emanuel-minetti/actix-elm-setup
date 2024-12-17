@@ -2,12 +2,12 @@ module User exposing (Msg(..), User, init, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
-import Locale exposing (Lang)
+import Locale exposing (Locale)
 
 
 type alias User =
     { name : String
-    , preferredLang : Lang
+    , preferredLocale : Locale
     , token : String
     , sessionExpiresAt : Int
     }
@@ -15,19 +15,23 @@ type alias User =
 
 type Msg
     = GotApiResponse (Result Http.Error ApiResponse)
+    | GotTranslationFromLocale Locale.Msg
 
 
 init : String -> ( User, Cmd Msg )
 init token =
     let
-        msg =
+        sessionMsg =
             if String.length token > 0 then
                 loadSession token
 
             else
                 Cmd.none
+
+        ( locale, _ ) =
+            Locale.init ""
     in
-    ( User "" (Locale.langFromString "") token 0, msg )
+    ( User "" locale token 0, sessionMsg )
 
 
 update : Msg -> User -> ( User, Cmd Msg )
@@ -42,17 +46,30 @@ update msg user =
                     case apiResponse.data of
                         SessionResponseData serverSession ->
                             let
+                                ( locale, localeCmd ) =
+                                    Locale.init serverSession.lang
+
                                 newUser =
                                     { name = serverSession.name
-                                    , preferredLang = Locale.langFromString serverSession.lang
+                                    , preferredLocale = locale
                                     , token = user.token
                                     , sessionExpiresAt = apiResponse.expires
                                     }
+
+                                cmd =
+                                    Cmd.map GotTranslationFromLocale localeCmd
                             in
-                            ( newUser, Cmd.none )
+                            ( newUser, cmd )
 
                         _ ->
                             ( user, Cmd.none )
+
+        GotTranslationFromLocale localeCmd ->
+            let
+                ( newLocale, _ ) =
+                    Locale.update localeCmd user.preferredLocale
+            in
+            ( { user | preferredLocale = newLocale }, Cmd.none )
 
 
 loadSession : String -> Cmd Msg
