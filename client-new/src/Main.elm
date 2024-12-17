@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Array exposing (Array)
 import Browser exposing (Document)
@@ -10,6 +10,9 @@ import Route exposing (Route(..))
 import Session exposing (Session)
 import Url exposing (Url)
 import User
+
+
+port setLang : String -> Cmd msg
 
 
 type alias Model =
@@ -102,12 +105,18 @@ update msg model =
 
         PageMsg pageMsg ->
             case pageMsg of
-                Page.SwitchLanguage _ ->
+                Page.SwitchLanguage lang ->
                     let
                         ( session, newPageCmd ) =
                             Page.update pageMsg model
+
+                        storageCmd =
+                            setLang lang
+
+                        newCmd =
+                            Cmd.batch [ Cmd.map GotTranslationFromPage newPageCmd, storageCmd ]
                     in
-                    ( { model | locale = session.locale }, Cmd.map GotTranslationFromPage newPageCmd )
+                    ( { model | locale = session.locale }, newCmd )
 
                 Page.GotTranslation _ ->
                     ( model, Cmd.none )

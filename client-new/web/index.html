@@ -14,12 +14,15 @@
 <script>
     let lang = localStorage.getItem("lang") ?? navigator.language;
     let savedSessionToken = sessionStorage.getItem("session-token") ?? '';
-    Elm.Main.init({
+    let app = Elm.Main.init({
         node: document.getElementById('elm'),
         flags: [
             lang,
             savedSessionToken
         ]
+    });
+    app.ports.setLang.subscribe(function (language) {
+        localStorage.setItem("lang", language);
     });
 </script>
 </body>
