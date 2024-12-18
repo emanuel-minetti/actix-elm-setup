@@ -199,7 +199,7 @@ where
                 };
 
                 req.extensions_mut()
-                    .insert(SessionId(updated_session_row.account_id));
+                    .insert(DBId(updated_session_row.account_id));
 
                 Ok(updated_session_row.expires_at.and_utc().timestamp() as ExpiresAt)
             }
@@ -292,14 +292,14 @@ where
 }
 
 #[derive(Clone, Debug)]
-pub struct SessionId(Uuid);
+pub struct DBId(Uuid);
 
-impl FromRequest for SessionId {
+impl FromRequest for DBId {
     type Error = ApiError;
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        let session_id_option: Option<SessionId> = req.extensions().get().cloned();
+        let session_id_option: Option<DBId> = req.extensions().get().cloned();
         let result = match session_id_option {
             None => Err(ApiError {
                 req: req.clone(),
@@ -311,7 +311,7 @@ impl FromRequest for SessionId {
     }
 }
 
-impl std::ops::Deref for SessionId {
+impl std::ops::Deref for DBId {
     type Target = Uuid;
     fn deref(&self) -> &Self::Target {
         &self.0

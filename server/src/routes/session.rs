@@ -1,10 +1,10 @@
 use actix_web::web::{Data, Json};
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse};
 use log::{log, Level};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, PgPool};
 use crate::api_error::{return_early, ApiError, ApiErrorType};
-use crate::authorisation::{HandlerResponse, SessionId};
+use crate::authorisation::{HandlerResponse, DBId};
 
 #[derive(sqlx::Type, Serialize, Debug, Deserialize)]
 #[sqlx(type_name = "lang", rename_all = "lowercase")]
@@ -26,7 +26,7 @@ pub struct SessionRequest {
 
 pub async fn session_handler(
     db_pool: Data<PgPool>,
-    session_id: SessionId,
+    account_id: DBId,
     request: HttpRequest,
 ) -> HttpResponse {
     let into_api_error = ApiError::get_into(&request);
@@ -38,7 +38,7 @@ pub async fn session_handler(
                preferred_language AS "preferred_lang: Lang"
            FROM account WHERE id = $1
        "#,
-        *session_id
+        *account_id
     )
     .fetch_one(&**db_pool)
     .await
@@ -49,7 +49,7 @@ pub async fn session_handler(
                 Level::Error,
                 "Error: {}, while retrieving account, Data: {:?}",
                 error,
-                session_id
+                account_id
             );
             return return_early(into_api_error(error.into()));
         }
@@ -66,7 +66,7 @@ pub async fn session_handler(
 pub async fn set_user_language_handler(
     db_pool: Data<PgPool>,
     req_json_body: Json<SessionRequest>,
-    session_id: SessionId,
+    account_id: DBId,
     request: HttpRequest,
 ) -> HttpResponse {
     let into_api_error = ApiError::get_into(&request);
@@ -86,7 +86,7 @@ pub async fn set_user_language_handler(
             preferred_language AS "preferred_lang: Lang"
         "#,
         preferred_lang_data.into_inner() as Lang,
-        *session_id,)
+        *account_id,)
             .fetch_one(&**db_pool).await {
         Ok(row) => row,
         Err(_error) => {
