@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n           SELECT\n               name,\n               preferred_language AS \"preferred_lang: Lang\"\n           FROM account WHERE id = $1\n       ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "preferred_lang: Lang",
+        "type_info": {
+          "Custom": {
+            "name": "lang",
+            "kind": {
+              "Enum": [
+                "en",
+                "de"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "e9817e61c0aecd5243710f9cf6034540096fd7a71dc8772aa15505eb291dcb33"
+}
