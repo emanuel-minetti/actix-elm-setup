@@ -113,8 +113,15 @@ update msg model =
                         storageCmd =
                             setLang lang
 
+                        dbCmd =
+                            User.setSession model.user.token lang
+
                         newCmd =
-                            Cmd.batch [ Cmd.map GotTranslationFromPage newPageCmd, storageCmd ]
+                            Cmd.batch
+                                [ Cmd.map GotTranslationFromPage newPageCmd
+                                , Cmd.map UserMsg dbCmd
+                                , storageCmd
+                                ]
                     in
                     ( { model | locale = session.locale }, newCmd )
 
@@ -123,12 +130,15 @@ update msg model =
 
         UserMsg userMsg ->
             case userMsg of
-                User.GotApiResponse _ ->
+                User.GotApiLoadResponse _ ->
                     let
                         ( newUser, userCmd ) =
                             User.update userMsg model.user
                     in
                     ( { model | user = newUser }, Cmd.map UserMsg userCmd )
+
+                User.GotApiSetResponse _ ->
+                    ( model, Cmd.none )
 
                 User.GotTranslationFromLocale _ ->
                     let
