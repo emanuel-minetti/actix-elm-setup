@@ -8,6 +8,7 @@ import Locale exposing (Locale)
 import Route exposing (Route(..))
 import Session exposing (Session)
 import Translations.Main as I18n
+import User
 
 
 view : Session -> Document Msg
@@ -75,7 +76,7 @@ viewLoggedInText session =
                 I18n.notLoggedInText session.locale.t
 
             else
-                I18n.loggedInText session.locale.t session.user.name
+                I18n.loggedInText session.locale.t <| User.name session.user
     in
     text loggedInText
 

@@ -114,7 +114,7 @@ update msg model =
                             setLang lang
 
                         dbCmd =
-                            User.setSession model.user.token lang
+                            User.setSession (User.token model.user) lang
 
                         newCmd =
                             Cmd.batch
@@ -146,11 +146,11 @@ update msg model =
                             User.update userMsg model.user
 
                         newModel =
-                            if model.locale == newUser.preferredLocale then
+                            if model.locale == User.preferredLocale newUser then
                                 { model | user = newUser }
 
                             else
-                                { model | user = newUser, locale = newUser.preferredLocale }
+                                { model | user = newUser, locale = User.preferredLocale newUser }
                     in
                     ( newModel, Cmd.none )
 

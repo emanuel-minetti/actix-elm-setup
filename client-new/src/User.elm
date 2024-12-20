@@ -1,4 +1,4 @@
-module User exposing (Msg(..), User, init, setSession, update)
+module User exposing (Msg(..), User, init, name, preferredLocale, setSession, token, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
@@ -6,12 +6,50 @@ import Locale exposing (Locale)
 import ServerRequest
 
 
-type alias User =
-    { name : String
-    , preferredLocale : Locale
-    , token : String
-    , sessionExpiresAt : Int
-    }
+type User
+    = User
+        { name : String
+        , preferredLocale : Locale
+        , token : String
+        , sessionExpiresAt : Int
+        }
+
+
+fromToken : String -> User
+fromToken newToken =
+    let
+        ( locale, _ ) =
+            Locale.init ""
+    in
+    User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
+
+
+name : User -> String
+name user =
+    case user of
+        User record ->
+            record.name
+
+
+preferredLocale : User -> Locale
+preferredLocale user =
+    case user of
+        User record ->
+            record.preferredLocale
+
+
+token : User -> String
+token user =
+    case user of
+        User record ->
+            record.token
+
+
+setPreferredLocale : User -> Locale -> User
+setPreferredLocale user locale =
+    case user of
+        User record ->
+            User { record | preferredLocale = locale }
 
 
 type Msg
@@ -21,19 +59,16 @@ type Msg
 
 
 init : String -> ( User, Cmd Msg )
-init token =
+init newToken =
     let
         sessionMsg =
-            if String.length token > 0 then
-                loadSession token
+            if String.length newToken > 0 then
+                loadSession newToken
 
             else
                 Cmd.none
-
-        ( locale, _ ) =
-            Locale.init ""
     in
-    ( User "" locale token 0, sessionMsg )
+    ( fromToken newToken, sessionMsg )
 
 
 update : Msg -> User -> ( User, Cmd Msg )
@@ -52,11 +87,12 @@ update msg user =
                                     Locale.init serverSession.lang
 
                                 newUser =
-                                    { name = serverSession.name
-                                    , preferredLocale = locale
-                                    , token = user.token
-                                    , sessionExpiresAt = apiResponse.expires
-                                    }
+                                    User
+                                        { name = serverSession.name
+                                        , preferredLocale = locale
+                                        , token = token user
+                                        , sessionExpiresAt = apiResponse.expires
+                                        }
 
                                 cmd =
                                     Cmd.map GotTranslationFromLocale localeCmd
@@ -82,16 +118,16 @@ update msg user =
         GotTranslationFromLocale localeCmd ->
             let
                 ( newLocale, _ ) =
-                    Locale.update localeCmd user.preferredLocale
+                    Locale.update localeCmd <| preferredLocale user
             in
-            ( { user | preferredLocale = newLocale }, Cmd.none )
+            ( setPreferredLocale user newLocale, Cmd.none )
 
 
 loadSession : String -> Cmd Msg
-loadSession token =
-    ServerRequest.loadSession token <| Http.expectJson GotApiLoadResponse apiResponseDecoder
+loadSession tokenToLoad =
+    ServerRequest.loadSession tokenToLoad <| Http.expectJson GotApiLoadResponse apiResponseDecoder
 
 
 setSession : String -> String -> Cmd Msg
-setSession token locale =
-    ServerRequest.setSession token locale <| Http.expectJson GotApiSetResponse apiResponseDecoder
+setSession tokenToSet locale =
+    ServerRequest.setSession tokenToSet locale <| Http.expectJson GotApiSetResponse apiResponseDecoder

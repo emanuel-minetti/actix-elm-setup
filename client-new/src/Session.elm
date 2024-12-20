@@ -16,4 +16,8 @@ type alias Session =
 
 isLoggedIn : Session -> Bool
 isLoggedIn session =
-    String.length session.user.name > 0
+    (session.user
+        |> User.name
+        |> String.length
+    )
+        > 0
