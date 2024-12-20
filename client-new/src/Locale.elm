@@ -15,6 +15,7 @@ import Html exposing (Html, option, text)
 import Html.Attributes exposing (selected, value)
 import Http
 import I18Next exposing (Translations, initialTranslations, translationsDecoder)
+import ServerRequest
 import Translations.Lang as I18n
 
 
@@ -134,15 +135,9 @@ langFromString string =
 
 loadTranslation : Locale -> Cmd Msg
 loadTranslation locale =
-    Http.request
-        { method = "GET"
-        , url = "http://127.0.0.1:8080/lang/translation." ++ toValue locale ++ ".json"
-        , headers = [ Http.header "Accept" "application/json" ]
-        , body = Http.emptyBody
-        , expect = Http.expectJson GotTranslation translationsDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    translationsDecoder
+        |> Http.expectJson GotTranslation
+        |> ServerRequest.loadTranslation (toValue locale)
 
 
 viewLangOptions : Locale -> List (Html msg)

@@ -2,8 +2,8 @@ module User exposing (Msg(..), User, init, setSession, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
-import Json.Encode as E
 import Locale exposing (Locale)
+import ServerRequest
 
 
 type alias User =
@@ -89,32 +89,9 @@ update msg user =
 
 loadSession : String -> Cmd Msg
 loadSession token =
-    Http.request
-        { method = "GET"
-        , url = "http://127.0.0.1:8080/api/session"
-        , headers = [ Http.header "Accept" "application/json", Http.header "Authorization" <| "Bearer " ++ token ]
-        , body = Http.emptyBody
-        , expect = Http.expectJson GotApiLoadResponse apiResponseDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    ServerRequest.loadSession token <| Http.expectJson GotApiLoadResponse apiResponseDecoder
 
 
 setSession : String -> String -> Cmd Msg
 setSession token locale =
-    let
-        jsonBody =
-            E.object [ ( "preferred_lang", E.string locale ) ]
-    in
-    Http.request
-        { method = "POST"
-        , url = "http://127.0.0.1:8080/api/session"
-        , headers =
-            [ Http.header "Accept" "application/json"
-            , Http.header "Authorization" <| "Bearer " ++ token
-            ]
-        , body = Http.jsonBody jsonBody
-        , expect = Http.expectJson GotApiSetResponse apiResponseDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
+    ServerRequest.setSession token locale <| Http.expectJson GotApiSetResponse apiResponseDecoder
