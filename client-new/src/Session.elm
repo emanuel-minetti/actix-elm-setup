@@ -58,22 +58,22 @@ isLoggedIn session =
         > 0
 
 
-setLocale : Session -> Locale -> Session
-setLocale session newLocale =
+setLocale : Locale -> Session -> Session
+setLocale newLocale session =
     case session of
         Session record ->
             Session { record | locale = newLocale }
 
 
-setRoute : Session -> Route -> Session
-setRoute session newRoute =
+setRoute : Route -> Session -> Session
+setRoute newRoute session =
     case session of
         Session record ->
             Session { record | route = newRoute }
 
 
-setUser : Session -> User -> Session
-setUser session newUser =
+setUser : User -> Session -> Session
+setUser newUser session =
     case session of
         Session record ->
             Session { record | user = newUser }

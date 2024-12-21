@@ -53,8 +53,8 @@ fromToken newToken =
     User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
 
 
-setPreferredLocale : User -> Locale -> User
-setPreferredLocale user locale =
+setPreferredLocale : Locale -> User -> User
+setPreferredLocale locale user =
     case user of
         User record ->
             User { record | preferredLocale = locale }
@@ -128,7 +128,7 @@ update msg user =
                 ( newLocale, _ ) =
                     Locale.update localeCmd <| preferredLocale user
             in
-            ( setPreferredLocale user newLocale, Cmd.none )
+            ( setPreferredLocale newLocale user, Cmd.none )
 
 
 loadSession : String -> Cmd Msg

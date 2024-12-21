@@ -34,14 +34,14 @@ update msg session =
                 locale =
                     Locale.changeLang (Session.locale session) newValue
             in
-            ( Session.setLocale session locale, Cmd.map GotTranslation <| Locale.loadTranslation locale )
+            ( Session.setLocale locale session, Cmd.map GotTranslation <| Locale.loadTranslation locale )
 
         GotTranslation localeCmd ->
             let
                 ( locale, _ ) =
                     Locale.update localeCmd (Session.locale session)
             in
-            ( Session.setLocale session locale, Cmd.none )
+            ( Session.setLocale locale session, Cmd.none )
 
 
 viewHeader : Session -> Html Msg

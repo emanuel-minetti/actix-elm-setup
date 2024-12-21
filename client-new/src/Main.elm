@@ -61,12 +61,6 @@ init flags url navKey =
         model =
             Session.init locale (Route.parseUrl url) navKey user
 
-        --Session
-        --    { locale = locale
-        --    , route = Route.parseUrl url
-        --    , navKey = navKey
-        --    , user = user
-        --    }
         cmds =
             [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd ]
     in
@@ -89,21 +83,21 @@ update msg model =
                 newRoute =
                     Route.parseUrl url
             in
-            ( Session.setRoute model newRoute, Cmd.none )
+            ( Session.setRoute newRoute model, Cmd.none )
 
         GotTranslationFromLocale localeCmd ->
             let
                 ( locale, _ ) =
                     Locale.update localeCmd <| Session.locale model
             in
-            ( Session.setLocale model locale, Cmd.none )
+            ( Session.setLocale locale model, Cmd.none )
 
         GotTranslationFromPage pageCmd ->
             let
                 ( session, _ ) =
                     Page.update pageCmd model
             in
-            ( Session.setLocale model (Session.locale session), Cmd.none )
+            ( Session.setLocale (Session.locale session) model, Cmd.none )
 
         --( { model | locale = session.locale }, Cmd.none )
         PageMsg pageMsg ->
@@ -127,7 +121,7 @@ update msg model =
                                 ]
 
                         newModel =
-                            Session.setLocale model <| Session.locale session
+                            Session.setLocale (Session.locale session) model
                     in
                     ( newModel, newCmd )
 
@@ -148,7 +142,7 @@ update msg model =
                                 |> setLang
 
                         newModel =
-                            Session.setUser model newUser
+                            Session.setUser newUser model
 
                         newCmd =
                             Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd ]
@@ -165,10 +159,12 @@ update msg model =
 
                         newModel =
                             if Session.locale model == User.preferredLocale newUser then
-                                Session.setUser model newUser
+                                Session.setUser newUser model
 
                             else
-                                Session.setLocale (Session.setUser model newUser) <| User.preferredLocale newUser
+                                model
+                                    |> Session.setUser newUser
+                                    |> Session.setLocale (User.preferredLocale newUser)
                     in
                     ( newModel, Cmd.none )
 
