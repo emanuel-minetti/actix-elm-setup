@@ -13,7 +13,10 @@ import User
 
 view : Session -> Document Msg
 view session =
-    { title = Route.toText session.route session.locale
+    { title =
+        session
+            |> Session.locale
+            |> Route.toText (Session.route session)
     , body = [ viewHeader session, viewContent session, viewFooter session ]
     }
 
@@ -29,16 +32,16 @@ update msg session =
         SwitchLanguage newValue ->
             let
                 locale =
-                    Locale.changeLang session.locale newValue
+                    Locale.changeLang (Session.locale session) newValue
             in
-            ( { session | locale = locale }, Cmd.map GotTranslation <| Locale.loadTranslation locale )
+            ( Session.setLocale session locale, Cmd.map GotTranslation <| Locale.loadTranslation locale )
 
         GotTranslation localeCmd ->
             let
                 ( locale, _ ) =
-                    Locale.update localeCmd session.locale
+                    Locale.update localeCmd (Session.locale session)
             in
-            ( { session | locale = locale }, Cmd.none )
+            ( Session.setLocale session locale, Cmd.none )
 
 
 viewHeader : Session -> Html Msg
@@ -59,7 +62,7 @@ viewHeader session =
                     , text "Actix Elm Setup"
                     ]
                 , span [ class "navbar-text" ] [ viewLoggedInText session ]
-                , select [ onInput SwitchLanguage ] <| Locale.viewLangOptions session.locale
+                , select [ onInput SwitchLanguage ] (Locale.viewLangOptions (Session.locale session))
                 ]
             ]
         ]
@@ -73,53 +76,53 @@ viewLoggedInText session =
 
         loggedInText =
             if not loggedIn then
-                I18n.notLoggedInText session.locale.t
+                I18n.notLoggedInText (Session.locale session).t
 
             else
-                I18n.loggedInText session.locale.t <| User.name session.user
+                I18n.loggedInText (Session.locale session).t <| User.name <| Session.user session
     in
     text loggedInText
 
 
 viewContent : Session -> Html Msg
 viewContent session =
-    case session.route of
+    case Session.route session of
         Home ->
             div [ class "container" ]
                 [ text "Das ist Home"
                 , br [] []
-                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
                 ]
 
         NotFound ->
             div [ class "container" ]
                 [ text "Das ist NotFound"
                 , br [] []
-                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
                 ]
 
         Privacy ->
             div [ class "container" ]
                 [ text "Das ist Privacy"
                 , br [] []
-                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
                 ]
 
         Imprint ->
             div [ class "container" ]
                 [ text "Das ist Imprint"
                 , br [] []
-                , text <| I18n.yourPreferredLang session.locale.t <| Locale.toValue session.locale
+                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
                 ]
 
 
 viewFooter : Session -> Html Msg
-viewFooter model =
+viewFooter session =
     footer [ class "bg-body-tertiary" ]
         [ div [ class "container-fluid" ]
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
-                    [ ul [ class "list-unstyled" ] <| viewFooterLinks model.locale ]
+                    [ ul [ class "list-unstyled" ] <| viewFooterLinks <| Session.locale session ]
                 , div [ class "col text-center" ]
                     --todo get from config api
                     [ span [] [ text "Version: 0.0.0" ] ]

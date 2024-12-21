@@ -15,13 +15,8 @@ type User
         }
 
 
-fromToken : String -> User
-fromToken newToken =
-    let
-        ( locale, _ ) =
-            Locale.init ""
-    in
-    User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
+
+--GETTERS
 
 
 name : User -> String
@@ -43,6 +38,19 @@ token user =
     case user of
         User record ->
             record.token
+
+
+
+--CONSTRUCTORS AND SETTERS
+
+
+fromToken : String -> User
+fromToken newToken =
+    let
+        ( locale, _ ) =
+            Locale.init ""
+    in
+    User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
 
 
 setPreferredLocale : User -> Locale -> User

@@ -7,7 +7,7 @@ import Html exposing (..)
 import Locale exposing (Locale)
 import Page
 import Route exposing (Route(..))
-import Session exposing (Session)
+import Session exposing (Session, locale)
 import Url exposing (Url)
 import User
 
@@ -59,12 +59,14 @@ init flags url navKey =
             User.init tokenFromBrowser
 
         model =
-            { locale = locale
-            , route = Route.parseUrl url
-            , navKey = navKey
-            , user = user
-            }
+            Session.init locale (Route.parseUrl url) navKey user
 
+        --Session
+        --    { locale = locale
+        --    , route = Route.parseUrl url
+        --    , navKey = navKey
+        --    , user = user
+        --    }
         cmds =
             [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd ]
     in
@@ -77,7 +79,7 @@ update msg model =
         ClickedLink urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+                    ( model, Nav.pushUrl (Session.navKey model) (Url.toString url) )
 
                 Browser.External url ->
                     ( model, Nav.load url )
@@ -87,22 +89,23 @@ update msg model =
                 newRoute =
                     Route.parseUrl url
             in
-            ( { model | route = newRoute }, Cmd.none )
+            ( Session.setRoute model newRoute, Cmd.none )
 
         GotTranslationFromLocale localeCmd ->
             let
                 ( locale, _ ) =
-                    Locale.update localeCmd model.locale
+                    Locale.update localeCmd <| Session.locale model
             in
-            ( { model | locale = locale }, Cmd.none )
+            ( Session.setLocale model locale, Cmd.none )
 
         GotTranslationFromPage pageCmd ->
             let
                 ( session, _ ) =
                     Page.update pageCmd model
             in
-            ( { model | locale = session.locale }, Cmd.none )
+            ( Session.setLocale model (Session.locale session), Cmd.none )
 
+        --( { model | locale = session.locale }, Cmd.none )
         PageMsg pageMsg ->
             case pageMsg of
                 Page.SwitchLanguage lang ->
@@ -113,17 +116,20 @@ update msg model =
                         storageCmd =
                             setLang lang
 
-                        dbCmd =
-                            User.setSession (User.token model.user) lang
+                        apiCmd =
+                            User.setSession (User.token <| Session.user session) lang
 
                         newCmd =
                             Cmd.batch
                                 [ Cmd.map GotTranslationFromPage newPageCmd
-                                , Cmd.map UserMsg dbCmd
+                                , Cmd.map UserMsg apiCmd
                                 , storageCmd
                                 ]
+
+                        newModel =
+                            Session.setLocale model <| Session.locale session
                     in
-                    ( { model | locale = session.locale }, newCmd )
+                    ( newModel, newCmd )
 
                 Page.GotTranslation _ ->
                     ( model, Cmd.none )
@@ -133,9 +139,21 @@ update msg model =
                 User.GotApiLoadResponse _ ->
                     let
                         ( newUser, userCmd ) =
-                            User.update userMsg model.user
+                            User.update userMsg <| Session.user model
+
+                        storageCmd =
+                            newUser
+                                |> User.preferredLocale
+                                |> Locale.toValue
+                                |> setLang
+
+                        newModel =
+                            Session.setUser model newUser
+
+                        newCmd =
+                            Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd ]
                     in
-                    ( { model | user = newUser }, Cmd.map UserMsg userCmd )
+                    ( newModel, newCmd )
 
                 User.GotApiSetResponse _ ->
                     ( model, Cmd.none )
@@ -143,14 +161,14 @@ update msg model =
                 User.GotTranslationFromLocale _ ->
                     let
                         ( newUser, _ ) =
-                            User.update userMsg model.user
+                            User.update userMsg <| Session.user model
 
                         newModel =
-                            if model.locale == User.preferredLocale newUser then
-                                { model | user = newUser }
+                            if Session.locale model == User.preferredLocale newUser then
+                                Session.setUser model newUser
 
                             else
-                                { model | user = newUser, locale = User.preferredLocale newUser }
+                                Session.setLocale (Session.setUser model newUser) <| User.preferredLocale newUser
                     in
                     ( newModel, Cmd.none )
 
