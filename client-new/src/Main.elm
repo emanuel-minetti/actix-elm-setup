@@ -9,6 +9,7 @@ import Page
 import Page.Home
 import Page.Imprint
 import Page.NotFound
+import Page.Privacy
 import Route exposing (Route(..))
 import Session exposing (Session, locale)
 import Url exposing (Url)
@@ -230,8 +231,10 @@ update msg model =
                     in
                     ( newModel, Cmd.none )
 
-        HomeMsg _ ->
-            ( model, Cmd.none )
+        HomeMsg homeMsg ->
+            case homeMsg of
+                Page.Home.None ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Document Msg
@@ -243,56 +246,29 @@ view model =
         ( header, footer ) =
             Page.view session
 
+        viewPage newTitle content =
+            let
+                newerTitle =
+                    "AES - " ++ newTitle
+
+                newBody =
+                    [ Html.map PageMsg header, content, Html.map PageMsg footer ]
+            in
+            ( newerTitle, newBody )
+
         ( title, body ) =
             case model of
                 Home _ ->
-                    let
-                        newTitle =
-                            "AES - Home"
-
-                        content =
-                            Page.Home.view session
-
-                        newBody =
-                            [ Html.map PageMsg header, Html.map HomeMsg content, Html.map PageMsg footer ]
-                    in
-                    ( newTitle, newBody )
+                    viewPage "Home" <| Html.map HomeMsg <| Page.Home.view session
 
                 NotFound _ ->
-                    let
-                        newTitle =
-                            "AES - NotFound"
-
-                        content =
-                            Page.NotFound.view session
-
-                        newBody =
-                            [ Html.map PageMsg header, content, Html.map PageMsg footer ]
-                    in
-                    ( newTitle, newBody )
+                    viewPage "NotFound" <| Page.NotFound.view session
 
                 Imprint _ ->
-                    let
-                        newTitle =
-                            "AES - Imprint"
-
-                        content =
-                            Page.Imprint.view session
-
-                        newBody =
-                            [ Html.map PageMsg header, content, Html.map PageMsg footer ]
-                    in
-                    ( newTitle, newBody )
+                    viewPage "Imprint" <| Page.Imprint.view session
 
                 Privacy _ ->
-                    let
-                        newTitle =
-                            "AES - Privacy"
-
-                        newBody =
-                            [ Html.map PageMsg header, Html.map PageMsg footer ]
-                    in
-                    ( newTitle, newBody )
+                    viewPage "Privacy" <| Page.Privacy.view session
     in
     { title = title, body = body }
 
