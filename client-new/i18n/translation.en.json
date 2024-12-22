@@ -1,8 +1,8 @@
 {
   "Main": {
     "notLoggedInText": "You're not logged in",
-    "loggedInText": "You're logged in as {{name}}",
-    "yourPreferredLang": "Your preferred Language: {{lang}}"
+    "loggedInText": "You're logged in as {{name}}"
+
   },
   "Route": {
     "Privacy": "Privacy Declaration",
@@ -11,5 +11,21 @@
   "Lang": {
     "german": "German",
     "english": "English"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Your preferred Language: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Not Found",
+    "message": "The page You requested could not be found on this server."
+  },
+  "Imprint": {
+    "title": "Imprint",
+    "message": "This is the imprint page."
+  },
+  "Privacy": {
+    "title": "Privacy",
+    "message": "On this page You find information on privacy."
   }
 }

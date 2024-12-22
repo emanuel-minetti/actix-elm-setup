@@ -1,17 +1,12 @@
-module Page.Home exposing (Msg(..), view)
+module Page.Imprint exposing (view)
 
 import Html exposing (Html, br, div, h1, text)
 import Html.Attributes exposing (class)
-import Locale
 import Session exposing (Session)
-import Translations.Home as I18n
+import Translations.Imprint as I18n
 
 
-type Msg
-    = None
-
-
-view : Session -> Html Msg
+view : Session -> Html msg
 view session =
     let
         locale =
@@ -21,5 +16,5 @@ view session =
         [ h1 []
             [ text <| I18n.title locale.t ]
         , br [] []
-        , text <| I18n.yourPreferredLang locale.t <| Locale.toValue <| locale
+        , text <| I18n.message locale.t
         ]

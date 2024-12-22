@@ -1,23 +1,21 @@
-module Session exposing (Session, init, isLoggedIn, locale, navKey, route, setLocale, setRoute, setUser, user)
+module Session exposing (Session, init, isLoggedIn, locale, navKey, setLocale, setUser, user)
 
 import Browser.Navigation as Nav
 import Locale exposing (Locale)
-import Route exposing (Route)
 import User exposing (User)
 
 
 type Session
     = Session
         { locale : Locale
-        , route : Route
         , navKey : Nav.Key
         , user : User
         }
 
 
-init : Locale -> Route -> Nav.Key -> User -> Session
-init newLocale newRoute newNavKey newUser =
-    Session { locale = newLocale, route = newRoute, navKey = newNavKey, user = newUser }
+init : Locale -> Nav.Key -> User -> Session
+init newLocale newNavKey newUser =
+    Session { locale = newLocale, navKey = newNavKey, user = newUser }
 
 
 locale : Session -> Locale
@@ -25,13 +23,6 @@ locale session =
     case session of
         Session record ->
             record.locale
-
-
-route : Session -> Route
-route session =
-    case session of
-        Session record ->
-            record.route
 
 
 navKey : Session -> Nav.Key
@@ -63,13 +54,6 @@ setLocale newLocale session =
     case session of
         Session record ->
             Session { record | locale = newLocale }
-
-
-setRoute : Route -> Session -> Session
-setRoute newRoute session =
-    case session of
-        Session record ->
-            Session { record | route = newRoute }
 
 
 setUser : User -> Session -> Session

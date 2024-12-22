@@ -1,8 +1,7 @@
 {
   "Main": {
     "notLoggedInText": "Sie sind nicht angemeldet",
-    "loggedInText": "Sie sind angemeldet als {{name}}",
-    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+    "loggedInText": "Sie sind angemeldet als {{name}}"
   },
   "Route": {
     "Privacy": "Datenschutz-Erklärung",
@@ -11,5 +10,21 @@
   "Lang": {
     "german": "Deutsch",
     "english": "Englisch"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Seite nicht gefunden",
+    "message": "Die von Ihnen angefragte Seite konnte auf diesem Server nicht gefunden werden."
+  },
+  "Imprint": {
+    "title": "Impressum",
+    "message": "Dies ist die Impressum Seite."
+  },
+  "Privacy": {
+    "title": "Datenschutz",
+    "message": "Dies ist die Seite mit Datenschutz Informationen."
   }
 }

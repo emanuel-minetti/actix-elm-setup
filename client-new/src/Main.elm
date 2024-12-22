@@ -6,6 +6,9 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Locale exposing (Locale)
 import Page
+import Page.Home
+import Page.Imprint
+import Page.NotFound
 import Route exposing (Route(..))
 import Session exposing (Session, locale)
 import Url exposing (Url)
@@ -15,8 +18,11 @@ import User
 port setLang : String -> Cmd msg
 
 
-type alias Model =
-    Session
+type Model
+    = Home Session
+    | NotFound Session
+    | Imprint Session
+    | Privacy Session
 
 
 type Msg
@@ -26,6 +32,7 @@ type Msg
     | GotTranslationFromPage Page.Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
+    | HomeMsg Page.Home.Msg
 
 
 main : Program (Array String) Model Msg
@@ -58,8 +65,25 @@ init flags url navKey =
         ( user, userCmd ) =
             User.init tokenFromBrowser
 
+        route =
+            Route.parseUrl url
+
+        session =
+            Session.init locale navKey user
+
         model =
-            Session.init locale (Route.parseUrl url) navKey user
+            case route of
+                Route.NotFound ->
+                    NotFound session
+
+                Route.Home ->
+                    Home session
+
+                Route.Privacy ->
+                    Privacy session
+
+                Route.Imprint ->
+                    Imprint session
 
         cmds =
             [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd ]
@@ -73,7 +97,7 @@ update msg model =
         ClickedLink urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl (Session.navKey model) (Url.toString url) )
+                    ( model, Nav.pushUrl (Session.navKey (toSession model)) (Url.toString url) )
 
                 Browser.External url ->
                     ( model, Nav.load url )
@@ -82,36 +106,65 @@ update msg model =
             let
                 newRoute =
                     Route.parseUrl url
+
+                newModel =
+                    changeRoute newRoute model
             in
-            ( Session.setRoute newRoute model, Cmd.none )
+            ( newModel, Cmd.none )
 
         GotTranslationFromLocale localeCmd ->
             let
+                session =
+                    toSession model
+
                 ( locale, _ ) =
-                    Locale.update localeCmd <| Session.locale model
+                    Locale.update localeCmd <| Session.locale session
+
+                newSession =
+                    Session.setLocale locale session
+
+                newModel =
+                    setNewSession newSession model
             in
-            ( Session.setLocale locale model, Cmd.none )
+            ( newModel, Cmd.none )
 
         GotTranslationFromPage pageCmd ->
             let
-                ( session, _ ) =
-                    Page.update pageCmd model
-            in
-            ( Session.setLocale (Session.locale session) model, Cmd.none )
+                session =
+                    toSession model
 
-        --( { model | locale = session.locale }, Cmd.none )
+                ( newSession, _ ) =
+                    Page.update pageCmd session
+
+                newerSession =
+                    Session.setLocale (Session.locale newSession) newSession
+
+                newModel =
+                    setNewSession newerSession model
+            in
+            ( newModel, Cmd.none )
+
         PageMsg pageMsg ->
             case pageMsg of
                 Page.SwitchLanguage lang ->
                     let
-                        ( session, newPageCmd ) =
-                            Page.update pageMsg model
+                        session =
+                            toSession model
+
+                        ( newSession, newPageCmd ) =
+                            Page.update pageMsg session
+
+                        newerSession =
+                            Session.setLocale (Session.locale newSession) newSession
+
+                        newModel =
+                            setNewSession newerSession model
 
                         storageCmd =
                             setLang lang
 
                         apiCmd =
-                            User.setSession (User.token <| Session.user session) lang
+                            User.setSession (User.token <| Session.user newSession) lang
 
                         newCmd =
                             Cmd.batch
@@ -119,9 +172,6 @@ update msg model =
                                 , Cmd.map UserMsg apiCmd
                                 , storageCmd
                                 ]
-
-                        newModel =
-                            Session.setLocale (Session.locale session) model
                     in
                     ( newModel, newCmd )
 
@@ -132,17 +182,23 @@ update msg model =
             case userMsg of
                 User.GotApiLoadResponse _ ->
                     let
+                        session =
+                            toSession model
+
                         ( newUser, userCmd ) =
-                            User.update userMsg <| Session.user model
+                            User.update userMsg <| Session.user session
+
+                        newSession =
+                            Session.setUser newUser session
+
+                        newModel =
+                            setNewSession newSession model
 
                         storageCmd =
                             newUser
                                 |> User.preferredLocale
                                 |> Locale.toValue
                                 |> setLang
-
-                        newModel =
-                            Session.setUser newUser model
 
                         newCmd =
                             Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd ]
@@ -154,25 +210,140 @@ update msg model =
 
                 User.GotTranslationFromLocale _ ->
                     let
-                        ( newUser, _ ) =
-                            User.update userMsg <| Session.user model
+                        session =
+                            toSession model
 
-                        newModel =
-                            if Session.locale model == User.preferredLocale newUser then
-                                Session.setUser newUser model
+                        ( newUser, _ ) =
+                            User.update userMsg <| Session.user session
+
+                        newSession =
+                            if Session.locale session == User.preferredLocale newUser then
+                                Session.setUser newUser session
 
                             else
-                                model
+                                session
                                     |> Session.setUser newUser
                                     |> Session.setLocale (User.preferredLocale newUser)
+
+                        newModel =
+                            setNewSession newSession model
                     in
                     ( newModel, Cmd.none )
+
+        HomeMsg _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Document Msg
 view model =
     let
-        { title, body } =
-            Page.view model
+        session =
+            toSession model
+
+        ( header, footer ) =
+            Page.view session
+
+        ( title, body ) =
+            case model of
+                Home _ ->
+                    let
+                        newTitle =
+                            "AES - Home"
+
+                        content =
+                            Page.Home.view session
+
+                        newBody =
+                            [ Html.map PageMsg header, Html.map HomeMsg content, Html.map PageMsg footer ]
+                    in
+                    ( newTitle, newBody )
+
+                NotFound _ ->
+                    let
+                        newTitle =
+                            "AES - NotFound"
+
+                        content =
+                            Page.NotFound.view session
+
+                        newBody =
+                            [ Html.map PageMsg header, content, Html.map PageMsg footer ]
+                    in
+                    ( newTitle, newBody )
+
+                Imprint _ ->
+                    let
+                        newTitle =
+                            "AES - Imprint"
+
+                        content =
+                            Page.Imprint.view session
+
+                        newBody =
+                            [ Html.map PageMsg header, content, Html.map PageMsg footer ]
+                    in
+                    ( newTitle, newBody )
+
+                Privacy _ ->
+                    let
+                        newTitle =
+                            "AES - Privacy"
+
+                        newBody =
+                            [ Html.map PageMsg header, Html.map PageMsg footer ]
+                    in
+                    ( newTitle, newBody )
     in
-    { title = title, body = List.map (Html.map PageMsg) body }
+    { title = title, body = body }
+
+
+toSession : Model -> Session
+toSession model =
+    case model of
+        Home session ->
+            session
+
+        NotFound session ->
+            session
+
+        Imprint session ->
+            session
+
+        Privacy session ->
+            session
+
+
+setNewSession : Session -> Model -> Model
+setNewSession session model =
+    case model of
+        Home _ ->
+            Home session
+
+        NotFound _ ->
+            NotFound session
+
+        Imprint _ ->
+            Imprint session
+
+        Privacy _ ->
+            Privacy session
+
+
+changeRoute : Route -> Model -> Model
+changeRoute route model =
+    let
+        session =
+            toSession model
+    in
+    case route of
+        Route.NotFound ->
+            NotFound session
+
+        Route.Home ->
+            Home session
+
+        Route.Privacy ->
+            Privacy session
+
+        Route.Imprint ->
+            Imprint session

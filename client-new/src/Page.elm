@@ -1,6 +1,5 @@
 module Page exposing (Msg(..), update, view)
 
-import Browser exposing (Document)
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, src, width)
 import Html.Events exposing (onInput)
@@ -11,14 +10,9 @@ import Translations.Main as I18n
 import User
 
 
-view : Session -> Document Msg
+view : Session -> ( Html Msg, Html Msg )
 view session =
-    { title =
-        session
-            |> Session.locale
-            |> Route.toText (Session.route session)
-    , body = [ viewHeader session, viewContent session, viewFooter session ]
-    }
+    ( viewHeader session, viewFooter session )
 
 
 type Msg
@@ -84,36 +78,37 @@ viewLoggedInText session =
     text loggedInText
 
 
-viewContent : Session -> Html Msg
-viewContent session =
-    case Session.route session of
-        Home ->
-            div [ class "container" ]
-                [ text "Das ist Home"
-                , br [] []
-                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
-                ]
 
-        NotFound ->
-            div [ class "container" ]
-                [ text "Das ist NotFound"
-                , br [] []
-                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
-                ]
-
-        Privacy ->
-            div [ class "container" ]
-                [ text "Das ist Privacy"
-                , br [] []
-                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
-                ]
-
-        Imprint ->
-            div [ class "container" ]
-                [ text "Das ist Imprint"
-                , br [] []
-                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
-                ]
+--viewContent : Session -> Route -> Html Msg
+--viewContent session route =
+--    case route of
+--        Home ->
+--            div [ class "container" ]
+--                [ text "Das ist Home"
+--                , br [] []
+--                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
+--                ]
+--
+--        NotFound ->
+--            div [ class "container" ]
+--                [ text "Das ist NotFound"
+--                , br [] []
+--                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
+--                ]
+--
+--        Privacy ->
+--            div [ class "container" ]
+--                [ text "Das ist Privacy"
+--                , br [] []
+--                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
+--                ]
+--
+--        Imprint ->
+--            div [ class "container" ]
+--                [ text "Das ist Imprint"
+--                , br [] []
+--                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
+--                ]
 
 
 viewFooter : Session -> Html Msg
