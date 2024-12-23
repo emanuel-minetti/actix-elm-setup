@@ -8,6 +8,7 @@ import Locale exposing (Locale)
 import Page
 import Page.Home
 import Page.Imprint
+import Page.Login
 import Page.NotFound
 import Page.Privacy
 import Route exposing (Route(..))
@@ -20,7 +21,8 @@ port setLang : String -> Cmd msg
 
 
 type Model
-    = Home Session
+    = Home Page.Home.Model
+    | Login Page.Login.Model
     | NotFound Session
     | Imprint Session
     | Privacy Session
@@ -34,6 +36,7 @@ type Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
     | HomeMsg Page.Home.Msg
+    | LoginMsg Page.Login.Msg
 
 
 main : Program (Array String) Model Msg
@@ -72,22 +75,33 @@ init flags url navKey =
         session =
             Session.init locale navKey user
 
-        model =
+        ( model, newCmd ) =
             case route of
                 Route.NotFound ->
-                    NotFound session
+                    ( NotFound session, Cmd.none )
 
                 Route.Home ->
-                    Home session
+                    let
+                        ( homeModel, homeMsg ) =
+                            Page.Home.init session
+                    in
+                    ( Home homeModel, Cmd.map HomeMsg homeMsg )
 
                 Route.Privacy ->
-                    Privacy session
+                    ( Privacy session, Cmd.none )
 
                 Route.Imprint ->
-                    Imprint session
+                    ( Imprint session, Cmd.none )
+
+                Route.Login ->
+                    let
+                        ( loginModel, _ ) =
+                            Page.Login.init session Route.Home
+                    in
+                    ( Login loginModel, Cmd.none )
 
         cmds =
-            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd ]
+            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd, newCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -107,11 +121,8 @@ update msg model =
             let
                 newRoute =
                     Route.parseUrl url
-
-                newModel =
-                    changeRoute newRoute model
             in
-            ( newModel, Cmd.none )
+            changeRoute newRoute model
 
         GotTranslationFromLocale localeCmd ->
             let
@@ -236,6 +247,18 @@ update msg model =
                 Page.Home.None ->
                     ( model, Cmd.none )
 
+                Page.Home.NotLoggedIn ->
+                    let
+                        ( loginModel, _ ) =
+                            Page.Login.init (toSession model) Route.Home
+                    in
+                    changeRoute Route.Login <| Login loginModel
+
+        LoginMsg loginMsg ->
+            case loginMsg of
+                Page.Login.None ->
+                    ( model, Cmd.none )
+
 
 view : Model -> Document Msg
 view model =
@@ -258,8 +281,8 @@ view model =
 
         ( title, body ) =
             case model of
-                Home _ ->
-                    viewPage "Home" <| Html.map HomeMsg <| Page.Home.view session
+                Home homeModel ->
+                    viewPage "Home" <| Html.map HomeMsg <| Page.Home.view homeModel
 
                 NotFound _ ->
                     viewPage "NotFound" <| Page.NotFound.view session
@@ -269,6 +292,9 @@ view model =
 
                 Privacy _ ->
                     viewPage "Privacy" <| Page.Privacy.view session
+
+                Login loginModel ->
+                    viewPage "Login" <| Page.Login.view loginModel
     in
     { title = title, body = body }
 
@@ -276,8 +302,8 @@ view model =
 toSession : Model -> Session
 toSession model =
     case model of
-        Home session ->
-            session
+        Home homeModel ->
+            Page.Home.toSession homeModel
 
         NotFound session ->
             session
@@ -288,12 +314,15 @@ toSession model =
         Privacy session ->
             session
 
+        Login loginModel ->
+            Page.Login.toSession loginModel
+
 
 setNewSession : Session -> Model -> Model
 setNewSession session model =
     case model of
-        Home _ ->
-            Home session
+        Home homeModel ->
+            Home <| Page.Home.setSession session homeModel
 
         NotFound _ ->
             NotFound session
@@ -304,8 +333,11 @@ setNewSession session model =
         Privacy _ ->
             Privacy session
 
+        Login loginModel ->
+            Login <| Page.Login.setSession session loginModel
 
-changeRoute : Route -> Model -> Model
+
+changeRoute : Route -> Model -> ( Model, Cmd Msg )
 changeRoute route model =
     let
         session =
@@ -313,13 +345,24 @@ changeRoute route model =
     in
     case route of
         Route.NotFound ->
-            NotFound session
+            ( NotFound session, Cmd.none )
 
         Route.Home ->
-            Home session
+            let
+                ( homeModel, homeCmd ) =
+                    Page.Home.init session
+            in
+            ( Home homeModel, Cmd.map HomeMsg homeCmd )
 
         Route.Privacy ->
-            Privacy session
+            ( Privacy session, Cmd.none )
 
         Route.Imprint ->
-            Imprint session
+            ( Imprint session, Cmd.none )
+
+        Route.Login ->
+            let
+                ( loginModel, _ ) =
+                    Page.Login.init session route
+            in
+            ( Login loginModel, Cmd.none )

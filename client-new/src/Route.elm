@@ -11,6 +11,7 @@ type Route
     | Home
     | Privacy
     | Imprint
+    | Login
 
 
 parseUrl : Url -> Route
@@ -30,6 +31,7 @@ matchRoute =
         , map Home (s "home")
         , map Privacy (s "privacy")
         , map Imprint (s "imprint")
+        , map Login (s "login")
         ]
 
 
@@ -41,6 +43,9 @@ toHref route =
 
         Imprint ->
             "/imprint"
+
+        Login ->
+            "/login"
 
         _ ->
             "/"

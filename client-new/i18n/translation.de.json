@@ -26,5 +26,9 @@
   "Privacy": {
     "title": "Datenschutz",
     "message": "Dies ist die Seite mit Datenschutz Informationen."
+  },
+  "Login": {
+    "title": "Anmelden",
+    "message": "Hier können Sie sich anmelden."
   }
 }

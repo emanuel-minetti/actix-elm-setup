@@ -27,5 +27,9 @@
   "Privacy": {
     "title": "Privacy",
     "message": "On this page You find information on privacy."
+  },
+  "Login": {
+    "title": "Login",
+    "message": "You can login here."
   }
 }

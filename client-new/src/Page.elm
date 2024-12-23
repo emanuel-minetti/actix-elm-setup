@@ -78,39 +78,6 @@ viewLoggedInText session =
     text loggedInText
 
 
-
---viewContent : Session -> Route -> Html Msg
---viewContent session route =
---    case route of
---        Home ->
---            div [ class "container" ]
---                [ text "Das ist Home"
---                , br [] []
---                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
---                ]
---
---        NotFound ->
---            div [ class "container" ]
---                [ text "Das ist NotFound"
---                , br [] []
---                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
---                ]
---
---        Privacy ->
---            div [ class "container" ]
---                [ text "Das ist Privacy"
---                , br [] []
---                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
---                ]
---
---        Imprint ->
---            div [ class "container" ]
---                [ text "Das ist Imprint"
---                , br [] []
---                , text <| I18n.yourPreferredLang (Session.locale session).t <| Locale.toValue <| Session.locale session
---                ]
-
-
 viewFooter : Session -> Html Msg
 viewFooter session =
     footer [ class "bg-body-tertiary" ]
