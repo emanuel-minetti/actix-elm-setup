@@ -44,12 +44,8 @@ token user =
 --CONSTRUCTORS AND SETTERS
 
 
-fromToken : String -> User
-fromToken newToken =
-    let
-        ( locale, _ ) =
-            Locale.init ""
-    in
+fromTokenAndLocale : String -> Locale -> User
+fromTokenAndLocale newToken locale =
     User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
 
 
@@ -66,8 +62,8 @@ type Msg
     | GotTranslationFromLocale Locale.Msg
 
 
-init : String -> ( User, Cmd Msg )
-init newToken =
+init : String -> Locale -> ( User, Cmd Msg )
+init newToken locale =
     let
         sessionMsg =
             if String.length newToken > 0 then
@@ -76,7 +72,7 @@ init newToken =
             else
                 Cmd.none
     in
-    ( fromToken newToken, sessionMsg )
+    ( fromTokenAndLocale newToken locale, sessionMsg )
 
 
 update : Msg -> User -> ( User, Cmd Msg )

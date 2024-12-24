@@ -96,7 +96,7 @@ init flags url navKey =
                 Route.Login ->
                     let
                         ( loginModel, _ ) =
-                            Page.Login.init session Route.Home
+                            Page.Login.init session route
                     in
                     ( Login loginModel, Cmd.none )
 
