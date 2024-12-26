@@ -67,7 +67,7 @@ init flags url navKey =
             Maybe.withDefault "" <| Array.get 1 flags
 
         ( user, userCmd ) =
-            User.init tokenFromBrowser
+            User.init tokenFromBrowser locale
 
         route =
             Route.parseUrl url
@@ -362,7 +362,15 @@ changeRoute route model =
 
         Route.Login ->
             let
-                ( loginModel, _ ) =
-                    Page.Login.init session route
+                redirect =
+                    case model of
+                        Login loginModel ->
+                            loginModel.redirect
+
+                        _ ->
+                            Route.NotFound
+
+                ( newLoginModel, _ ) =
+                    Page.Login.init session redirect
             in
-            ( Login loginModel, Cmd.none )
+            ( Login newLoginModel, Cmd.none )

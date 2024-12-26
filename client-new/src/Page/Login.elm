@@ -19,7 +19,14 @@ type Msg
 
 init : Session -> Route -> ( Model, Cmd Msg )
 init session route =
-    ( Model session route, Cmd.none )
+    let
+        newModel =
+            Model session route
+
+        _ =
+            Debug.log "loginModel" newModel
+    in
+    ( newModel, Cmd.none )
 
 
 view : Model -> Html msg
