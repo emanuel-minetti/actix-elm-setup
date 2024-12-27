@@ -191,8 +191,28 @@ update msg model =
                                 |> Locale.toValue
                                 |> setLang
 
+                        redirectCmd =
+                            case model of
+                                Login loginModel ->
+                                    if Session.isLoggedIn newSession then
+                                        let
+                                            redirect =
+                                                if loginModel.redirect == Route.Login then
+                                                    Route.Home
+
+                                                else
+                                                    loginModel.redirect
+                                        in
+                                        Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+
+                                    else
+                                        Cmd.none
+
+                                _ ->
+                                    Cmd.none
+
                         newCmd =
-                            Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd ]
+                            Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd, redirectCmd ]
                     in
                     ( newModel, newCmd )
 
