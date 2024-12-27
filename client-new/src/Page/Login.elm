@@ -24,7 +24,7 @@ init session route =
             Model session route
 
         _ =
-            Debug.log "loginModel" newModel
+            Debug.log "redirectTo" newModel.redirect
     in
     ( newModel, Cmd.none )
 

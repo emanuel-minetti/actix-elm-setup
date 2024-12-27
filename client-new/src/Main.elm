@@ -21,7 +21,8 @@ port setLang : String -> Cmd msg
 
 
 type Model
-    = Home Page.Home.Model
+    = Init Session
+    | Home Page.Home.Model
     | Login Page.Login.Model
     | NotFound Session
     | Imprint Session
@@ -75,33 +76,11 @@ init flags url navKey =
         session =
             Session.init locale navKey user
 
-        ( model, newCmd ) =
-            case route of
-                Route.NotFound ->
-                    ( NotFound session, Cmd.none )
-
-                Route.Home ->
-                    let
-                        ( homeModel, homeMsg ) =
-                            Page.Home.init session
-                    in
-                    ( Home homeModel, Cmd.map HomeMsg homeMsg )
-
-                Route.Privacy ->
-                    ( Privacy session, Cmd.none )
-
-                Route.Imprint ->
-                    ( Imprint session, Cmd.none )
-
-                Route.Login ->
-                    let
-                        ( loginModel, _ ) =
-                            Page.Login.init session route
-                    in
-                    ( Login loginModel, Cmd.none )
+        ( model, modelCmd ) =
+            changeRoute route <| Init session
 
         cmds =
-            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd, newCmd ]
+            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd, modelCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -295,6 +274,9 @@ view model =
 
                 Login loginModel ->
                     viewPage "Login" <| Page.Login.view loginModel
+
+                Init _ ->
+                    viewPage "" <| Html.text ""
     in
     { title = title, body = body }
 
@@ -317,6 +299,9 @@ toSession model =
         Login loginModel ->
             Page.Login.toSession loginModel
 
+        Init session ->
+            session
+
 
 setNewSession : Session -> Model -> Model
 setNewSession session model =
@@ -336,6 +321,9 @@ setNewSession session model =
         Login loginModel ->
             Login <| Page.Login.setSession session loginModel
 
+        Init _ ->
+            Init session
+
 
 changeRoute : Route -> Model -> ( Model, Cmd Msg )
 changeRoute route model =
@@ -343,34 +331,42 @@ changeRoute route model =
         session =
             toSession model
     in
-    case route of
-        Route.NotFound ->
-            ( NotFound session, Cmd.none )
+    if Route.needsAuthentication route && not (Session.isLoggedIn session) then
+        let
+            ( loginModel, _ ) =
+                Page.Login.init session route
 
-        Route.Home ->
-            let
-                ( homeModel, homeCmd ) =
-                    Page.Home.init session
-            in
-            ( Home homeModel, Cmd.map HomeMsg homeCmd )
+            cmd =
+                Nav.pushUrl (Session.navKey session) (Route.toHref Route.Login)
+        in
+        ( Login loginModel, cmd )
 
-        Route.Privacy ->
-            ( Privacy session, Cmd.none )
+    else
+        case route of
+            Route.NotFound ->
+                ( NotFound session, Cmd.none )
 
-        Route.Imprint ->
-            ( Imprint session, Cmd.none )
+            Route.Home ->
+                let
+                    ( homeModel, homeCmd ) =
+                        Page.Home.init session
+                in
+                ( Home homeModel, Cmd.map HomeMsg homeCmd )
 
-        Route.Login ->
-            let
-                redirect =
-                    case model of
-                        Login loginModel ->
-                            loginModel.redirect
+            Route.Privacy ->
+                ( Privacy session, Cmd.none )
 
-                        _ ->
-                            Route.NotFound
+            Route.Imprint ->
+                ( Imprint session, Cmd.none )
 
-                ( newLoginModel, _ ) =
-                    Page.Login.init session redirect
-            in
-            ( Login newLoginModel, Cmd.none )
+            Route.Login ->
+                let
+                    newLoginModel =
+                        case model of
+                            Login loginModel ->
+                                loginModel
+
+                            _ ->
+                                Tuple.first <| Page.Login.init session Route.Login
+                in
+                ( Login newLoginModel, Cmd.none )

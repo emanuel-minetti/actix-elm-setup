@@ -1,4 +1,4 @@
-module Route exposing (Route(..), parseUrl, toHref, toText)
+module Route exposing (Route(..), needsAuthentication, parseUrl, toHref, toText)
 
 import Locale exposing (Locale)
 import Translations.Route as I18n
@@ -62,3 +62,12 @@ toText route locale =
 
         _ ->
             ""
+
+
+needsAuthentication : Route -> Bool
+needsAuthentication route =
+    let
+        routesWithoutAuthentication =
+            [ NotFound, Privacy, Imprint, Login ]
+    in
+    not <| List.member route routesWithoutAuthentication

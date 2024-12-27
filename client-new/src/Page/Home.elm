@@ -1,10 +1,8 @@
 module Page.Home exposing (Model, Msg(..), init, setSession, toSession, view)
 
-import Browser.Navigation as Nav
 import Html exposing (Html, br, div, h1, text)
 import Html.Attributes exposing (class)
 import Locale
-import Route exposing (Route)
 import Session exposing (Session)
 import Translations.Home as I18n
 
@@ -20,18 +18,7 @@ type alias Model =
 
 init : Session -> ( Model, Cmd Msg )
 init session =
-    let
-        newModel =
-            Model session
-
-        newCmd =
-            if not <| Session.isLoggedIn session then
-                Nav.pushUrl (Session.navKey session) (Route.toHref Route.Login)
-
-            else
-                Cmd.none
-    in
-    ( newModel, newCmd )
+    ( Model session, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
