@@ -35,7 +35,7 @@ type Model
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
-    | GotTranslationFromLocale Locale.Msg
+    | LocaleMsg Locale.Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
     | HomeMsg Page.Home.Msg
@@ -82,7 +82,7 @@ init flags url navKey =
             changeRoute route <| Init session
 
         cmds =
-            [ Cmd.map GotTranslationFromLocale localeCmd, Cmd.map UserMsg userCmd, modelCmd ]
+            [ Cmd.map LocaleMsg localeCmd, Cmd.map UserMsg userCmd, modelCmd ]
     in
     ( model, Cmd.batch cmds )
 
@@ -105,7 +105,7 @@ update msg model =
             in
             changeRoute newRoute model
 
-        GotTranslationFromLocale localeCmd ->
+        LocaleMsg localeCmd ->
             let
                 session =
                     toSession model
