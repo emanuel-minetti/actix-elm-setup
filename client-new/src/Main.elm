@@ -36,7 +36,6 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | GotTranslationFromLocale Locale.Msg
-    | GotTranslationFromPage Page.Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
     | HomeMsg Page.Home.Msg
@@ -122,55 +121,36 @@ update msg model =
             in
             ( newModel, Cmd.none )
 
-        GotTranslationFromPage pageCmd ->
+        PageMsg pageMsg ->
             let
                 session =
                     toSession model
 
-                ( newSession, _ ) =
-                    Page.update pageCmd session
+                ( newSession, newPageCmd ) =
+                    Page.update pageMsg session
 
                 newerSession =
                     Session.setLocale (Session.locale newSession) newSession
 
                 newModel =
                     setNewSession newerSession model
+
+                cmd =
+                    case pageMsg of
+                        Page.SwitchLanguage lang ->
+                            let
+                                storageCmd =
+                                    setLang lang
+
+                                apiCmd =
+                                    User.setSession (User.token <| Session.user newSession) lang
+                            in
+                            Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map UserMsg apiCmd, storageCmd ]
+
+                        Page.GotTranslation _ ->
+                            Cmd.map PageMsg newPageCmd
             in
-            ( newModel, Cmd.none )
-
-        PageMsg pageMsg ->
-            case pageMsg of
-                Page.SwitchLanguage lang ->
-                    let
-                        session =
-                            toSession model
-
-                        ( newSession, newPageCmd ) =
-                            Page.update pageMsg session
-
-                        newerSession =
-                            Session.setLocale (Session.locale newSession) newSession
-
-                        newModel =
-                            setNewSession newerSession model
-
-                        storageCmd =
-                            setLang lang
-
-                        apiCmd =
-                            User.setSession (User.token <| Session.user newSession) lang
-
-                        newCmd =
-                            Cmd.batch
-                                [ Cmd.map GotTranslationFromPage newPageCmd
-                                , Cmd.map UserMsg apiCmd
-                                , storageCmd
-                                ]
-                    in
-                    ( newModel, newCmd )
-
-                Page.GotTranslation _ ->
-                    ( model, Cmd.none )
+            ( newModel, cmd )
 
         UserMsg userMsg ->
             case userMsg of
@@ -244,9 +224,6 @@ update msg model =
                     in
                     ( newModel, Cmd.none )
 
-        HomeMsg _ ->
-            ( model, Cmd.none )
-
         LoginMsg loginMsg ->
             case model of
                 Login loginModel ->
@@ -306,6 +283,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        HomeMsg _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Document Msg
