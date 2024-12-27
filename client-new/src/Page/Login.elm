@@ -32,9 +32,6 @@ init session route =
     let
         newModel =
             Model session route "" ""
-
-        _ =
-            Debug.log "redirectTo" newModel.redirect
     in
     ( newModel, Cmd.none )
 
