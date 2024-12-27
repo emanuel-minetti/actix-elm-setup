@@ -153,77 +153,150 @@ update msg model =
             ( newModel, cmd )
 
         UserMsg userMsg ->
-            case userMsg of
-                User.GotApiLoadResponse _ ->
-                    let
-                        session =
-                            toSession model
+            let
+                session =
+                    toSession model
 
-                        ( newUser, userCmd ) =
-                            User.update userMsg <| Session.user session
+                ( newUser, userCmd ) =
+                    User.update userMsg <| Session.user session
 
-                        newSession =
-                            Session.setUser newUser session
+                ( newerModel, cmd ) =
+                    case userMsg of
+                        User.GotApiLoadResponse result ->
+                            case result of
+                                Ok _ ->
+                                    let
+                                        newSession =
+                                            Session.setUser newUser session
 
-                        newModel =
-                            setNewSession newSession model
+                                        newModel =
+                                            setNewSession newSession model
 
-                        storageCmd =
-                            newUser
-                                |> User.preferredLocale
-                                |> Locale.toValue
-                                |> setLang
+                                        storageCmd =
+                                            newUser
+                                                |> User.preferredLocale
+                                                |> Locale.toValue
+                                                |> setLang
 
-                        redirectCmd =
-                            case model of
-                                Login loginModel ->
-                                    if Session.isLoggedIn newSession then
-                                        let
-                                            redirect =
-                                                if loginModel.redirect == Route.Login then
-                                                    Route.Home
+                                        redirectCmd =
+                                            case model of
+                                                Login loginModel ->
+                                                    if Session.isLoggedIn newSession then
+                                                        let
+                                                            redirect =
+                                                                if loginModel.redirect == Route.Login then
+                                                                    Route.Home
 
-                                                else
-                                                    loginModel.redirect
-                                        in
-                                        Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+                                                                else
+                                                                    loginModel.redirect
+                                                        in
+                                                        Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+
+                                                    else
+                                                        Cmd.none
+
+                                                _ ->
+                                                    Cmd.none
+
+                                        newCmd =
+                                            Cmd.batch [ Cmd.map UserMsg userCmd, storageCmd, redirectCmd ]
+                                    in
+                                    ( newModel, newCmd )
+
+                                Err _ ->
+                                    ( model, Cmd.none )
+
+                        User.GotApiSetResponse _ ->
+                            ( model, Cmd.none )
+
+                        User.GotTranslationFromLocale _ ->
+                            let
+                                newSession =
+                                    if Session.locale session == User.preferredLocale newUser then
+                                        Session.setUser newUser session
 
                                     else
-                                        Cmd.none
+                                        session
+                                            |> Session.setUser newUser
+                                            |> Session.setLocale (User.preferredLocale newUser)
 
-                                _ ->
-                                    Cmd.none
+                                newModel =
+                                    setNewSession newSession model
+                            in
+                            ( newModel, Cmd.none )
+            in
+            ( newerModel, cmd )
 
-                        newCmd =
-                            Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd, redirectCmd ]
-                    in
-                    ( newModel, newCmd )
-
-                User.GotApiSetResponse _ ->
-                    ( model, Cmd.none )
-
-                User.GotTranslationFromLocale _ ->
-                    let
-                        session =
-                            toSession model
-
-                        ( newUser, _ ) =
-                            User.update userMsg <| Session.user session
-
-                        newSession =
-                            if Session.locale session == User.preferredLocale newUser then
-                                Session.setUser newUser session
-
-                            else
-                                session
-                                    |> Session.setUser newUser
-                                    |> Session.setLocale (User.preferredLocale newUser)
-
-                        newModel =
-                            setNewSession newSession model
-                    in
-                    ( newModel, Cmd.none )
-
+        --case userMsg of
+        --    User.GotApiLoadResponse _ ->
+        --        let
+        --            session =
+        --                toSession model
+        --
+        --            ( newUser, userCmd ) =
+        --                User.update userMsg <| Session.user session
+        --
+        --            newSession =
+        --                Session.setUser newUser session
+        --
+        --            newModel =
+        --                setNewSession newSession model
+        --
+        --            storageCmd =
+        --                newUser
+        --                    |> User.preferredLocale
+        --                    |> Locale.toValue
+        --                    |> setLang
+        --
+        --            redirectCmd =
+        --                case model of
+        --                    Login loginModel ->
+        --                        if Session.isLoggedIn newSession then
+        --                            let
+        --                                redirect =
+        --                                    if loginModel.redirect == Route.Login then
+        --                                        Route.Home
+        --
+        --                                    else
+        --                                        loginModel.redirect
+        --                            in
+        --                            Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+        --
+        --                        else
+        --                            Cmd.none
+        --
+        --                    _ ->
+        --                        Cmd.none
+        --
+        --            newCmd =
+        --                Cmd.batch [ storageCmd, Cmd.map UserMsg userCmd, redirectCmd ]
+        --        in
+        --        ( newModel, newCmd )
+        --
+        --    User.GotApiSetResponse _ ->
+        --        ( model, Cmd.none )
+        --
+        --    User.GotTranslationFromLocale _ ->
+        --        let
+        --            session =
+        --                toSession model
+        --
+        --            ( newUser, _ ) =
+        --                User.update userMsg <| Session.user session
+        --
+        --            newSession =
+        --                if Session.locale session == User.preferredLocale newUser then
+        --                    Session.setUser newUser session
+        --
+        --                else
+        --                    session
+        --                        |> Session.setUser newUser
+        --                        |> Session.setLocale (User.preferredLocale newUser)
+        --
+        --            newModel =
+        --                setNewSession newSession model
+        --        in
+        --        ( newModel, Cmd.none )
         LoginMsg loginMsg ->
             case model of
                 Login loginModel ->
