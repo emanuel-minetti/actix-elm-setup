@@ -29,6 +29,8 @@
   },
   "Login": {
     "title": "Anmelden",
-    "message": "Hier können Sie sich anmelden."
+    "message": "Bitte melden Sie sich an: ",
+    "username": "Benutzername",
+    "password": "Passwort"
   }
 }

@@ -1,4 +1,4 @@
-module User exposing (Msg(..), User, init, name, preferredLocale, setSession, token, update)
+module User exposing (Msg(..), User, init, loadSession, name, preferredLocale, setSession, setToken, token, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
@@ -38,6 +38,13 @@ token user =
     case user of
         User record ->
             record.token
+
+
+setToken : String -> User -> User
+setToken newToken user =
+    case user of
+        User record ->
+            User { record | token = newToken }
 
 
 

@@ -1,4 +1,4 @@
-module ServerRequest exposing (loadSession, loadTranslation, setSession)
+module ServerRequest exposing (loadLogin, loadSession, loadTranslation, setSession)
 
 import Http
 import Json.Encode as E
@@ -72,5 +72,17 @@ loadTranslation lang expect =
     let
         options =
             { method = "GET", token = Nothing, expect = expect, path = "lang/translation." ++ lang ++ ".json", body = Nothing }
+    in
+    request options
+
+
+loadLogin : String -> String -> Http.Expect msg -> Cmd msg
+loadLogin username password expect =
+    let
+        jsonBody =
+            E.object [ ( "account", E.string username ), ( "pw", E.string password ) ]
+
+        options =
+            { method = "POST", token = Nothing, expect = expect, path = "api/login", body = Just jsonBody }
     in
     request options

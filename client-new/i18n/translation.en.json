@@ -30,6 +30,8 @@
   },
   "Login": {
     "title": "Login",
-    "message": "You can login here."
+    "message": "Please log in:",
+    "username": "Username",
+    "password": "Password"
   }
 }

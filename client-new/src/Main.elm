@@ -20,6 +20,9 @@ import User
 port setLang : String -> Cmd msg
 
 
+port setToken : String -> Cmd msg
+
+
 type Model
     = Init Session
     | Home Page.Home.Model
@@ -241,21 +244,67 @@ update msg model =
                     in
                     ( newModel, Cmd.none )
 
-        HomeMsg homeMsg ->
-            case homeMsg of
-                Page.Home.None ->
-                    ( model, Cmd.none )
-
-                Page.Home.NotLoggedIn ->
-                    let
-                        ( loginModel, _ ) =
-                            Page.Login.init (toSession model) Route.Home
-                    in
-                    changeRoute Route.Login <| Login loginModel
+        HomeMsg _ ->
+            ( model, Cmd.none )
 
         LoginMsg loginMsg ->
-            case loginMsg of
-                Page.Login.None ->
+            case model of
+                Login loginModel ->
+                    let
+                        ( newLoginModel, newLoginCmd ) =
+                            Page.Login.update loginMsg loginModel
+
+                        newModel =
+                            Login newLoginModel
+
+                        cmd =
+                            case loginMsg of
+                                Page.Login.GotLoginResponse result ->
+                                    case result of
+                                        Ok _ ->
+                                            --get session from server, store token in browser and redirect
+                                            let
+                                                session =
+                                                    newModel
+                                                        |> toSession
+
+                                                token =
+                                                    session
+                                                        |> Session.user
+                                                        |> User.token
+
+                                                userCmd =
+                                                    User.loadSession token
+
+                                                storageCmd =
+                                                    setToken token
+
+                                                redirect =
+                                                    if loginModel.redirect == Route.Login then
+                                                        Route.Home
+
+                                                    else
+                                                        loginModel.redirect
+
+                                                redirectCmd =
+                                                    Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+                                            in
+                                            Cmd.batch
+                                                [ Cmd.map LoginMsg newLoginCmd
+                                                , Cmd.map UserMsg userCmd
+                                                , storageCmd
+                                                , redirectCmd
+                                                ]
+
+                                        Err _ ->
+                                            Cmd.map LoginMsg newLoginCmd
+
+                                _ ->
+                                    Cmd.map LoginMsg newLoginCmd
+                    in
+                    ( newModel, cmd )
+
+                _ ->
                     ( model, Cmd.none )
 
 
@@ -293,7 +342,7 @@ view model =
                     viewPage "Privacy" <| Page.Privacy.view session
 
                 Login loginModel ->
-                    viewPage "Login" <| Page.Login.view loginModel
+                    viewPage "Login" <| Html.map LoginMsg <| Page.Login.view loginModel
 
                 Init _ ->
                     viewPage "" <| Html.text ""

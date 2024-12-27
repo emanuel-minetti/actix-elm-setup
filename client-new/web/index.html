@@ -24,6 +24,9 @@
     app.ports.setLang.subscribe(function (language) {
         localStorage.setItem("lang", language);
     });
+    app.ports.setToken.subscribe(function (token) {
+        sessionStorage.setItem("session-token", token);
+    });
 </script>
 </body>
 </html>
