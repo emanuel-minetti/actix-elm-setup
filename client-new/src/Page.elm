@@ -1,12 +1,12 @@
 module Page exposing (Msg(..), update, view)
 
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, href, src, width)
+import Html.Attributes exposing (alt, class, height, href, src, style, title, width)
 import Html.Events exposing (onInput)
 import Locale exposing (Locale)
 import Route exposing (Route(..))
 import Session exposing (Session)
-import Translations.Main as I18n
+import Translations.Page as I18n
 import User
 
 
@@ -56,7 +56,10 @@ viewHeader session =
                     , text "Actix Elm Setup"
                     ]
                 , span [ class "navbar-text" ] [ viewLoggedInText session ]
-                , select [ onInput SwitchLanguage ] (Locale.viewLangOptions (Session.locale session))
+                , div [ style "display" "flex" ]
+                    [ viewLoginInfo session
+                    , select [ onInput SwitchLanguage ] (Locale.viewLangOptions (Session.locale session))
+                    ]
                 ]
             ]
         ]
@@ -65,17 +68,36 @@ viewHeader session =
 viewLoggedInText : Session -> Html Msg
 viewLoggedInText session =
     let
+        t =
+            (Session.locale session).t
+
         loggedIn =
             Session.isLoggedIn session
 
         loggedInText =
             if not loggedIn then
-                I18n.notLoggedInText (Session.locale session).t
+                I18n.notLoggedInText t
 
             else
-                I18n.loggedInText (Session.locale session).t <| User.name <| Session.user session
+                I18n.loggedInText t <| User.name <| Session.user session
     in
     text loggedInText
+
+
+viewLoginInfo : Session -> Html Msg
+viewLoginInfo session =
+    let
+        t =
+            (Session.locale session).t
+
+        loggedIn =
+            Session.isLoggedIn session
+    in
+    if loggedIn then
+        h4 [ title <| I18n.logoutTooltip t ] [ i [ class "bi bi-box-arrow-right me-3" ] [] ]
+
+    else
+        div [] []
 
 
 viewFooter : Session -> Html Msg

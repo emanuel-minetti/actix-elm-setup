@@ -1,8 +1,8 @@
 {
-  "Main": {
+  "Page": {
     "notLoggedInText": "You're not logged in",
-    "loggedInText": "You're logged in as {{name}}"
-
+    "loggedInText": "You're logged in as {{name}}",
+    "logoutTooltip": "Click here to log out"
   },
   "Route": {
     "Privacy": "Privacy Declaration",

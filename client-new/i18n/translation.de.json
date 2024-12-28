@@ -1,7 +1,8 @@
 {
-  "Main": {
+  "Page": {
     "notLoggedInText": "Sie sind nicht angemeldet",
-    "loggedInText": "Sie sind angemeldet als {{name}}"
+    "loggedInText": "Sie sind angemeldet als {{name}}",
+    "logoutTooltip": "Klicken Sie hier um sich abzumelden"
   },
   "Route": {
     "Privacy": "Datenschutz-Erklärung",
