@@ -109,10 +109,25 @@ pub async fn set_user_language_handler(
 
 pub async fn logout_handler(
     db_pool: Data<PgPool>,
-    account_id: DBId,
+    session_id: DBId,
     request: HttpRequest,
 ) -> HttpResponse {
-    HttpResponse::Ok().finish()
+    let into_api_error = ApiError::get_into(&request);
+    let _update_result = match query!(
+        // language=postgresql
+        r#"
+        DELETE FROM session WHERE id = $1
+        "#,
+        *session_id,)
+        .execute(&**db_pool).await{
+        Ok(result) => result,
+        Err(_error) => {
+            return return_early(into_api_error(ApiErrorType::DbError));
+        }
+    };
+    let res = HandlerResponse::None();
+
+    HttpResponse::Ok().json(res)
 }
 
 #[derive(Debug)]
