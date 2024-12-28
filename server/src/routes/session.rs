@@ -26,7 +26,7 @@ pub struct SessionRequest {
 
 pub async fn session_handler(
     db_pool: Data<PgPool>,
-    account_id: DBId,
+    session_id: DBId,
     request: HttpRequest,
 ) -> HttpResponse {
     let into_api_error = ApiError::get_into(&request);
@@ -36,9 +36,11 @@ pub async fn session_handler(
            SELECT
                name,
                preferred_language AS "preferred_lang: Lang"
-           FROM account WHERE id = $1
+           FROM account a
+           JOIN session s on a.id = s.account_id
+           WHERE s.id = $1
        "#,
-        *account_id
+        *session_id
     )
     .fetch_one(&**db_pool)
     .await
@@ -49,7 +51,7 @@ pub async fn session_handler(
                 Level::Error,
                 "Error: {}, while retrieving account, Data: {:?}",
                 error,
-                account_id
+                session_id
             );
             return return_early(into_api_error(error.into()));
         }
@@ -66,7 +68,7 @@ pub async fn session_handler(
 pub async fn set_user_language_handler(
     db_pool: Data<PgPool>,
     req_json_body: Json<SessionRequest>,
-    account_id: DBId,
+    session_id: DBId,
     request: HttpRequest,
 ) -> HttpResponse {
     let into_api_error = ApiError::get_into(&request);
@@ -77,16 +79,19 @@ pub async fn set_user_language_handler(
         }
     };
     let update_result = match query!(
+        // language=postgresql
         r#"
-        UPDATE account SET
+        UPDATE account a SET
             preferred_language = $1::lang
-        WHERE id = $2
+        FROM session s
+        WHERE s.id = $2
+            AND a.id = s.account_id
         RETURNING
             name,
             preferred_language AS "preferred_lang: Lang"
         "#,
         preferred_lang_data.into_inner() as Lang,
-        *account_id,)
+        *session_id,)
             .fetch_one(&**db_pool).await {
         Ok(row) => row,
         Err(_error) => {
@@ -100,6 +105,14 @@ pub async fn set_user_language_handler(
     });
 
     HttpResponse::Ok().json(res)
+}
+
+pub async fn logout_handler(
+    db_pool: Data<PgPool>,
+    account_id: DBId,
+    request: HttpRequest,
+) -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
 
 #[derive(Debug)]

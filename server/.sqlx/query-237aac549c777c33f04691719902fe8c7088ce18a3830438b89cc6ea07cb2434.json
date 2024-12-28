@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE account SET\n            preferred_language = $1::lang\n        WHERE id = $2\n        RETURNING\n            name,\n            preferred_language AS \"preferred_lang: Lang\"\n        ",
+  "query": "\n           SELECT\n               name,\n               preferred_language AS \"preferred_lang: Lang\"\n           FROM account a\n           JOIN session s on a.id = s.account_id\n           WHERE s.id = $1\n       ",
   "describe": {
     "columns": [
       {
@@ -26,17 +26,6 @@
     ],
     "parameters": {
       "Left": [
-        {
-          "Custom": {
-            "name": "lang",
-            "kind": {
-              "Enum": [
-                "en",
-                "de"
-              ]
-            }
-          }
-        },
         "Uuid"
       ]
     },
@@ -45,5 +34,5 @@
       false
     ]
   },
-  "hash": "037197f73167e5ae63a23b64bd1e9236c12ab3c8a35321ada07c3207d8029b9e"
+  "hash": "237aac549c777c33f04691719902fe8c7088ce18a3830438b89cc6ea07cb2434"
 }

@@ -180,7 +180,7 @@ where
                     // language=postgresql
                     r#"
                         UPDATE session SET expires_at = DEFAULT
-                            WHERE id = $1 RETURNING account_id, expires_at
+                            WHERE id = $1 RETURNING id, expires_at
                     "#,
                     session_id
                 )
@@ -199,7 +199,7 @@ where
                 };
 
                 req.extensions_mut()
-                    .insert(DBId(updated_session_row.account_id));
+                    .insert(DBId(updated_session_row.id));
 
                 Ok(updated_session_row.expires_at.and_utc().timestamp() as ExpiresAt)
             }

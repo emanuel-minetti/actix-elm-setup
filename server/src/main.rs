@@ -61,6 +61,7 @@ async fn main() -> std::io::Result<()> {
                             .route("/login", web::post().to(routes::login_handler))
                             .route("/session", web::get().to(routes::session_handler))
                             .route("/session", web::post().to(routes::set_user_language_handler))
+                            .route("/session", web::delete().to(routes::logout_handler))
                             .route("/{route}", web::get().to(routes::not_found_handler)),
                     )
                     .route("/favicon.ico", web::get().to(routes::return_favicon))
