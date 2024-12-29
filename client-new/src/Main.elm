@@ -149,6 +149,25 @@ update msg model =
 
                         Page.GotTranslation _ ->
                             Cmd.map PageMsg newPageCmd
+
+                        Page.LogoutRequested ->
+                            Cmd.map PageMsg newPageCmd
+
+                        Page.GotLogout result ->
+                            --update browser token, and redirect
+                            case result of
+                                Ok _ ->
+                                    let
+                                        storageCmd =
+                                            setToken ""
+
+                                        redirectCmd =
+                                            Nav.pushUrl (Session.navKey newerSession) (Route.toHref Route.Home)
+                                    in
+                                    Cmd.batch [ Cmd.map PageMsg newPageCmd, storageCmd, redirectCmd ]
+
+                                Err _ ->
+                                    Cmd.map PageMsg newPageCmd
             in
             ( newModel, cmd )
 

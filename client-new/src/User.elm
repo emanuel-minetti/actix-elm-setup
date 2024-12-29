@@ -1,4 +1,4 @@
-module User exposing (Msg(..), User, init, loadSession, name, preferredLocale, setSession, setToken, token, update)
+module User exposing (Msg(..), User, fromTokenAndLocale, init, loadSession, name, preferredLocale, setSession, setToken, token, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http

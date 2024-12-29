@@ -1,10 +1,13 @@
 module Page exposing (Msg(..), update, view)
 
+import ApiResponse exposing (ApiResponse, apiResponseDecoder)
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, height, href, src, style, title, width)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
+import Http
 import Locale exposing (Locale)
 import Route exposing (Route(..))
+import ServerRequest
 import Session exposing (Session)
 import Translations.Page as I18n
 import User
@@ -18,6 +21,8 @@ view session =
 type Msg
     = SwitchLanguage String
     | GotTranslation Locale.Msg
+    | LogoutRequested
+    | GotLogout (Result Http.Error ApiResponse)
 
 
 update : Msg -> Session -> ( Session, Cmd Msg )
@@ -36,6 +41,26 @@ update msg session =
                     Locale.update localeCmd (Session.locale session)
             in
             ( Session.setLocale locale session, Cmd.none )
+
+        LogoutRequested ->
+            ( session, loadLogout session )
+
+        GotLogout result ->
+            case result of
+                Ok _ ->
+                    let
+                        preferredLocale =
+                            session
+                                |> Session.user
+                                |> User.preferredLocale
+
+                        newSession =
+                            Session.setUser (User.fromTokenAndLocale "" preferredLocale) session
+                    in
+                    ( newSession, Cmd.none )
+
+                Err _ ->
+                    ( session, Cmd.none )
 
 
 viewHeader : Session -> Html Msg
@@ -94,7 +119,7 @@ viewLoginInfo session =
             Session.isLoggedIn session
     in
     if loggedIn then
-        h4 [ title <| I18n.logoutTooltip t ] [ i [ class "bi bi-box-arrow-right me-3" ] [] ]
+        h4 [ title <| I18n.logoutTooltip t, onClick LogoutRequested ] [ i [ class "bi bi-box-arrow-right me-3" ] [] ]
 
     else
         div [] []
@@ -127,3 +152,14 @@ viewFooterLinks locale =
             li [] [ a [ href <| Route.toHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ] ]
     in
     List.map routeToItem routes
+
+
+loadLogout : Session -> Cmd Msg
+loadLogout session =
+    let
+        token =
+            session
+                |> Session.user
+                |> User.token
+    in
+    ServerRequest.logout token <| Http.expectJson GotLogout apiResponseDecoder

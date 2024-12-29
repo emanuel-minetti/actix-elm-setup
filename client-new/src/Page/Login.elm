@@ -124,4 +124,4 @@ setSession session model =
 
 loadLogin : Model -> Cmd Msg
 loadLogin model =
-    ServerRequest.loadLogin model.username model.password <| Http.expectJson GotLoginResponse apiResponseDecoder
+    ServerRequest.login model.username model.password <| Http.expectJson GotLoginResponse apiResponseDecoder
