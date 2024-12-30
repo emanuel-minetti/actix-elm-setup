@@ -129,11 +129,8 @@ update msg model =
                 ( newSession, newPageCmd ) =
                     Page.update pageMsg session
 
-                newerSession =
-                    Session.setLocale (Session.locale newSession) newSession
-
                 newModel =
-                    setNewSession newerSession model
+                    setNewSession newSession model
 
                 cmd =
                     case pageMsg of
@@ -162,7 +159,7 @@ update msg model =
                                             setToken ""
 
                                         redirectCmd =
-                                            Nav.pushUrl (Session.navKey newerSession) (Route.toHref Route.Home)
+                                            Nav.pushUrl (Session.navKey newSession) (Route.toHref Route.Home)
                                     in
                                     Cmd.batch [ Cmd.map PageMsg newPageCmd, storageCmd, redirectCmd ]
 
@@ -316,8 +313,14 @@ view model =
         session =
             toSession model
 
-        ( header, footer ) =
-            Page.view session
+        header =
+            Page.viewHeader session
+
+        messages =
+            Page.viewMessages session
+
+        footer =
+            Page.viewFooter session
 
         viewPage newTitle content =
             let
@@ -325,7 +328,7 @@ view model =
                     "AES - " ++ newTitle
 
                 newBody =
-                    [ Html.map PageMsg header, content, Html.map PageMsg footer ]
+                    [ Html.map PageMsg header, messages, content, Html.map PageMsg footer ]
             in
             ( newerTitle, newBody )
 

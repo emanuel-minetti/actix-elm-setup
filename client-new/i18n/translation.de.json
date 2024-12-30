@@ -2,7 +2,11 @@
   "Page": {
     "notLoggedInText": "Sie sind nicht angemeldet",
     "loggedInText": "Sie sind angemeldet als {{name}}",
-    "logoutTooltip": "Klicken Sie hier um sich abzumelden"
+    "logoutTooltip": "Klicken Sie hier um sich abzumelden",
+    "success": "Erfolg",
+    "info": "Information",
+    "warning": "Warnung",
+    "error": "Fehler"
   },
   "Route": {
     "Privacy": "Datenschutz-Erklärung",
@@ -33,5 +37,9 @@
     "message": "Bitte melden Sie sich an: ",
     "username": "Benutzername",
     "password": "Passwort"
+  },
+  "Message": {
+    "empty": "",
+    "logoffSuccess": "Sie haben sich erfolgreich abgemeldet"
   }
 }

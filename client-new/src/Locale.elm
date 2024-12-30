@@ -3,6 +3,7 @@ module Locale exposing
     , Locale
     , Msg(..)
     , changeLang
+    , getLocaleOptions
     , init
     , langFromString
     , loadTranslation

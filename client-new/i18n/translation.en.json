@@ -2,7 +2,11 @@
   "Page": {
     "notLoggedInText": "You're not logged in",
     "loggedInText": "You're logged in as {{name}}",
-    "logoutTooltip": "Click here to log out"
+    "logoutTooltip": "Click here to log out",
+    "success": "Success",
+    "info": "Info",
+    "warning": "Warning",
+    "error": "Error"
   },
   "Route": {
     "Privacy": "Privacy Declaration",
@@ -33,5 +37,9 @@
     "message": "Please log in:",
     "username": "Username",
     "password": "Password"
+  },
+  "Message": {
+    "empty": "",
+    "logoffSuccess": "You successfully logged off"
   }
 }

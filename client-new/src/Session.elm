@@ -1,7 +1,8 @@
-module Session exposing (Session, init, isLoggedIn, locale, navKey, setLocale, setUser, user)
+module Session exposing (Session, addMessage, init, isLoggedIn, locale, messages, navKey, resetMessages, setLocale, setUser, user)
 
 import Browser.Navigation as Nav
 import Locale exposing (Locale)
+import Message exposing (Message)
 import User exposing (User)
 
 
@@ -10,12 +11,13 @@ type Session
         { locale : Locale
         , navKey : Nav.Key
         , user : User
+        , messages : List Message
         }
 
 
 init : Locale -> Nav.Key -> User -> Session
 init newLocale newNavKey newUser =
-    Session { locale = newLocale, navKey = newNavKey, user = newUser }
+    Session { locale = newLocale, navKey = newNavKey, user = newUser, messages = [] }
 
 
 locale : Session -> Locale
@@ -37,6 +39,13 @@ user session =
     case session of
         Session record ->
             record.user
+
+
+messages : Session -> List Message
+messages session =
+    case session of
+        Session record ->
+            record.messages
 
 
 isLoggedIn : Session -> Bool
@@ -61,3 +70,21 @@ setUser newUser session =
     case session of
         Session record ->
             Session { record | user = newUser }
+
+
+addMessage : Message -> Session -> Session
+addMessage message session =
+    let
+        newMessages =
+            message :: messages session
+    in
+    case session of
+        Session record ->
+            Session { record | messages = newMessages }
+
+
+resetMessages : Session -> Session
+resetMessages session =
+    case session of
+        Session record ->
+            Session { record | messages = [] }

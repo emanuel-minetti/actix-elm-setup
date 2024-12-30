@@ -1,21 +1,17 @@
-module Page exposing (Msg(..), update, view)
+module Page exposing (Msg(..), update, viewFooter, viewHeader, viewMessages)
 
 import ApiResponse exposing (ApiResponse, apiResponseDecoder)
 import Html exposing (..)
-import Html.Attributes exposing (alt, class, height, href, src, style, title, width)
+import Html.Attributes exposing (alt, attribute, class, height, href, src, style, title, width)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Locale exposing (Locale)
+import Message exposing (Message)
 import Route exposing (Route(..))
 import ServerRequest
 import Session exposing (Session)
 import Translations.Page as I18n
 import User
-
-
-view : Session -> ( Html Msg, Html Msg )
-view session =
-    ( viewHeader session, viewFooter session )
 
 
 type Msg
@@ -56,8 +52,11 @@ update msg session =
 
                         newSession =
                             Session.setUser (User.fromTokenAndLocale "" preferredLocale) session
+
+                        newerSession =
+                            Session.addMessage Message.getLoginSuccess newSession
                     in
-                    ( newSession, Cmd.none )
+                    ( newerSession, Cmd.none )
 
                 Err _ ->
                     ( session, Cmd.none )
@@ -87,6 +86,63 @@ viewHeader session =
                     ]
                 ]
             ]
+        ]
+
+
+viewMessages : Session -> Html msg
+viewMessages session =
+    div [ class "container mb-3" ]
+        (List.map (viewMessage session) (Session.messages session))
+
+
+viewFooter : Session -> Html Msg
+viewFooter session =
+    footer [ class "bg-body-tertiary" ]
+        [ div [ class "container-fluid" ]
+            [ div [ class "row align-items-start" ]
+                [ div [ class "col" ]
+                    [ ul [ class "list-unstyled" ] <| viewFooterLinks <| Session.locale session ]
+                , div [ class "col text-center" ]
+                    --todo get from config api
+                    [ span [] [ text "Version: 0.0.0" ] ]
+                , div [ class "col" ]
+                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
+                ]
+            ]
+        ]
+
+
+viewMessage : Session -> Message -> Html msg
+viewMessage session message =
+    let
+        t =
+            (Session.locale session).t
+
+        baseClass =
+            "alert"
+
+        ( severityClass, severityTitle ) =
+            case Message.severity message of
+                Message.Success ->
+                    ( "alert-success", I18n.success t )
+
+                Message.Info ->
+                    ( "alert-info", I18n.info t )
+
+                Message.Warning ->
+                    ( "alert-warning", I18n.warning t )
+
+                Message.Error ->
+                    ( "alert-danger", I18n.error t )
+
+        newClass =
+            baseClass ++ " " ++ severityClass
+    in
+    div [ class newClass, attribute "role" "alert" ]
+        [ h5 [ class "alert-heading text-center" ] [ text severityTitle ]
+        , hr [] []
+        , h6 [ class "alert-heading" ] [ text <| Message.title message t ]
+        , text <| Message.text message t
         ]
 
 
@@ -123,23 +179,6 @@ viewLoginInfo session =
 
     else
         div [] []
-
-
-viewFooter : Session -> Html Msg
-viewFooter session =
-    footer [ class "bg-body-tertiary" ]
-        [ div [ class "container-fluid" ]
-            [ div [ class "row align-items-start" ]
-                [ div [ class "col" ]
-                    [ ul [ class "list-unstyled" ] <| viewFooterLinks <| Session.locale session ]
-                , div [ class "col text-center" ]
-                    --todo get from config api
-                    [ span [] [ text "Version: 0.0.0" ] ]
-                , div [ class "col" ]
-                    [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
-                ]
-            ]
-        ]
 
 
 viewFooterLinks : Locale -> List (Html Msg)
