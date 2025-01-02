@@ -23,6 +23,12 @@ port setLang : String -> Cmd msg
 port setToken : String -> Cmd msg
 
 
+port getShownMessageIds : () -> Cmd msg
+
+
+port gotShownMessageIds : (Array Int -> msg) -> Sub msg
+
+
 type Model
     = Init Session
     | Home Page.Home.Model
@@ -35,6 +41,7 @@ type Model
 type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
+    | GotShownMessageIds (Array Int)
     | LocaleMsg Locale.Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
@@ -47,7 +54,7 @@ main =
     Browser.application
         { init = init
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         , view = view
         , onUrlRequest = ClickedLink
         , onUrlChange = ChangedUrl
@@ -102,8 +109,21 @@ update msg model =
             let
                 newRoute =
                     Route.parseUrl url
+
+                ( newModel, newCmd ) =
+                    changeRoute newRoute model
+
+                removeMessagesCmd =
+                    getShownMessageIds ()
             in
-            changeRoute newRoute model
+            ( newModel, Cmd.batch [ removeMessagesCmd, newCmd ] )
+
+        GotShownMessageIds ints ->
+            let
+                newModel =
+                    setNewSession (Session.removeSeenMessages ints <| toSession model) model
+            in
+            ( newModel, Cmd.none )
 
         LocaleMsg localeCmd ->
             let
@@ -159,7 +179,7 @@ update msg model =
                                             setToken ""
 
                                         redirectCmd =
-                                            Nav.pushUrl (Session.navKey newSession) (Route.toHref Route.Home)
+                                            Nav.pushUrl (Session.navKey newSession) (Route.toHref Route.Login)
                                     in
                                     Cmd.batch [ Cmd.map PageMsg newPageCmd, storageCmd, redirectCmd ]
 
@@ -307,6 +327,11 @@ update msg model =
             ( model, Cmd.none )
 
 
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    gotShownMessageIds GotShownMessageIds
+
+
 view : Model -> Document Msg
 view model =
     let
@@ -411,7 +436,9 @@ changeRoute route model =
                 Page.Login.init session route
 
             cmd =
-                Nav.pushUrl (Session.navKey session) (Route.toHref Route.Login)
+                Cmd.batch
+                    [ Nav.pushUrl (Session.navKey session) (Route.toHref Route.Login)
+                    ]
         in
         ( Login loginModel, cmd )
 
@@ -425,7 +452,7 @@ changeRoute route model =
                     ( homeModel, homeCmd ) =
                         Page.Home.init session
                 in
-                ( Home homeModel, Cmd.map HomeMsg homeCmd )
+                ( Home homeModel, Cmd.batch [ Cmd.map HomeMsg homeCmd ] )
 
             Route.Privacy ->
                 ( Privacy session, Cmd.none )

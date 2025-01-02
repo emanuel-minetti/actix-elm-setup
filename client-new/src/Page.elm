@@ -1,8 +1,9 @@
 module Page exposing (Msg(..), update, viewFooter, viewHeader, viewMessages)
 
 import ApiResponse exposing (ApiResponse, apiResponseDecoder)
+import Array
 import Html exposing (..)
-import Html.Attributes exposing (alt, attribute, class, height, href, src, style, title, width)
+import Html.Attributes exposing (alt, attribute, class, height, href, id, src, style, title, width)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Locale exposing (Locale)
@@ -92,7 +93,7 @@ viewHeader session =
 viewMessages : Session -> Html msg
 viewMessages session =
     div [ class "container mb-3" ]
-        (List.map (viewMessage session) (Session.messages session))
+        (Array.toList (Array.indexedMap (viewMessage session) (Session.messages session)))
 
 
 viewFooter : Session -> Html Msg
@@ -112,14 +113,14 @@ viewFooter session =
         ]
 
 
-viewMessage : Session -> Message -> Html msg
-viewMessage session message =
+viewMessage : Session -> Int -> Message -> Html msg
+viewMessage session index message =
     let
         t =
             (Session.locale session).t
 
         baseClass =
-            "alert"
+            "aes-message alert"
 
         ( severityClass, severityTitle ) =
             case Message.severity message of
@@ -138,7 +139,7 @@ viewMessage session message =
         newClass =
             baseClass ++ " " ++ severityClass
     in
-    div [ class newClass, attribute "role" "alert" ]
+    div [ class newClass, attribute "role" "alert", id <| "aes-message-" ++ String.fromInt index ]
         [ h5 [ class "alert-heading text-center" ] [ text severityTitle ]
         , hr [] []
         , h6 [ class "alert-heading" ] [ text <| Message.title message t ]

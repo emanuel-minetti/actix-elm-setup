@@ -29,6 +29,13 @@
     app.ports.setToken.subscribe(function (token) {
         sessionStorage.setItem("session-token", token);
     });
+    app.ports.getShownMessageIds.subscribe(function () {
+        let messageEls = document.getElementsByClassName("aes-message");
+        let messageElsArray = Array.from(messageEls);
+        app.ports.gotShownMessageIds.send(
+            messageElsArray.map((el) => Number.parseInt(el.id.substring(12)))
+        );
+    });
 </script>
 </body>
 </html>

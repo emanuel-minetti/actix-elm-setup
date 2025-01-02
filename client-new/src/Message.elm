@@ -1,4 +1,4 @@
-module Message exposing (Message, Severity(..), getLoginSuccess, severity, text, title)
+module Message exposing (Message, Severity(..), getLoginSuccess, seen, setSeen, severity, text, title)
 
 import I18Next exposing (Translations)
 import Translations.Message as I18n
@@ -16,6 +16,7 @@ type Message
         { severity : Severity
         , title : Translations -> String
         , text : Translations -> String
+        , seen : Bool
         }
 
 
@@ -40,10 +41,25 @@ text message =
             record.text
 
 
+seen : Message -> Bool
+seen message =
+    case message of
+        Message record ->
+            record.seen
+
+
+setSeen : Message -> Message
+setSeen message =
+    case message of
+        Message record ->
+            Message { record | seen = True }
+
+
 getLoginSuccess : Message
 getLoginSuccess =
     Message
         { severity = Success
         , title = I18n.empty
         , text = I18n.logoffSuccess
+        , seen = False
         }

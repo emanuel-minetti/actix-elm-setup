@@ -1,5 +1,6 @@
-module Session exposing (Session, addMessage, init, isLoggedIn, locale, messages, navKey, resetMessages, setLocale, setUser, user)
+module Session exposing (Session, addMessage, init, isLoggedIn, locale, messages, navKey, removeSeenMessages, setLocale, setUser, user)
 
+import Array exposing (Array)
 import Browser.Navigation as Nav
 import Locale exposing (Locale)
 import Message exposing (Message)
@@ -11,13 +12,13 @@ type Session
         { locale : Locale
         , navKey : Nav.Key
         , user : User
-        , messages : List Message
+        , messages : Array Message
         }
 
 
 init : Locale -> Nav.Key -> User -> Session
 init newLocale newNavKey newUser =
-    Session { locale = newLocale, navKey = newNavKey, user = newUser, messages = [] }
+    Session { locale = newLocale, navKey = newNavKey, user = newUser, messages = Array.empty }
 
 
 locale : Session -> Locale
@@ -41,7 +42,7 @@ user session =
             record.user
 
 
-messages : Session -> List Message
+messages : Session -> Array Message
 messages session =
     case session of
         Session record ->
@@ -76,15 +77,49 @@ addMessage : Message -> Session -> Session
 addMessage message session =
     let
         newMessages =
-            message :: messages session
+            Array.push message <| messages session
     in
     case session of
         Session record ->
             Session { record | messages = newMessages }
 
 
-resetMessages : Session -> Session
-resetMessages session =
+removeSeenMessages : Array Int -> Session -> Session
+removeSeenMessages ints session =
+    let
+        newSession =
+            doRemoveSeenMessages session
+
+        newerSession =
+            markSeen ints newSession
+    in
+    newerSession
+
+
+doRemoveSeenMessages : Session -> Session
+doRemoveSeenMessages session =
+    let
+        newMessages =
+            Array.filter (\m -> not (Message.seen m)) (messages session)
+    in
     case session of
         Session record ->
-            Session { record | messages = [] }
+            Session { record | messages = newMessages }
+
+
+markSeen : Array Int -> Session -> Session
+markSeen ints session =
+    let
+        markMessage int message =
+            if List.member int <| Array.toList ints then
+                Message.setSeen message
+
+            else
+                message
+
+        newMessages =
+            Array.indexedMap markMessage <| messages session
+    in
+    case session of
+        Session record ->
+            Session { record | messages = newMessages }
