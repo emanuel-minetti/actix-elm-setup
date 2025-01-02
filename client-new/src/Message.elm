@@ -59,7 +59,7 @@ getLoginSuccess : Message
 getLoginSuccess =
     Message
         { severity = Success
-        , title = I18n.empty
+        , title = I18n.logoffTitle
         , text = I18n.logoffSuccess
         , seen = False
         }

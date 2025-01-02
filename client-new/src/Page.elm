@@ -92,7 +92,7 @@ viewHeader session =
 
 viewMessages : Session -> Html msg
 viewMessages session =
-    div [ class "container mb-3" ]
+    div [ class "container pt-3" ]
         (Array.toList (Array.indexedMap (viewMessage session) (Session.messages session)))
 
 
@@ -140,9 +140,9 @@ viewMessage session index message =
             baseClass ++ " " ++ severityClass
     in
     div [ class newClass, attribute "role" "alert", id <| "aes-message-" ++ String.fromInt index ]
-        [ h5 [ class "alert-heading text-center" ] [ text severityTitle ]
+        [ h4 [ class "alert-heading text-center" ] [ text severityTitle ]
         , hr [] []
-        , h6 [ class "alert-heading" ] [ text <| Message.title message t ]
+        , h5 [ class "alert-heading" ] [ text <| Message.title message t ]
         , text <| Message.text message t
         ]
 
