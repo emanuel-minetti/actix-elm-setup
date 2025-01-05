@@ -40,13 +40,6 @@ token user =
             record.token
 
 
-setToken : String -> User -> User
-setToken newToken user =
-    case user of
-        User record ->
-            User { record | token = newToken }
-
-
 
 --CONSTRUCTORS AND SETTERS
 
@@ -56,11 +49,25 @@ fromTokenAndLocale newToken locale =
     User { name = "", preferredLocale = locale, token = newToken, sessionExpiresAt = 0 }
 
 
+setToken : String -> User -> User
+setToken newToken user =
+    case user of
+        User record ->
+            User { record | token = newToken }
+
+
 setPreferredLocale : Locale -> User -> User
 setPreferredLocale locale user =
     case user of
         User record ->
             User { record | preferredLocale = locale }
+
+
+setExpiresAt : Int -> User -> User
+setExpiresAt expiresAt user =
+    case user of
+        User record ->
+            User { record | sessionExpiresAt = expiresAt }
 
 
 type Msg
@@ -121,7 +128,11 @@ update msg user =
                 Ok apiResponse ->
                     case apiResponse.data of
                         SessionResponseData _ ->
-                            ( user, Cmd.none )
+                            let
+                                newUser =
+                                    setExpiresAt apiResponse.expires user
+                            in
+                            ( newUser, Cmd.none )
 
                         _ ->
                             ( user, Cmd.none )

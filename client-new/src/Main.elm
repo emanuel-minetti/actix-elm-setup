@@ -243,10 +243,23 @@ update msg model =
                                     ( model, Cmd.none )
 
                         User.GotApiSetResponse _ ->
-                            ( model, Cmd.none )
+                            let
+                                newSession =
+                                    Session.setUser newUser session
+
+                                newModel =
+                                    setNewSession newSession model
+                            in
+                            ( newModel, Cmd.none )
 
                         User.GotTranslationFromLocale _ ->
                             let
+                                _ =
+                                    Debug.log "Session Lang: " (Session.locale session)
+
+                                _ =
+                                    Debug.log "User Lang: " (User.preferredLocale newUser)
+
                                 newSession =
                                     if Session.locale session == User.preferredLocale newUser then
                                         Session.setUser newUser session
@@ -429,6 +442,9 @@ changeRoute route model =
     let
         session =
             toSession model
+
+        _ =
+            Debug.log "Session: " session
     in
     if Route.needsAuthentication route && not (Session.isLoggedIn session) then
         let
