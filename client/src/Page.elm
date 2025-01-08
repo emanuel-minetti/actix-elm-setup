@@ -171,7 +171,9 @@ viewLoginInfo session =
             Session.isLoggedIn session
     in
     if loggedIn then
-        h4 [ title <| I18n.logoutTooltip t, onClick LogoutRequested ] [ i [ class "bi bi-box-arrow-right me-3" ] [] ]
+        button
+            [ title <| I18n.logoutTooltip t, onClick LogoutRequested, class "btn btn-secondary me-2" ]
+            [ text "Logout   ", i [ class "bi bi-box-arrow-right" ] [] ]
 
     else
         div [] []
@@ -184,7 +186,12 @@ viewFooterLinks locale =
             [ Route.Privacy, Route.Imprint ]
 
         routeToItem route =
-            li [] [ a [ href <| Route.toHref route ] [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ] ]
+            li
+                []
+                [ a
+                    [ href <| Route.toHref route ]
+                    [ button [ class "btn btn-secondary" ] [ text <| Route.toText route locale ] ]
+                ]
     in
     List.map routeToItem routes
 

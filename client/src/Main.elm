@@ -340,7 +340,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    gotShownMessageIds GotShownMessageIds
+    Sub.batch [ gotShownMessageIds GotShownMessageIds ]
 
 
 view : Model -> Document Msg
