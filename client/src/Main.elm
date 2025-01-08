@@ -209,7 +209,9 @@ update msg model =
                                                     Session.setUser newUser session
 
                                                 newerSession =
-                                                    Session.setLocale (Locale.initialLocale sessionResponse.lang) newSession
+                                                    Session.setLocale
+                                                        (Locale.initialLocale sessionResponse.lang)
+                                                        newSession
 
                                                 localeCmd =
                                                     Locale.loadTranslation <| Locale.initialLocale sessionResponse.lang
@@ -438,9 +440,6 @@ changeRoute route model =
     let
         session =
             toSession model
-
-        _ =
-            Debug.log "Session: " session
     in
     if Route.needsAuthentication route && not (Session.isLoggedIn session) then
         let
