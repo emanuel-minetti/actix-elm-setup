@@ -5,6 +5,7 @@ module Locale exposing
     , changeLang
     , getLocaleOptions
     , init
+    , initialLocale
     , langFromString
     , loadTranslation
     , toValue

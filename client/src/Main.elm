@@ -1,5 +1,6 @@
 port module Main exposing (main)
 
+import ApiResponse exposing (ApiResponseData(..))
 import Array exposing (Array)
 import Browser exposing (Document)
 import Browser.Navigation as Nav
@@ -77,7 +78,7 @@ init flags url navKey =
             Maybe.withDefault "" <| Array.get 1 flags
 
         ( user, userCmd ) =
-            User.init tokenFromBrowser locale
+            User.init tokenFromBrowser
 
         route =
             Route.parseUrl url
@@ -200,44 +201,63 @@ update msg model =
                     case userMsg of
                         User.GotApiLoadResponse result ->
                             case result of
-                                Ok _ ->
-                                    let
-                                        newSession =
-                                            Session.setUser newUser session
+                                Ok apiResponse ->
+                                    case apiResponse.data of
+                                        SessionResponseData sessionResponse ->
+                                            let
+                                                newSession =
+                                                    Session.setUser newUser session
 
-                                        newModel =
-                                            setNewSession newSession model
+                                                newerSession =
+                                                    Session.setLocale
+                                                        (Locale.initialLocale sessionResponse.lang)
+                                                        newSession
 
-                                        storageCmd =
-                                            newUser
-                                                |> User.preferredLocale
-                                                |> Locale.toValue
-                                                |> setLang
+                                                localeCmd =
+                                                    Locale.loadTranslation <| Locale.initialLocale sessionResponse.lang
 
-                                        redirectCmd =
-                                            case model of
-                                                Login loginModel ->
-                                                    if Session.isLoggedIn newSession then
-                                                        let
-                                                            redirect =
-                                                                if loginModel.redirect == Route.Login then
-                                                                    Route.Home
+                                                storageCmd =
+                                                    sessionResponse.lang
+                                                        |> String.toLower
+                                                        |> setLang
 
-                                                                else
-                                                                    loginModel.redirect
-                                                        in
-                                                        Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
+                                                redirectCmd =
+                                                    case model of
+                                                        Login loginModel ->
+                                                            if Session.isLoggedIn newerSession then
+                                                                let
+                                                                    redirect =
+                                                                        if loginModel.redirect == Route.Login then
+                                                                            Route.Home
 
-                                                    else
-                                                        Cmd.none
+                                                                        else
+                                                                            loginModel.redirect
+                                                                in
+                                                                redirect
+                                                                    |> Route.toHref
+                                                                    |> Nav.pushUrl (Session.navKey session)
 
-                                                _ ->
-                                                    Cmd.none
+                                                            else
+                                                                Cmd.none
 
-                                        newCmd =
-                                            Cmd.batch [ Cmd.map UserMsg userCmd, storageCmd, redirectCmd ]
-                                    in
-                                    ( newModel, newCmd )
+                                                        _ ->
+                                                            Cmd.none
+
+                                                newModel =
+                                                    setNewSession newerSession model
+
+                                                newCmd =
+                                                    Cmd.batch
+                                                        [ Cmd.map UserMsg userCmd
+                                                        , Cmd.map LocaleMsg localeCmd
+                                                        , storageCmd
+                                                        , redirectCmd
+                                                        ]
+                                            in
+                                            ( newModel, newCmd )
+
+                                        _ ->
+                                            ( model, Cmd.none )
 
                                 Err _ ->
                                     ( model, Cmd.none )
@@ -246,28 +266,6 @@ update msg model =
                             let
                                 newSession =
                                     Session.setUser newUser session
-
-                                newModel =
-                                    setNewSession newSession model
-                            in
-                            ( newModel, Cmd.none )
-
-                        User.GotTranslationFromLocale _ ->
-                            let
-                                _ =
-                                    Debug.log "Session Lang: " (Session.locale session)
-
-                                _ =
-                                    Debug.log "User Lang: " (User.preferredLocale newUser)
-
-                                newSession =
-                                    if Session.locale session == User.preferredLocale newUser then
-                                        Session.setUser newUser session
-
-                                    else
-                                        session
-                                            |> Session.setUser newUser
-                                            |> Session.setLocale (User.preferredLocale newUser)
 
                                 newModel =
                                     setNewSession newSession model
@@ -442,9 +440,6 @@ changeRoute route model =
     let
         session =
             toSession model
-
-        _ =
-            Debug.log "Session: " session
     in
     if Route.needsAuthentication route && not (Session.isLoggedIn session) then
         let

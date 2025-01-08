@@ -46,13 +46,8 @@ update msg session =
             case result of
                 Ok _ ->
                     let
-                        preferredLocale =
-                            session
-                                |> Session.user
-                                |> User.preferredLocale
-
                         newSession =
-                            Session.setUser (User.fromTokenAndLocale "" preferredLocale) session
+                            Session.setUser (User.fromToken "") session
 
                         newerSession =
                             Session.addMessage Message.getLoginSuccess newSession
