@@ -99,7 +99,6 @@ viewFooter session =
                 [ div [ class "col" ]
                     [ ul [ class "list-unstyled" ] <| viewFooterLinks <| Session.locale session ]
                 , div [ class "col text-center" ]
-                    --todo get from config api
                     [ span [] [ text "Version: 0.0.0" ] ]
                 , div [ class "col" ]
                     [ span [ class "float-end" ] [ text "© Example.com 2024" ] ]
