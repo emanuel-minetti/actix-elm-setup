@@ -1,4 +1,4 @@
-module User exposing (Msg(..), User, fromToken, init, loadSession, name, setSession, setToken, token, update)
+module User exposing (Msg(..), User, expiresAt, fromToken, init, loadSession, name, setSession, setToken, token, update)
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
@@ -31,6 +31,13 @@ token user =
             record.token
 
 
+expiresAt : User -> Int
+expiresAt user =
+    case user of
+        User record ->
+            record.sessionExpiresAt
+
+
 
 --CONSTRUCTORS AND SETTERS
 
@@ -48,10 +55,10 @@ setToken newToken user =
 
 
 setExpiresAt : Int -> User -> User
-setExpiresAt expiresAt user =
+setExpiresAt newExpiresAt user =
     case user of
         User record ->
-            User { record | sessionExpiresAt = expiresAt }
+            User { record | sessionExpiresAt = newExpiresAt }
 
 
 type Msg

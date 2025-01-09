@@ -14,6 +14,7 @@ import Page.NotFound
 import Page.Privacy
 import Route exposing (Route(..))
 import Session exposing (Session, locale)
+import Task
 import Time
 import Url exposing (Url)
 import User
@@ -91,8 +92,11 @@ init flags url navKey =
         ( model, modelCmd ) =
             changeRoute route <| Init session
 
+        currentTimeCmd =
+            Task.perform UpdateCurrentTime Time.now
+
         cmds =
-            [ Cmd.map LocaleMsg localeCmd, Cmd.map UserMsg userCmd, modelCmd ]
+            [ Cmd.map LocaleMsg localeCmd, Cmd.map UserMsg userCmd, modelCmd, currentTimeCmd ]
     in
     ( model, Cmd.batch cmds )
 

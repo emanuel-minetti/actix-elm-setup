@@ -3,6 +3,7 @@
     "notLoggedInText": "Sie sind nicht angemeldet",
     "loggedInText": "Sie sind angemeldet als {{name}}",
     "logoutTooltip": "Klicken Sie hier um sich abzumelden",
+    "remainingTooltip": "In {{minutes}} Minuten werden Sie automatisch abgemeldet. Klicken Sie hier um Ihre Sitzung zu erneuern",
     "success": "Erfolg",
     "info": "Information",
     "warning": "Warnung",

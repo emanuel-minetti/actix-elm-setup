@@ -3,6 +3,7 @@
     "notLoggedInText": "You're not logged in",
     "loggedInText": "You're logged in as {{name}}",
     "logoutTooltip": "Click here to log out",
+    "remainingTooltip": "You will be automatically logged off in {{minutes}} minutes. Click here to refresh your session.",
     "success": "Success",
     "info": "Info",
     "warning": "Warning",

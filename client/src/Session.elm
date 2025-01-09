@@ -1,4 +1,4 @@
-module Session exposing (Session, addMessage, init, isLoggedIn, locale, messages, navKey, removeSeenMessages, setCurrentTime, setLocale, setUser, user)
+module Session exposing (Session, addMessage, currentTime, init, isLoggedIn, locale, messages, navKey, removeSeenMessages, setCurrentTime, setLocale, setUser, user)
 
 import Array exposing (Array)
 import Browser.Navigation as Nav
@@ -19,7 +19,13 @@ type Session
 
 init : Locale -> Nav.Key -> User -> Session
 init newLocale newNavKey newUser =
-    Session { locale = newLocale, navKey = newNavKey, user = newUser, messages = Array.empty, currentTime = 0 }
+    Session
+        { locale = newLocale
+        , navKey = newNavKey
+        , user = newUser
+        , messages = Array.empty
+        , currentTime = 0
+        }
 
 
 locale : Session -> Locale
@@ -48,6 +54,13 @@ messages session =
     case session of
         Session record ->
             record.messages
+
+
+currentTime : Session -> Int
+currentTime session =
+    case session of
+        Session record ->
+            record.currentTime
 
 
 isLoggedIn : Session -> Bool

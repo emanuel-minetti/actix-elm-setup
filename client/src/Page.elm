@@ -171,9 +171,31 @@ viewLoginInfo session =
             Session.isLoggedIn session
     in
     if loggedIn then
-        button
-            [ title <| I18n.logoutTooltip t, onClick LogoutRequested, class "btn btn-secondary me-2" ]
-            [ text "Logout   ", i [ class "bi bi-box-arrow-right" ] [] ]
+        let
+            expiresAt =
+                session
+                    |> Session.user
+                    |> User.expiresAt
+                    |> (*) 1000
+
+            currentTime =
+                session
+                    |> Session.currentTime
+
+            remainingMinutes =
+                toFloat (expiresAt - currentTime)
+                    / (1000 * 60)
+                    |> round
+                    |> String.fromInt
+        in
+        [ button
+            [ title <| I18n.remainingTooltip t remainingMinutes, class "btn btn-outline-secondary me-2" ]
+            [ text remainingMinutes ]
+        , button
+            [ title <| I18n.logoutTooltip t, onClick LogoutRequested, class "btn btn-outline-secondary me-2" ]
+            [ i [ class "bi bi-box-arrow-right fw-bold" ] [] ]
+        ]
+            |> div []
 
     else
         div [] []
