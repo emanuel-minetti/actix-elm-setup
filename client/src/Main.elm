@@ -14,6 +14,7 @@ import Page.NotFound
 import Page.Privacy
 import Route exposing (Route(..))
 import Session exposing (Session, locale)
+import Time
 import Url exposing (Url)
 import User
 
@@ -43,6 +44,7 @@ type Msg
     = ChangedUrl Url
     | ClickedLink Browser.UrlRequest
     | GotShownMessageIds (Array Int)
+    | UpdateCurrentTime Time.Posix
     | LocaleMsg Locale.Msg
     | PageMsg Page.Msg
     | UserMsg User.Msg
@@ -123,6 +125,19 @@ update msg model =
             let
                 newModel =
                     setNewSession (Session.removeSeenMessages ints <| toSession model) model
+            in
+            ( newModel, Cmd.none )
+
+        UpdateCurrentTime timePosix ->
+            let
+                session =
+                    toSession model
+
+                newSession =
+                    Session.setCurrentTime (Time.posixToMillis timePosix) session
+
+                newModel =
+                    setNewSession newSession model
             in
             ( newModel, Cmd.none )
 
@@ -340,7 +355,10 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.batch [ gotShownMessageIds GotShownMessageIds ]
+    Sub.batch
+        [ gotShownMessageIds GotShownMessageIds
+        , Time.every (1000 * 60) UpdateCurrentTime
+        ]
 
 
 view : Model -> Document Msg
