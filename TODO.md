@@ -4,7 +4,8 @@
 - Use GitHub CI tools to guide deployment and E2E testing.
 
 ## Client
-- Show an expiration timer in the header
+- Logoff automatically after expiration time
+- Show dialog if expiration is coming up
 - Adapt error handling to server errors
 - Get config from server
 
