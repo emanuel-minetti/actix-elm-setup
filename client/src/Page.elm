@@ -20,6 +20,8 @@ type Msg
     | GotTranslation Locale.Msg
     | LogoutRequested
     | GotLogout (Result Http.Error ApiResponse)
+    | RenewSession
+    | GotRenewedSession (Result Http.Error ApiResponse)
 
 
 update : Msg -> Session -> ( Session, Cmd Msg )
@@ -53,6 +55,24 @@ update msg session =
                             Session.addMessage Message.getLoginSuccess newSession
                     in
                     ( newerSession, Cmd.none )
+
+                Err _ ->
+                    ( session, Cmd.none )
+
+        RenewSession ->
+            ( session, loadSession session )
+
+        GotRenewedSession result ->
+            case result of
+                Ok apiResponse ->
+                    let
+                        newSession =
+                            session
+                                |> Session.user
+                                |> User.setExpiresAt apiResponse.expires
+                                |> Session.setUser
+                    in
+                    ( newSession session, Cmd.none )
 
                 Err _ ->
                     ( session, Cmd.none )
@@ -188,7 +208,11 @@ viewLoginInfo session =
                     |> String.fromInt
         in
         [ button
-            [ title <| I18n.remainingTooltip t remainingMinutes, class "btn btn-outline-secondary me-2" ]
+            [ title <|
+                I18n.remainingTooltip t remainingMinutes
+            , onClick RenewSession
+            , class "btn btn-outline-secondary me-2"
+            ]
             [ text remainingMinutes ]
         , button
             [ title <| I18n.logoutTooltip t, onClick LogoutRequested, class "btn btn-outline-secondary me-2" ]
@@ -226,3 +250,14 @@ loadLogout session =
                 |> User.token
     in
     ServerRequest.logout token <| Http.expectJson GotLogout apiResponseDecoder
+
+
+loadSession : Session -> Cmd Msg
+loadSession session =
+    let
+        tokenToLoad =
+            session
+                |> Session.user
+                |> User.token
+    in
+    ServerRequest.loadSession tokenToLoad <| Http.expectJson GotRenewedSession apiResponseDecoder

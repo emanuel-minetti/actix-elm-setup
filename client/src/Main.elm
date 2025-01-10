@@ -184,12 +184,6 @@ update msg model =
                             in
                             Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map UserMsg apiCmd, storageCmd ]
 
-                        Page.GotTranslation _ ->
-                            Cmd.map PageMsg newPageCmd
-
-                        Page.LogoutRequested ->
-                            Cmd.map PageMsg newPageCmd
-
                         Page.GotLogout result ->
                             --update browser token, and redirect
                             case result of
@@ -205,6 +199,18 @@ update msg model =
 
                                 Err _ ->
                                     Cmd.map PageMsg newPageCmd
+
+                        Page.RenewSession ->
+                            Cmd.map PageMsg newPageCmd
+
+                        Page.GotRenewedSession _ ->
+                            Cmd.map PageMsg newPageCmd
+
+                        Page.GotTranslation _ ->
+                            Cmd.map PageMsg newPageCmd
+
+                        Page.LogoutRequested ->
+                            Cmd.map PageMsg newPageCmd
             in
             ( newModel, cmd )
 

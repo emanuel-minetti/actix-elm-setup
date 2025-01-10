@@ -1,4 +1,17 @@
-module User exposing (Msg(..), User, expiresAt, fromToken, init, loadSession, name, setSession, setToken, token, update)
+module User exposing
+    ( Msg(..)
+    , User
+    , expiresAt
+    , fromToken
+    , init
+    , loadSession
+    , name
+    , setExpiresAt
+    , setSession
+    , setToken
+    , token
+    , update
+    )
 
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
