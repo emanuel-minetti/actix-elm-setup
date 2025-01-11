@@ -26,6 +26,11 @@ type User
         }
 
 
+type Msg
+    = GotApiLoadResponse (Result Http.Error ApiResponse)
+    | GotApiSetResponse (Result Http.Error ApiResponse)
+
+
 
 --GETTERS
 
@@ -74,9 +79,8 @@ setExpiresAt newExpiresAt user =
             User { record | sessionExpiresAt = newExpiresAt }
 
 
-type Msg
-    = GotApiLoadResponse (Result Http.Error ApiResponse)
-    | GotApiSetResponse (Result Http.Error ApiResponse)
+
+--PLATFORM
 
 
 init : String -> ( User, Cmd Msg )

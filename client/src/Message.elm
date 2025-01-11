@@ -20,6 +20,10 @@ type Message
         }
 
 
+
+--GETTERS
+
+
 severity : Message -> Severity
 severity message =
     case message of
@@ -48,11 +52,19 @@ seen message =
             record.seen
 
 
+
+--SETTERS
+
+
 setSeen : Message -> Message
 setSeen message =
     case message of
         Message record ->
             Message { record | seen = True }
+
+
+
+--PLATFORM
 
 
 getLoginSuccess : Message

@@ -24,6 +24,10 @@ type Msg
     | GotRenewedSession (Result Http.Error ApiResponse)
 
 
+
+--PLATFORM
+
+
 update : Msg -> Session -> ( Session, Cmd Msg )
 update msg session =
     case msg of
@@ -125,6 +129,10 @@ viewFooter session =
                 ]
             ]
         ]
+
+
+
+--PRIVATE
 
 
 viewMessage : Session -> Int -> Message -> Html msg
