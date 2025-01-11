@@ -1,5 +1,5 @@
 ## Server
-- Serve config (version, copyright and messages).
+- Serve config (version, copyright, messages and max-expiration-minutes).
 - Use rust integration tests (for selected use cases).
 - Use GitHub CI tools to guide deployment and E2E testing.
 
