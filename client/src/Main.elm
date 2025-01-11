@@ -200,16 +200,7 @@ update msg model =
                                 Err _ ->
                                     Cmd.map PageMsg newPageCmd
 
-                        Page.RenewSession ->
-                            Cmd.map PageMsg newPageCmd
-
-                        Page.GotRenewedSession _ ->
-                            Cmd.map PageMsg newPageCmd
-
-                        Page.GotTranslation _ ->
-                            Cmd.map PageMsg newPageCmd
-
-                        Page.LogoutRequested ->
+                        _ ->
                             Cmd.map PageMsg newPageCmd
             in
             ( newModel, cmd )
