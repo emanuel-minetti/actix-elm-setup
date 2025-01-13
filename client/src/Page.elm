@@ -109,7 +109,7 @@ viewHeader session =
         ]
 
 
-viewExpirationModal : Session -> Html msg
+viewExpirationModal : Session -> Html Msg
 viewExpirationModal session =
     let
         t =
@@ -137,9 +137,19 @@ viewExpirationModal session =
                 , div [ class "modal-body" ]
                     [ text <| I18n.modalBody t ]
                 , div [ class "modal-footer" ]
-                    [ button [ type_ "button", class "btn btn-secondary", attribute "data-bs-dismiss" "modal" ]
+                    [ button
+                        [ type_ "button"
+                        , class "btn btn-secondary"
+                        , attribute "data-bs-dismiss" "modal"
+                        , onClick LogoutRequested
+                        ]
                         [ text <| I18n.modalLogout t ]
-                    , button [ type_ "button", class "btn btn-primary", attribute "data-bs-dismiss" "modal" ]
+                    , button
+                        [ type_ "button"
+                        , class "btn btn-primary"
+                        , attribute "data-bs-dismiss" "modal"
+                        , onClick RenewSession
+                        ]
                         [ text <| I18n.modalRenew t ]
                     ]
                 ]

@@ -408,7 +408,7 @@ view model =
 
                 newBody =
                     [ Html.map PageMsg header
-                    , expirationModal
+                    , Html.map PageMsg expirationModal
                     , messages
                     , content
                     , Html.map PageMsg footer
