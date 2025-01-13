@@ -1,9 +1,9 @@
-module Page exposing (Msg(..), update, viewFooter, viewHeader, viewMessages)
+module Page exposing (Msg(..), update, viewExpirationModal, viewFooter, viewHeader, viewMessages)
 
 import ApiResponse exposing (ApiResponse, apiResponseDecoder)
 import Array
 import Html exposing (..)
-import Html.Attributes exposing (alt, attribute, class, height, href, id, src, style, title, width)
+import Html.Attributes exposing (alt, attribute, class, height, href, id, src, style, tabindex, title, type_, width)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Locale exposing (Locale)
@@ -109,9 +109,47 @@ viewHeader session =
         ]
 
 
+viewExpirationModal : Session -> Html msg
+viewExpirationModal session =
+    let
+        t =
+            (Session.locale session).t
+    in
+    div
+        [ class "modal fade"
+        , id "expirationModal"
+        , tabindex -1
+        , attribute "aria-labelledby" "expirationModalLabel"
+        , attribute "aria-hidden" "true"
+        ]
+        [ div [ class "modal-dialog" ]
+            [ div [ class "modal-content" ]
+                [ div [ class "modal-header" ]
+                    [ h1 [ class "modal-title fs-5", id "expirationModalLabel" ] [ text <| I18n.modalTitle t ]
+                    , button
+                        [ type_ "button"
+                        , class "btn-close"
+                        , attribute "data-bs-dismiss" "modal"
+                        , attribute "aria-label" "Close"
+                        ]
+                        []
+                    ]
+                , div [ class "modal-body" ]
+                    [ text <| I18n.modalBody t ]
+                , div [ class "modal-footer" ]
+                    [ button [ type_ "button", class "btn btn-secondary", attribute "data-bs-dismiss" "modal" ]
+                        [ text <| I18n.modalLogout t ]
+                    , button [ type_ "button", class "btn btn-primary", attribute "data-bs-dismiss" "modal" ]
+                        [ text <| I18n.modalRenew t ]
+                    ]
+                ]
+            ]
+        ]
+
+
 viewMessages : Session -> Html msg
 viewMessages session =
-    div [ class "container pt-3" ]
+    div [ class "container pt-3", id "messages" ]
         (Array.toList (Array.indexedMap (viewMessage session) (Session.messages session)))
 
 

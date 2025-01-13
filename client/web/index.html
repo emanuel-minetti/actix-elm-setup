@@ -8,6 +8,7 @@
           href="css/bootstrap-icons.css">
 
     <script src="js/elm.js"></script>
+    <script src="js/bootstrap.js"></script>
 </head>
 
 <body>
@@ -30,11 +31,15 @@
         sessionStorage.setItem("session-token", token);
     });
     app.ports.getShownMessageIds.subscribe(function () {
-        let messageEls = document.getElementsByClassName("aes-message");
-        let messageElsArray = Array.from(messageEls);
+        const messageEls = document.getElementsByClassName("aes-message");
+        const messageElsArray = Array.from(messageEls);
         app.ports.gotShownMessageIds.send(
             messageElsArray.map((el) => Number.parseInt(el.id.substring(12)))
         );
+    });
+    app.ports.showExpirationModal.subscribe(function () {
+        const expirationModal = new bootstrap.Modal('#expirationModal', {});
+        expirationModal.show(document);
     });
 </script>
 </body>

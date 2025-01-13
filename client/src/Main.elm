@@ -32,6 +32,9 @@ port getShownMessageIds : () -> Cmd msg
 port gotShownMessageIds : (Array Int -> msg) -> Sub msg
 
 
+port showExpirationModal : () -> Cmd msg
+
+
 type Model
     = Init Session
     | Home Page.Home.Model
@@ -142,8 +145,26 @@ update msg model =
 
                 newModel =
                     setNewSession newSession model
+
+                remainingMillis =
+                    newSession
+                        |> Session.user
+                        |> User.expiresAt
+                        |> (*) 1000
+                        |> (-) (Session.currentTime newSession)
+
+                remainingMinutes =
+                    toFloat remainingMillis
+                        / (1000 * 60)
+
+                cmd =
+                    if remainingMinutes <= 28 then
+                        showExpirationModal ()
+
+                    else
+                        Cmd.none
             in
-            ( newModel, Cmd.none )
+            ( newModel, cmd )
 
         LocaleMsg localeCmd ->
             let
@@ -377,13 +398,21 @@ view model =
         footer =
             Page.viewFooter session
 
+        expirationModal =
+            Page.viewExpirationModal session
+
         viewPage newTitle content =
             let
                 newerTitle =
                     "AES - " ++ newTitle
 
                 newBody =
-                    [ Html.map PageMsg header, messages, content, Html.map PageMsg footer ]
+                    [ Html.map PageMsg header
+                    , expirationModal
+                    , messages
+                    , content
+                    , Html.map PageMsg footer
+                    ]
             in
             ( newerTitle, newBody )
 
