@@ -1,4 +1,4 @@
-module Page exposing (Msg(..), update, viewExpirationModal, viewFooter, viewHeader, viewMessages)
+module Page exposing (Msg(..), loadLogout, update, viewExpirationModal, viewFooter, viewHeader, viewMessages)
 
 import ApiResponse exposing (ApiResponse, apiResponseDecoder)
 import Array
@@ -19,7 +19,7 @@ type Msg
     = SwitchLanguage String
     | GotTranslation Locale.Msg
     | LogoutRequested
-    | GotLogout (Result Http.Error ApiResponse)
+    | GotLogout Bool (Result Http.Error ApiResponse)
     | RenewSession
     | GotRenewedSession (Result Http.Error ApiResponse)
 
@@ -46,9 +46,9 @@ update msg session =
             ( Session.setLocale locale session, Cmd.none )
 
         LogoutRequested ->
-            ( session, loadLogout session )
+            ( session, loadLogout False session )
 
-        GotLogout result ->
+        GotLogout forced result ->
             case result of
                 Ok _ ->
                     let
@@ -56,7 +56,11 @@ update msg session =
                             Session.setUser (User.fromToken "") session
 
                         newerSession =
-                            Session.addMessage Message.getLoginSuccess newSession
+                            if forced then
+                                Session.addMessage Message.getForcedLogoutSuccess newSession
+
+                            else
+                                Session.addMessage Message.getLogoutSuccess newSession
                     in
                     ( newerSession, Cmd.none )
 
@@ -297,15 +301,15 @@ viewFooterLinks locale =
     List.map routeToItem routes
 
 
-loadLogout : Session -> Cmd Msg
-loadLogout session =
+loadLogout : Bool -> Session -> Cmd Msg
+loadLogout forced session =
     let
         token =
             session
                 |> Session.user
                 |> User.token
     in
-    ServerRequest.logout token <| Http.expectJson GotLogout apiResponseDecoder
+    ServerRequest.logout token (Http.expectJson (GotLogout forced) apiResponseDecoder)
 
 
 loadSession : Session -> Cmd Msg

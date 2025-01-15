@@ -46,6 +46,7 @@
   "Message": {
     "empty": "",
     "logoffTitle": "Logoff",
-    "logoffSuccess": "You successfully logged off"
+    "logoffSuccess": "You successfully logged off",
+    "ForcedLogoffSuccess": "You were logged off"
   }
 }

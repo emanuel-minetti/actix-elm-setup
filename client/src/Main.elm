@@ -32,7 +32,7 @@ port getShownMessageIds : () -> Cmd msg
 port gotShownMessageIds : (Array Int -> msg) -> Sub msg
 
 
-port showExpirationModal : () -> Cmd msg
+port showExpirationModal : Bool -> Cmd msg
 
 
 type Model
@@ -145,26 +145,35 @@ update msg model =
 
                 newModel =
                     setNewSession newSession model
-
-                remainingMillis =
-                    newSession
-                        |> Session.user
-                        |> User.expiresAt
-                        |> (*) 1000
-                        |> (-) (Session.currentTime newSession)
-
-                remainingMinutes =
-                    toFloat remainingMillis
-                        / (1000 * 60)
-
-                cmd =
-                    if remainingMinutes <= 28 then
-                        showExpirationModal ()
-
-                    else
-                        Cmd.none
             in
-            ( newModel, cmd )
+            if model |> toSession |> Session.isLoggedIn then
+                let
+                    remainingMillis =
+                        newSession
+                            |> Session.user
+                            |> User.expiresAt
+                            |> (*) 1000
+                            |> (-) (Session.currentTime newSession)
+                            |> (-) 0
+
+                    remainingMinutes =
+                        toFloat remainingMillis
+                            / (1000 * 60)
+
+                    cmd =
+                        if remainingMinutes <= 25 then
+                            Cmd.map PageMsg <| Page.loadLogout True session
+
+                        else if remainingMinutes <= 28 then
+                            showExpirationModal True
+
+                        else
+                            Cmd.none
+                in
+                ( newModel, cmd )
+
+            else
+                ( newModel, Cmd.none )
 
         LocaleMsg localeCmd ->
             let
@@ -205,8 +214,8 @@ update msg model =
                             in
                             Cmd.batch [ Cmd.map PageMsg newPageCmd, Cmd.map UserMsg apiCmd, storageCmd ]
 
-                        Page.GotLogout result ->
-                            --update browser token, and redirect
+                        Page.GotLogout forced result ->
+                            --update browser token, redirect and maybe close modal
                             case result of
                                 Ok _ ->
                                     let
@@ -215,8 +224,16 @@ update msg model =
 
                                         redirectCmd =
                                             Nav.pushUrl (Session.navKey newSession) (Route.toHref Route.Login)
+
+                                        expirationModalCmd =
+                                            if forced then
+                                                showExpirationModal False
+
+                                            else
+                                                Cmd.none
                                     in
-                                    Cmd.batch [ Cmd.map PageMsg newPageCmd, storageCmd, redirectCmd ]
+                                    Cmd.batch
+                                        [ Cmd.map PageMsg newPageCmd, storageCmd, redirectCmd, expirationModalCmd ]
 
                                 Err _ ->
                                     Cmd.map PageMsg newPageCmd

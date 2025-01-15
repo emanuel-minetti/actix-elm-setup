@@ -1,4 +1,4 @@
-module Message exposing (Message, Severity(..), getLoginSuccess, seen, setSeen, severity, text, title)
+module Message exposing (Message, Severity(..), getForcedLogoutSuccess, getLogoutSuccess, seen, setSeen, severity, text, title)
 
 import I18Next exposing (Translations)
 import Translations.Message as I18n
@@ -67,11 +67,21 @@ setSeen message =
 --PLATFORM
 
 
-getLoginSuccess : Message
-getLoginSuccess =
+getLogoutSuccess : Message
+getLogoutSuccess =
     Message
         { severity = Success
         , title = I18n.logoffTitle
         , text = I18n.logoffSuccess
+        , seen = False
+        }
+
+
+getForcedLogoutSuccess : Message
+getForcedLogoutSuccess =
+    Message
+        { severity = Warning
+        , title = I18n.logoffTitle
+        , text = I18n.forcedLogoffSuccess
         , seen = False
         }

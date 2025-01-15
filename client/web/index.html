@@ -37,9 +37,9 @@
             messageElsArray.map((el) => Number.parseInt(el.id.substring(12)))
         );
     });
-    app.ports.showExpirationModal.subscribe(function () {
-        const expirationModal = new bootstrap.Modal('#expirationModal', {});
-        expirationModal.show(document);
+    app.ports.showExpirationModal.subscribe(function (show) {
+        const expirationModal = bootstrap.Modal.getOrCreateInstance('#expirationModal');
+        show ? expirationModal.show(document) : expirationModal.hide(document)
     });
 </script>
 </body>

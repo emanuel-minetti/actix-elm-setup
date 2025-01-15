@@ -46,6 +46,7 @@
   "Message": {
     "empty": "",
     "logoffTitle": "Abmeldung",
-    "logoffSuccess": "Sie haben sich erfolgreich abgemeldet"
+    "logoffSuccess": "Sie haben sich erfolgreich abgemeldet",
+    "ForcedLogoffSuccess": "Sie wurden abgemeldet"
   }
 }
