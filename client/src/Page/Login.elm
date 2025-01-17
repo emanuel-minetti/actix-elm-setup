@@ -25,6 +25,7 @@ type Msg
     | Password String
     | LoginRequested
     | GotLoginResponse (Result Http.Error ApiResponse)
+    | UserMsg User.Msg
 
 
 init : Session -> Route -> ( Model, Cmd Msg )
@@ -59,13 +60,30 @@ update msg model =
 
                                 newSession =
                                     Session.setUser newUser model.session
+
+                                --get session from server
+                                token =
+                                    newSession
+                                        |> Session.user
+                                        |> User.token
+
+                                userCmd =
+                                    User.loadSession token
+
+                                cmd =
+                                    Cmd.batch [ Cmd.map UserMsg userCmd ]
                             in
-                            ( { model | session = newSession }, Cmd.none )
+                            ( { model | session = newSession }, cmd )
 
                         _ ->
                             ( model, Cmd.none )
 
                 Err _ ->
+                    ( model, Cmd.none )
+
+        UserMsg usrMsg ->
+            case usrMsg of
+                _ ->
                     ( model, Cmd.none )
 
 

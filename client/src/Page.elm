@@ -1,4 +1,14 @@
-module Page exposing (Msg(..), loadLogout, update, viewExpirationModal, viewFooter, viewHeader, viewMessages)
+port module Page exposing
+    ( Msg(..)
+    , getShownMessageIds
+    , loadLogout
+    , showOrHideExpirationModal
+    , update
+    , viewExpirationModal
+    , viewFooter
+    , viewHeader
+    , viewMessages
+    )
 
 import ApiResponse exposing (ApiResponse, apiResponseDecoder)
 import Array
@@ -13,6 +23,12 @@ import ServerRequest
 import Session exposing (Session)
 import Translations.Page as I18n
 import User
+
+
+port getShownMessageIds : () -> Cmd msg
+
+
+port showOrHideExpirationModal : Bool -> Cmd msg
 
 
 type Msg

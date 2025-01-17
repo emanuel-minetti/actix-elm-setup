@@ -1,4 +1,4 @@
-module User exposing
+port module User exposing
     ( Msg(..)
     , User
     , expiresAt
@@ -6,6 +6,7 @@ module User exposing
     , init
     , loadSession
     , name
+    , setBrowserToken
     , setExpiresAt
     , setSession
     , setToken
@@ -16,6 +17,9 @@ module User exposing
 import ApiResponse exposing (ApiResponse, ApiResponseData(..), apiResponseDecoder)
 import Http
 import ServerRequest
+
+
+port setBrowserToken : String -> Cmd msg
 
 
 type User

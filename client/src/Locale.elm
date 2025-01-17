@@ -1,4 +1,4 @@
-module Locale exposing
+port module Locale exposing
     ( Lang(..)
     , Locale
     , Msg(..)
@@ -8,6 +8,7 @@ module Locale exposing
     , initialLocale
     , langFromString
     , loadTranslation
+    , setLang
     , toValue
     , update
     , viewLangOptions
@@ -19,6 +20,9 @@ import Http
 import I18Next exposing (Translations, initialTranslations, translationsDecoder)
 import ServerRequest
 import Translations.Lang as I18n
+
+
+port setLang : String -> Cmd msg
 
 
 type Lang

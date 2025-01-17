@@ -20,19 +20,7 @@ import Url exposing (Url)
 import User
 
 
-port setLang : String -> Cmd msg
-
-
-port setToken : String -> Cmd msg
-
-
-port getShownMessageIds : () -> Cmd msg
-
-
 port gotShownMessageIds : (Array Int -> msg) -> Sub msg
-
-
-port showExpirationModal : Bool -> Cmd msg
 
 
 type Model
@@ -124,7 +112,7 @@ update msg model =
                     changeRoute newRoute model
 
                 removeMessagesCmd =
-                    getShownMessageIds ()
+                    Page.getShownMessageIds ()
             in
             ( newModel, Cmd.batch [ removeMessagesCmd, newCmd ] )
 
@@ -165,7 +153,7 @@ update msg model =
                             Cmd.map PageMsg <| Page.loadLogout True session
 
                         else if remainingMinutes <= 0 then
-                            showExpirationModal True
+                            Page.showOrHideExpirationModal True
 
                         else
                             Cmd.none
@@ -177,19 +165,21 @@ update msg model =
 
         LocaleMsg localeCmd ->
             let
-                session =
-                    toSession model
+                locale =
+                    model
+                        |> toSession
+                        |> Session.locale
 
-                ( locale, _ ) =
-                    Locale.update localeCmd <| Session.locale session
-
-                newSession =
-                    Session.setLocale locale session
+                ( newLocale, _ ) =
+                    Locale.update localeCmd locale
 
                 newModel =
-                    setNewSession newSession model
+                    model
+                        |> toSession
+                        |> Session.setLocale newLocale
+                        |> setNewSession
             in
-            ( newModel, Cmd.none )
+            ( newModel model, Cmd.none )
 
         PageMsg pageMsg ->
             let
@@ -207,7 +197,7 @@ update msg model =
                         Page.SwitchLanguage lang ->
                             let
                                 storageCmd =
-                                    setLang lang
+                                    Locale.setLang lang
 
                                 apiCmd =
                                     User.setSession (User.token <| Session.user newSession) lang
@@ -220,14 +210,14 @@ update msg model =
                                 Ok _ ->
                                     let
                                         storageCmd =
-                                            setToken ""
+                                            User.setBrowserToken ""
 
                                         redirectCmd =
                                             Nav.pushUrl (Session.navKey newSession) (Route.toHref Route.Login)
 
                                         expirationModalCmd =
                                             if forced then
-                                                showExpirationModal False
+                                                Page.showOrHideExpirationModal False
 
                                             else
                                                 Cmd.none
@@ -273,7 +263,7 @@ update msg model =
                                                 storageCmd =
                                                     sessionResponse.lang
                                                         |> String.toLower
-                                                        |> setLang
+                                                        |> Locale.setLang
 
                                                 redirectCmd =
                                                     case model of
@@ -358,7 +348,7 @@ update msg model =
                                                     User.loadSession token
 
                                                 storageCmd =
-                                                    setToken token
+                                                    User.setBrowserToken token
 
                                                 redirect =
                                                     if loginModel.redirect == Route.Login then
