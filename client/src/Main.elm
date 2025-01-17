@@ -161,10 +161,10 @@ update msg model =
                             / (1000 * 60)
 
                     cmd =
-                        if remainingMinutes <= 25 then
+                        if remainingMinutes <= 3 then
                             Cmd.map PageMsg <| Page.loadLogout True session
 
-                        else if remainingMinutes <= 28 then
+                        else if remainingMinutes <= 0 then
                             showExpirationModal True
 
                         else

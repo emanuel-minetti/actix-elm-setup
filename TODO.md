@@ -4,8 +4,7 @@
 - Use GitHub CI tools to guide deployment and E2E testing.
 
 ## Client
-- Logoff automatically after expiration time
-- Show dialog if expiration is coming up
+- Make Login form react to enter key
 - Adapt error handling to server errors
 - Get config from server
 
