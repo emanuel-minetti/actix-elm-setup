@@ -61,19 +61,19 @@ update msg model =
                                 newSession =
                                     Session.setUser newUser model.session
 
-                                --get session from server
-                                token =
-                                    newSession
-                                        |> Session.user
-                                        |> User.token
-
-                                userCmd =
-                                    User.loadSession token
-
-                                cmd =
-                                    Cmd.batch [ Cmd.map UserMsg userCmd ]
+                                --    --get session from server
+                                --    token =
+                                --        newSession
+                                --            |> Session.user
+                                --            |> User.token
+                                --
+                                --    userCmd =
+                                --        User.loadSession token
+                                --
+                                --    cmd =
+                                --        Cmd.batch [ Cmd.map UserMsg userCmd ]
                             in
-                            ( { model | session = newSession }, cmd )
+                            ( { model | session = newSession }, Cmd.none )
 
                         _ ->
                             ( model, Cmd.none )
