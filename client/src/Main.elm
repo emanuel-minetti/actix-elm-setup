@@ -339,31 +339,29 @@ update msg model =
                                                     newModel
                                                         |> toSession
 
-                                                token =
-                                                    session
-                                                        |> Session.user
-                                                        |> User.token
-
-                                                userCmd =
-                                                    User.loadSession token
-
-                                                storageCmd =
-                                                    User.setBrowserToken token
-
+                                                --token =
+                                                --    session
+                                                --        |> Session.user
+                                                --        |> User.token
+                                                --userCmd =
+                                                --    User.loadSession token
+                                                --storageCmd =
+                                                --    User.setBrowserToken token
                                                 redirect =
-                                                    if loginModel.redirect == Route.Login then
+                                                    if newLoginModel.redirect == Route.Login then
                                                         Route.Home
 
                                                     else
-                                                        loginModel.redirect
+                                                        newLoginModel.redirect
 
                                                 redirectCmd =
                                                     Nav.pushUrl (Session.navKey session) (Route.toHref redirect)
                                             in
                                             Cmd.batch
                                                 [ Cmd.map LoginMsg newLoginCmd
-                                                , Cmd.map UserMsg userCmd
-                                                , storageCmd
+
+                                                --, Cmd.map UserMsg userCmd
+                                                --, storageCmd
                                                 , redirectCmd
                                                 ]
 

@@ -55,25 +55,29 @@ update msg model =
                     case apiResponse.data of
                         ApiResponse.LoginResponseData serverLoginData ->
                             let
+                                session =
+                                    model.session
+
+                                token =
+                                    serverLoginData.token
+
                                 newUser =
-                                    User.setToken serverLoginData.token <| Session.user model.session
+                                    User.setToken token <| Session.user session
 
                                 newSession =
                                     Session.setUser newUser model.session
 
-                                --    --get session from server
-                                --    token =
-                                --        newSession
-                                --            |> Session.user
-                                --            |> User.token
-                                --
-                                --    userCmd =
-                                --        User.loadSession token
-                                --
-                                --    cmd =
-                                --        Cmd.batch [ Cmd.map UserMsg userCmd ]
+                                --get session from server and store token in browser
+                                userCmd =
+                                    User.loadSession token
+
+                                storageCmd =
+                                    User.setBrowserToken token
+
+                                cmd =
+                                    Cmd.batch [ Cmd.map UserMsg userCmd, storageCmd ]
                             in
-                            ( { model | session = newSession }, Cmd.none )
+                            ( { model | session = newSession }, cmd )
 
                         _ ->
                             ( model, Cmd.none )
@@ -83,6 +87,19 @@ update msg model =
 
         UserMsg usrMsg ->
             case usrMsg of
+                User.GotApiLoadResponse _ ->
+                    let
+                        user =
+                            Session.user model.session
+
+                        ( newUser, userCmd ) =
+                            User.update usrMsg user
+
+                        newModel =
+                            setSession (Session.setUser newUser model.session) model
+                    in
+                    ( newModel, Cmd.map UserMsg userCmd )
+
                 _ ->
                     ( model, Cmd.none )
 
