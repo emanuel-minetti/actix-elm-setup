@@ -1,0 +1,46 @@
+{
+  "Page": {
+    "notLoggedInText": "You're not logged in",
+    "loggedInText": "You're logged in as {{name}}",
+    "logoutTooltip": "Click here to log out",
+    "success": "Success",
+    "info": "Info",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "Route": {
+    "Privacy": "Privacy Declaration",
+    "Imprint": "Imprint"
+  },
+  "Lang": {
+    "german": "German",
+    "english": "English"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Your preferred Language: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Not Found",
+    "message": "The page You requested could not be found on this server."
+  },
+  "Imprint": {
+    "title": "Imprint",
+    "message": "This is the imprint page."
+  },
+  "Privacy": {
+    "title": "Privacy",
+    "message": "On this page You find information on privacy."
+  },
+  "Login": {
+    "title": "Login",
+    "message": "Please log in:",
+    "username": "Username",
+    "password": "Password"
+  },
+  "Message": {
+    "empty": "",
+    "logoffTitle": "Logoff",
+    "logoffSuccess": "You successfully logged off"
+  }
+}

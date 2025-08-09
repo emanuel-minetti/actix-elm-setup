@@ -1,0 +1,32 @@
+{
+  "name": "actix-elmsetup-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "npm run generateTranslations",
+    "build": "elm-land build",
+    "postbuild": "npm run copyAll",
+    "generateTranslations": "elm-i18next-gen -s i18n/translation.de.json -t src -o",
+    "copyAll": "npm run copyStatic && npm run copyElmLand",
+    "copyStatic": "npm run copyBootstrap && npm run copyBootstrapJs && npm run copyIcons && npm run copyFonts && npm run copyI18n && npm run copyPublic",
+    "copyBootstrap": "ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",
+    "copyBootstrapJs": "ncp node_modules/bootstrap/dist/js/bootstrap.js ../public/js/bootstrap.js",
+    "copyIcons": "ncp node_modules/bootstrap-icons/font/bootstrap-icons.css ../public/css/bootstrap-icons.css",
+    "copyFonts": "ncp node_modules/bootstrap-icons/font/fonts ../public/css/fonts/",
+    "copyI18n": "ncp i18n/ ../public/lang/",
+    "copyPublic": "ncp public ../public",
+    "copyElmLand": "ncp dist/index.html ../public/index.html && ncp dist/assets/ ../public/assets",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^5.3.7",
+    "bootstrap-icons": "^1.13.1"
+  },
+  "devDependencies": {
+    "elm-i18next-gen": "^1.1.0",
+    "npc": "^0.0.1"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "Page": {
+    "notLoggedInText": "Sie sind nicht angemeldet",
+    "loggedInText": "Sie sind angemeldet als {{name}}",
+    "logoutTooltip": "Klicken Sie hier um sich abzumelden",
+    "success": "Erfolg",
+    "info": "Information",
+    "warning": "Warnung",
+    "error": "Fehler"
+  },
+  "Route": {
+    "Privacy": "Datenschutz-Erklärung",
+    "Imprint": "Impressum"
+  },
+  "Lang": {
+    "german": "Deutsch",
+    "english": "Englisch"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Seite nicht gefunden",
+    "message": "Die von Ihnen angefragte Seite konnte auf diesem Server nicht gefunden werden."
+  },
+  "Imprint": {
+    "title": "Impressum",
+    "message": "Dies ist die Impressum Seite."
+  },
+  "Privacy": {
+    "title": "Datenschutz",
+    "message": "Dies ist die Seite mit Datenschutz Informationen."
+  },
+  "Login": {
+    "title": "Anmelden",
+    "message": "Bitte melden Sie sich an: ",
+    "username": "Benutzername",
+    "password": "Passwort"
+  },
+  "Message": {
+    "empty": "",
+    "logoffTitle": "Abmeldung",
+    "logoffSuccess": "Sie haben sich erfolgreich abgemeldet"
+  }
+}
