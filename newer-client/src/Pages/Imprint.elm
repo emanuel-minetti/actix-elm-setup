@@ -1,4 +1,4 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Imprint exposing (Model, Msg, page)
 
 import Effect exposing (Effect)
 import Html
@@ -72,6 +72,6 @@ subscriptions _ =
 
 view : Model -> View Msg
 view _ =
-    { title = "Pages.Home_"
-    , body = [ Html.text "Hello from Home." ]
+    { title = "Pages.Imprint"
+    , body = [ Html.text "/imprint" ]
     }

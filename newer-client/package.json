@@ -17,7 +17,8 @@
     "copyI18n": "ncp i18n/ ../public/lang/",
     "copyPublic": "ncp public ../public",
     "copyElmLand": "ncp dist/index.html ../public/index.html && ncp dist/assets/ ../public/assets",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "runDevServer": "npx elm-land server"
   },
   "author": "",
   "license": "MIT",
