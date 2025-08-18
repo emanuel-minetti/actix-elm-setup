@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prebuild": "npm run generateTranslations",
-    "build": "elm-land build",
+    "prebuild": "npm run generateTranslations && elm-land generate",
+    "build": "elm make .elm-land/src/Main.elm --output ../public/js/elm.js",
     "postbuild": "npm run copyAll",
     "generateTranslations": "elm-i18next-gen -s i18n/translation.de.json -t src -o",
     "copyAll": "npm run copyStatic && npm run copyElmLand",
@@ -16,7 +16,7 @@
     "copyFonts": "ncp node_modules/bootstrap-icons/font/fonts ../public/css/fonts/",
     "copyI18n": "ncp i18n/ ../public/lang/",
     "copyPublic": "ncp public ../public",
-    "copyElmLand": "ncp dist/index.html ../public/index.html && ncp dist/assets/ ../public/assets",
+    "copyElmLand": "ncp web/index.html ../public/index.html && ncp src/interop.js ../public/js/interop.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "runDevServer": "npx elm-land server"
   },

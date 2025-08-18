@@ -10,12 +10,12 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
         |> Page.withLayout toLayout
 
@@ -70,8 +70,8 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view _ =
+view : Shared.Model -> Model -> View Msg
+view shared _ =
     { title = "Pages.Home_"
-    , body = [ Html.text "Hello from Home." ]
+    , body = [ Html.text "Hello from Home.", Html.br [] [], Html.text shared.lang ]
     }
