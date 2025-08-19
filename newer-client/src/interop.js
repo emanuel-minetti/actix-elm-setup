@@ -4,10 +4,9 @@
 // into your `Shared.init` function.
 const flags = ({ env }) => {
     let lang = localStorage.getItem("lang") ?? navigator.language;
-    const ret = {
+    return {
         flags: {lang: lang}
     };
-    return ret;
 }
 
 // This is called AFTER your Elm app starts up

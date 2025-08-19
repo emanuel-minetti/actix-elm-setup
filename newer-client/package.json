@@ -7,7 +7,7 @@
     "prebuild": "npm run generateTranslations && elm-land generate",
     "build": "elm make .elm-land/src/Main.elm --output ../public/js/elm.js",
     "postbuild": "npm run copyAll",
-    "generateTranslations": "elm-i18next-gen -s i18n/translation.de.json -t src -o",
+    "generateTranslations": "npx elm-i18next-gen -s i18n/translation.de.json -t src -o",
     "copyAll": "npm run copyStatic && npm run copyElmLand",
     "copyStatic": "npm run copyBootstrap && npm run copyBootstrapJs && npm run copyIcons && npm run copyFonts && npm run copyI18n && npm run copyPublic",
     "copyBootstrap": "ncp node_modules/bootstrap/dist/css/bootstrap.css ../public/css/bootstrap.css",

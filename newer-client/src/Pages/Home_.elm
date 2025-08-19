@@ -72,6 +72,10 @@ subscriptions _ =
 
 view : Shared.Model -> Model -> View Msg
 view shared _ =
+    --let
+    --    preferredLangText =
+    --
+    --in
     { title = "Pages.Home_"
-    , body = [ Html.text "Hello from Home.", Html.br [] [], Html.text shared.lang ]
+    , body = [ Html.text "Hello from Home.", Html.br [] [], Html.text shared.locale.lang ]
     }

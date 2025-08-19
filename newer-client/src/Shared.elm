@@ -14,6 +14,7 @@ module Shared exposing
 
 import Effect exposing (Effect)
 import Json.Decode
+import Locale
 import Route exposing (Route)
 import Route.Path
 import Shared.Model
@@ -56,7 +57,7 @@ init flagsResult route =
                 Err _ ->
                     "de"
     in
-    ( { lang = lang }
+    ( { locale = Locale.init lang }
     , Effect.none
     )
 
