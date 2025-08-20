@@ -74,7 +74,7 @@ view : Shared.Model -> Model -> View Msg
 view shared _ =
     --let
     --    preferredLangText =
-    --
+    --        Translations.Home.yourPreferredLang shared.locale.t
     --in
     { title = "Pages.Home_"
     , body = [ Html.text "Hello from Home.", Html.br [] [], Html.text shared.locale.lang ]

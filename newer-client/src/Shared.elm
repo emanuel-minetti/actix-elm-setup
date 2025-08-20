@@ -12,11 +12,12 @@ module Shared exposing
 
 -}
 
+import Api
+import Api.Translations
 import Effect exposing (Effect)
 import Json.Decode
 import Locale
 import Route exposing (Route)
-import Route.Path
 import Shared.Model
 import Shared.Msg
 
@@ -47,7 +48,7 @@ type alias Model =
 
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
-init flagsResult route =
+init flagsResult _ =
     let
         lang =
             case flagsResult of
@@ -58,7 +59,7 @@ init flagsResult route =
                     "de"
     in
     ( { locale = Locale.init lang }
-    , Effect.none
+    , Effect.sendCmd (Api.Translations.getTranslations lang { onResponse = Shared.Msg.TranslationsApiResponded })
     )
 
 
@@ -71,12 +72,27 @@ type alias Msg =
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
-update route msg model =
+update _ msg model =
     case msg of
         Shared.Msg.NoOp ->
             ( model
             , Effect.none
             )
+
+        Shared.Msg.TranslationsApiResponded result ->
+            let
+                locale =
+                    model.locale
+
+                newLocale =
+                    case result of
+                        Ok translations ->
+                            { locale | t = Api.Success translations }
+
+                        Err error ->
+                            { locale | t = Api.Failure error }
+            in
+            ( { model | locale = newLocale }, Effect.none )
 
 
 
@@ -84,5 +100,5 @@ update route msg model =
 
 
 subscriptions : Route () -> Model -> Sub Msg
-subscriptions route model =
+subscriptions _ _ =
     Sub.none

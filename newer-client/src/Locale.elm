@@ -1,4 +1,4 @@
-module Locale exposing (..)
+module Locale exposing (Locale, init)
 
 import Api
 import I18Next
