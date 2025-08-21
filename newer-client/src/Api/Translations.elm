@@ -1,12 +1,16 @@
 module Api.Translations exposing (..)
 
+import Effect exposing (Effect)
 import Http
 import I18Next exposing (Translations)
+import Shared.Msg exposing (Msg)
 
 
-getTranslations : String -> { onResponse : Result Http.Error Translations -> msg } -> Cmd msg
+getTranslations : String -> { onResponse : Result Http.Error Translations -> Msg } -> Effect Msg
 getTranslations lang options =
-    Http.get
-        { url = "http://localhost:8080/lang/translation." ++ lang ++ ".json"
-        , expect = Http.expectJson options.onResponse I18Next.translationsDecoder
-        }
+    Effect.sendCmd
+        (Http.get
+            { url = "http://localhost:8080/lang/translation." ++ lang ++ ".json"
+            , expect = Http.expectJson options.onResponse I18Next.translationsDecoder
+            }
+        )
