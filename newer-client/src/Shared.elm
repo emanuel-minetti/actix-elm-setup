@@ -59,7 +59,7 @@ init flagsResult _ =
                     "de"
     in
     ( { locale = Locale.init lang }
-    , Api.Translations.getTranslations lang { onResponse = Shared.Msg.TranslationsApiResponded }
+    , Api.Translations.getTranslations lang Shared.Msg.TranslationsApiResponded
     )
 
 
