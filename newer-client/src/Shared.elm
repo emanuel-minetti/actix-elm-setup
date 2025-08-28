@@ -58,7 +58,9 @@ init flagsResult _ =
                 Err _ ->
                     "de"
     in
-    ( { locale = Locale.init lang }
+    ( { locale = Locale.init lang
+      , translationsApiData = Api.Loading
+      }
     , Api.Translations.getTranslations lang Shared.Msg.TranslationsApiResponded
     )
 
@@ -87,12 +89,20 @@ update _ msg model =
                 newLocale =
                     case result of
                         Ok translations ->
-                            { locale | t = Api.Success translations }
+                            { locale | t = translations }
+
+                        Err _ ->
+                            locale
+
+                newTranslationsApiData =
+                    case result of
+                        Ok translations ->
+                            Api.Success translations
 
                         Err error ->
-                            { locale | t = Api.Failure error }
+                            Api.Failure error
             in
-            ( { model | locale = newLocale }, Effect.none )
+            ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
 
 
 

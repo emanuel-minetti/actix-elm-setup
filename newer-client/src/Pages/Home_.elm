@@ -6,6 +6,7 @@ import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import Translations.Home as I18n
 import View exposing (View)
 
 
@@ -77,5 +78,5 @@ view shared _ =
     --        Translations.Home.yourPreferredLang shared.locale.t
     --in
     { title = "Pages.Home_"
-    , body = [ Html.text "Hello from Home.", Html.br [] [], Html.text shared.locale.lang ]
+    , body = [ Html.text <| I18n.yourPreferredLang shared.locale.t shared.locale.lang, Html.br [] [], Html.text shared.locale.lang ]
     }

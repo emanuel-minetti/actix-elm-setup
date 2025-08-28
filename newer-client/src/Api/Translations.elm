@@ -3,10 +3,9 @@ module Api.Translations exposing (..)
 import Effect exposing (Effect)
 import Http
 import I18Next exposing (Translations)
-import Shared.Msg exposing (Msg)
 
 
-getTranslations : String -> (Result Http.Error Translations -> Msg) -> Effect Msg
+getTranslations : String -> (Result Http.Error Translations -> msg) -> Effect msg
 getTranslations lang options =
     Effect.sendCmd
         (Http.get

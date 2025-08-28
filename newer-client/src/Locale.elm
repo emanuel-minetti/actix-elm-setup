@@ -1,17 +1,16 @@
 module Locale exposing (Locale, init)
 
-import Api
 import I18Next
 
 
 type alias Locale =
     { lang : String
-    , t : Api.Data I18Next.Translations
+    , t : I18Next.Translations
     }
 
 
 init : String -> Locale
 init lang =
     { lang = lang
-    , t = Api.Loading
+    , t = I18Next.initialTranslations
     }

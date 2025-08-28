@@ -1,8 +1,10 @@
-module Layouts.MainLayout exposing (Model, Msg, Props, layout)
+module Layouts.MainLayout exposing (Model, Msg(..), Props, layout)
 
+import Api exposing (Data(..))
 import Effect exposing (Effect)
 import Html exposing (..)
-import Html.Attributes exposing (class, href)
+import Html.Attributes exposing (..)
+import Http exposing (Error(..))
 import Layout exposing (Layout)
 import Pages
 import Route exposing (Route)
@@ -15,11 +17,11 @@ type alias Props =
 
 
 layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
-layout _ _ _ =
+layout _ shared _ =
     Layout.new
         { init = init
         , update = update
-        , view = view
+        , view = view shared
         , subscriptions = subscriptions
         }
 
@@ -34,9 +36,7 @@ type alias Model =
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( {}
-    , Effect.none
-    )
+    ( {}, Effect.none )
 
 
 
@@ -44,16 +44,14 @@ init _ =
 
 
 type Msg
-    = ReplaceMe
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        ReplaceMe ->
-            ( model
-            , Effect.none
-            )
+        NoOp ->
+            ( model, Effect.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -65,15 +63,52 @@ subscriptions _ =
 -- VIEW
 
 
-view : { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view { toContentMsg, model, content } =
+view : Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view shared { toContentMsg, model, content } =
     { title = content.title
     , body =
         [ text "MainLayout"
+        , br [] []
+        , translationsApiDataMessage shared
         , div [ class "page" ] content.body
         , viewFooter model
         ]
     }
+
+
+translationsApiDataMessage : Shared.Model -> Html contentMsg
+translationsApiDataMessage shared =
+    case shared.translationsApiData of
+        Loading ->
+            text "Loading Translations ..."
+
+        Success _ ->
+            text ""
+
+        Failure error ->
+            let
+                errorText =
+                    case error of
+                        BadUrl string ->
+                            "BadUrl: " ++ string
+
+                        Timeout ->
+                            "Timed out"
+
+                        NetworkError ->
+                            "Network Error"
+
+                        BadStatus int ->
+                            "Bad Status: " ++ String.fromInt int
+
+                        BadBody string ->
+                            "Bad Body: " ++ string
+            in
+            div [ class "alert alert-danger" ]
+                [ text "Failed to load Translations with following Error Message:"
+                , br [] []
+                , text errorText
+                ]
 
 
 viewFooter : Model -> Html contentMsg
