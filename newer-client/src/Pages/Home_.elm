@@ -3,10 +3,11 @@ module Pages.Home_ exposing (Model, Msg, page)
 import Effect exposing (Effect)
 import Html
 import Layouts
+import Locale
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
-import Translations.Home as I18n
+import Translations.Home as I18nHome
 import View exposing (View)
 
 
@@ -73,10 +74,10 @@ subscriptions _ =
 
 view : Shared.Model -> Model -> View Msg
 view shared _ =
-    --let
-    --    preferredLangText =
-    --        Translations.Home.yourPreferredLang shared.locale.t
-    --in
+    let
+        t =
+            shared.locale.t
+    in
     { title = "Pages.Home_"
-    , body = [ Html.text <| I18n.yourPreferredLang shared.locale.t shared.locale.lang, Html.br [] [], Html.text shared.locale.lang ]
+    , body = [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString shared.locale ]
     }

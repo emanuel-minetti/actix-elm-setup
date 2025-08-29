@@ -71,7 +71,7 @@ view shared { toContentMsg, model, content } =
         , br [] []
         , translationsApiDataMessage shared
         , div [ class "page" ] content.body
-        , viewFooter model
+        , viewFooter shared
         ]
     }
 
@@ -111,13 +111,13 @@ translationsApiDataMessage shared =
                 ]
 
 
-viewFooter : Model -> Html contentMsg
-viewFooter _ =
+viewFooter : Shared.Model -> Html contentMsg
+viewFooter shared =
     footer [ class "bg-body-tertiary" ]
         [ div [ class "container-fluid" ]
             [ div [ class "row align-items-start" ]
                 [ div [ class "col" ]
-                    [ ul [ class "list-unstyled" ] viewFooterLinks ]
+                    [ ul [ class "list-unstyled" ] (viewFooterLinks shared) ]
                 , div [ class "col text-center" ]
                     [ span [] [ text "Version: 0.0.0" ] ]
                 , div [ class "col" ]
@@ -127,13 +127,19 @@ viewFooter _ =
         ]
 
 
-viewFooterLinks : List (Html contentMsg)
-viewFooterLinks =
+viewFooterLinks : Shared.Model -> List (Html contentMsg)
+viewFooterLinks shared =
     let
         pages =
             [ Pages.Privacy, Pages.Imprint ]
 
-        routeToItem page =
-            li [] [ a [ href <| Pages.toPath page ] [ button [ class "btn btn-secondary" ] [ text <| Pages.toText page ] ] ]
+        pageToHref page =
+            Pages.toPath page
+
+        pageToText page =
+            Pages.toText page shared.locale.t
+
+        pageToListItem page =
+            li [] [ a [ href <| pageToHref page ] [ button [ class "btn btn-secondary" ] [ text <| pageToText page ] ] ]
     in
-    List.map routeToItem pages
+    List.map pageToListItem pages
