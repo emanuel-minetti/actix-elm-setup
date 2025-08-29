@@ -6,9 +6,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http exposing (Error(..))
 import Layout exposing (Layout)
+import Locale exposing (Language, Locale)
 import Pages
 import Route exposing (Route)
 import Shared
+import Translations.Page as I18n
 import View exposing (View)
 
 
@@ -67,17 +69,79 @@ view : Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View conten
 view shared { toContentMsg, model, content } =
     { title = content.title
     , body =
-        [ text "MainLayout"
-        , br [] []
-        , translationsApiDataMessage shared
+        [ viewHeader shared
+        , viewTranslationsApiDataMessage shared
         , div [ class "page" ] content.body
         , viewFooter shared
         ]
     }
 
 
-translationsApiDataMessage : Shared.Model -> Html contentMsg
-translationsApiDataMessage shared =
+viewHeader : Shared.Model -> Html contentMsg
+viewHeader shared =
+    header []
+        [ nav [ class "navbar bg-body-tertiary" ]
+            [ div [ class "container-fluid" ]
+                [ a [ class "navbar-brand", href "/" ]
+                    [ img
+                        [ src "img/logo-color.png"
+                        , alt "Logo"
+                        , width 30
+                        , height 24
+                        , class "d-inline-block align-text-top me-3"
+                        ]
+                        []
+                    , text "Actix Elm Setup"
+                    ]
+                , span [ class "navbar-text" ] [ viewLoggedInText shared ]
+                , div [ style "display" "flex" ]
+                    [ viewLoginTimer shared
+                    , select [] <| viewSelectOptions shared.locale
+                    ]
+                ]
+            ]
+        ]
+
+
+viewLoggedInText : Shared.Model -> Html contentMsg
+viewLoggedInText shared =
+    -- TODO adjust if user name is known
+    case shared.token of
+        Just _ ->
+            text <| I18n.loggedInText shared.locale.t ""
+
+        Nothing ->
+            text <| I18n.notLoggedInText shared.locale.t
+
+
+viewLoginTimer : Shared.Model -> Html contentMsg
+viewLoginTimer _ =
+    -- TODO adjust if session timeout is known
+    h4 [] [ text "30" ]
+
+
+viewSelectOptions : Locale -> List (Html contentMsg)
+viewSelectOptions locale =
+    List.map (viewSelectOption locale) Locale.languages
+
+
+viewSelectOption : Locale -> Language -> Html contentMsg
+viewSelectOption locale lang =
+    let
+        isSelected =
+            locale.lang == lang
+
+        valueString =
+            Locale.toLanguageValue lang
+
+        textString =
+            Locale.toLanguageString locale.t lang
+    in
+    option [ selected isSelected, value valueString ] [ text textString ]
+
+
+viewTranslationsApiDataMessage : Shared.Model -> Html contentMsg
+viewTranslationsApiDataMessage shared =
     case shared.translationsApiData of
         Loading ->
             text "Loading Translations ..."

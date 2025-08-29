@@ -78,6 +78,6 @@ view shared _ =
         t =
             shared.locale.t
     in
-    { title = "Pages.Home_"
-    , body = [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString shared.locale ]
+    { title = "Home"
+    , body = [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang ]
     }

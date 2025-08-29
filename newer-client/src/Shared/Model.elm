@@ -8,4 +8,5 @@ import Locale exposing (Locale)
 type alias Model =
     { locale : Locale
     , translationsApiData : Api.Data Translations
+    , token : Maybe String
     }

@@ -60,6 +60,7 @@ init flagsResult _ =
     in
     ( { locale = Locale.init lang
       , translationsApiData = Api.Loading
+      , token = Nothing
       }
     , Api.Translations.getTranslations lang Shared.Msg.TranslationsApiResponded
     )

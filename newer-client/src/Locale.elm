@@ -1,12 +1,17 @@
-module Locale exposing (Locale, init, toLanguageString)
+module Locale exposing (Language, Locale, init, languages, toLanguageString, toLanguageValue)
 
-import I18Next
+import I18Next exposing (Translations)
 import Translations.Lang as I18n
 
 
 type Language
     = De
     | En
+
+
+languages : List Language
+languages =
+    [ De, En ]
 
 
 type alias Locale =
@@ -34,11 +39,21 @@ init lang =
     }
 
 
-toLanguageString : Locale -> String
-toLanguageString locale =
-    case locale.lang of
+toLanguageString : Translations -> Language -> String
+toLanguageString t lang =
+    case lang of
         De ->
-            I18n.german locale.t
+            I18n.german t
 
         En ->
-            I18n.english locale.t
+            I18n.english t
+
+
+toLanguageValue : Language -> String
+toLanguageValue lang =
+    case lang of
+        De ->
+            "de"
+
+        En ->
+            "en"
