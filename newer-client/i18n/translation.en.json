@@ -36,7 +36,9 @@
     "title": "Login",
     "message": "Please log in:",
     "username": "Username",
-    "password": "Password"
+    "password": "Password",
+    "login": "Login",
+    "loggingIn": "Logging In ..."
   },
   "Message": {
     "empty": "",

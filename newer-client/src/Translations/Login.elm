@@ -25,3 +25,13 @@ username translations =
 password : Translations -> String
 password translations =
     t translations "Login.password"
+
+
+login : Translations -> String
+login translations =
+    t translations "Login.login"
+
+
+loggingIn : Translations -> String
+loggingIn translations =
+    t translations "Login.loggingIn"

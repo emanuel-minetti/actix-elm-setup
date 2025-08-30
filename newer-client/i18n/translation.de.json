@@ -33,10 +33,12 @@
     "message": "Dies ist die Seite mit Datenschutz Informationen."
   },
   "Login": {
-    "title": "Anmelden",
+    "title": "Anmeldung",
     "message": "Bitte melden Sie sich an: ",
     "username": "Benutzername",
-    "password": "Passwort"
+    "password": "Passwort",
+    "login": "Anmelden",
+    "loggingIn": "Sie werden angemeldet ..."
   },
   "Message": {
     "empty": "",

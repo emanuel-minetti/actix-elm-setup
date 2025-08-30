@@ -71,7 +71,7 @@ view shared { toContentMsg, model, content } =
     , body =
         [ viewHeader shared
         , viewTranslationsApiDataMessage shared
-        , div [ class "page" ] content.body
+        , div [ class "page ms-5" ] content.body
         , viewFooter shared
         ]
     }

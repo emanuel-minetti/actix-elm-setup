@@ -6,16 +6,17 @@ import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
+import Translations.Privacy as I18n
 import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page _ _ =
+page shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , view = view shared
         }
         |> Page.withLayout toLayout
 
@@ -70,8 +71,12 @@ subscriptions _ =
 -- VIEW
 
 
-view : Model -> View Msg
-view _ =
-    { title = "Pages.Privacy"
-    , body = [ Html.text "/privacy" ]
+view : Shared.Model -> Model -> View Msg
+view shared _ =
+    let
+        t =
+            shared.locale.t
+    in
+    { title = I18n.title t
+    , body = [ Html.text <| I18n.message t ]
     }
