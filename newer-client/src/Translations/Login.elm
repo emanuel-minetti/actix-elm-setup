@@ -35,3 +35,13 @@ login translations =
 loggingIn : Translations -> String
 loggingIn translations =
     t translations "Login.loggingIn"
+
+
+fail : Translations -> String
+fail translations =
+    t translations "Login.fail"
+
+
+networkError : Translations -> String
+networkError translations =
+    t translations "Login.networkError"

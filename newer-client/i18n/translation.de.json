@@ -38,7 +38,9 @@
     "username": "Benutzername",
     "password": "Passwort",
     "login": "Anmelden",
-    "loggingIn": "Sie werden angemeldet ..."
+    "loggingIn": "Sie werden angemeldet ...",
+    "fail": "Benutzername oder Passwort ungültig.",
+    "networkError": "Es gab einen Netzwerk-Fehler: "
   },
   "Message": {
     "empty": "",

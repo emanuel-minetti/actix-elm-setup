@@ -60,9 +60,9 @@ init flagsResult _ =
                 Err _ ->
                     "de"
     in
-    ( { locale = Locale.init lang
-      , translationsApiData = Api.Loading
-      , token = Nothing
+    ( { translationsApiData = Api.Loading
+      , locale = Locale.init lang
+      , user = Nothing
       }
     , Api.Translations.getTranslations lang Shared.Msg.TranslationsApiResponded
     )
@@ -107,8 +107,8 @@ update _ msg model =
             in
             ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
 
-        Shared.Msg.LoginApiResponded apiResponseData ->
-            ( { model | token = Just apiResponseData.token }
+        Shared.Msg.LoginApiResponded user ->
+            ( { model | user = Just user }
             , Effect.pushRoute
                 { path = Route.Path.Home_
                 , query = Dict.empty
@@ -117,7 +117,7 @@ update _ msg model =
             )
 
         Shared.Msg.Logout ->
-            ( { model | token = Nothing }
+            ( { model | user = Nothing }
             , Effect.none
             )
 

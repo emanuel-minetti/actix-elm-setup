@@ -3,10 +3,11 @@ module Shared.Model exposing (Model)
 import Api
 import I18Next exposing (Translations)
 import Locale exposing (Locale)
+import User exposing (User)
 
 
 type alias Model =
-    { locale : Locale
-    , translationsApiData : Api.Data Translations
-    , token : Maybe String
+    { translationsApiData : Api.Data Translations
+    , locale : Locale
+    , user : Maybe User
     }

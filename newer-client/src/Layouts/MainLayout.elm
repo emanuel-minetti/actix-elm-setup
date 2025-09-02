@@ -106,7 +106,7 @@ viewHeader shared =
 viewLoggedInText : Shared.Model -> Html contentMsg
 viewLoggedInText shared =
     -- TODO adjust if user name is known
-    case shared.token of
+    case shared.user of
         Just _ ->
             text <| I18n.loggedInText shared.locale.t ""
 

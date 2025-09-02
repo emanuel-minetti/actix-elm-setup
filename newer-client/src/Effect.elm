@@ -24,6 +24,7 @@ module Effect exposing
 
 -}
 
+import Api.Login.Model
 import Browser.Navigation
 import Dict exposing (Dict)
 import Route exposing (Route)
@@ -32,6 +33,7 @@ import Shared.Model
 import Shared.Msg
 import Task
 import Url exposing (Url)
+import User exposing (User)
 
 
 type Effect msg
@@ -218,7 +220,7 @@ toCmd options effect =
 -- SHARED
 
 
-login : { token : String } -> Effect msg
+login : User -> Effect msg
 login apiResponseData =
     SendSharedMsg (Shared.Msg.LoginApiResponded apiResponseData)
 

@@ -2,6 +2,7 @@ module Pages.Login exposing (Model, Msg, page)
 
 import Api
 import Api.Login
+import Api.Login.Model
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -12,6 +13,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import Translations.Login as I18n
+import User
 import View exposing (View)
 
 
@@ -19,7 +21,7 @@ page : Shared.Model -> Route () -> Page Model Msg
 page shared _ =
     Page.new
         { init = init
-        , update = update
+        , update = update shared
         , subscriptions = subscriptions
         , view = view shared
         }
@@ -39,6 +41,7 @@ type alias Model =
     { username : String
     , password : String
     , isSubmittingForm : Bool
+    , errorMessage : String
     }
 
 
@@ -47,6 +50,7 @@ init () =
     ( { username = ""
       , password = ""
       , isSubmittingForm = False
+      , errorMessage = ""
       }
     , Effect.none
     )
@@ -67,8 +71,8 @@ type Msg
     | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.ApiResponseData))
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update shared msg model =
     case msg of
         UserUpdatedInput User userName ->
             ( { model | username = userName }
@@ -81,25 +85,63 @@ update msg model =
             )
 
         UserSubmittedForm ->
-            ( { model | isSubmittingForm = True }
+            ( { model | isSubmittingForm = True, errorMessage = "" }
             , Api.Login.post { onResponse = LoginApiResponded, user = model.username, password = model.password }
             )
 
         LoginApiResponded (Ok apiResponseData) ->
             let
-                _ =
-                    Debug.log "Token" apiResponseData.data.token
+                hasError =
+                    not <| String.isEmpty apiResponseData.error
             in
-            ( { model | isSubmittingForm = False }
-            , Effect.login { token = apiResponseData.data.token }
-            )
+            case hasError of
+                True ->
+                    let
+                        message =
+                            I18n.fail shared.locale.t
+                    in
+                    ( { model | errorMessage = message, isSubmittingForm = False }, Effect.none )
+
+                False ->
+                    let
+                        token =
+                            case apiResponseData.data of
+                                Api.Login.LoginResponseData loginApiResponseData ->
+                                    loginApiResponseData.token
+
+                                Api.Login.NoneResponseData _ ->
+                                    ""
+
+                        expires =
+                            apiResponseData.expires
+                    in
+                    ( { model | isSubmittingForm = False }
+                    , Effect.login <| User.init token expires
+                    )
 
         LoginApiResponded (Err error) ->
             let
-                _ =
-                    Debug.log "Error" error
+                httpError =
+                    case error of
+                        Http.BadUrl string ->
+                            "BadUrl: " ++ string
+
+                        Http.Timeout ->
+                            "Timed Out"
+
+                        Http.NetworkError ->
+                            "NetworkError"
+
+                        Http.BadStatus int ->
+                            "Bad Status: " ++ String.fromInt int
+
+                        Http.BadBody string ->
+                            "Bad Body: " ++ string
+
+                message =
+                    I18n.networkError shared.locale.t ++ httpError
             in
-            ( { model | isSubmittingForm = False }
+            ( { model | isSubmittingForm = False, errorMessage = message }
             , Effect.none
             )
 
@@ -129,6 +171,7 @@ view shared model =
             [ div [ class "container" ]
                 [ h1 []
                     [ text <| I18n.title t ]
+                , viewErrorMessage model
                 , br [] []
                 , text <| I18n.message t
                 , br [] []
@@ -164,6 +207,16 @@ view shared model =
             ]
         ]
     }
+
+
+viewErrorMessage : Model -> Html Msg
+viewErrorMessage model =
+    case String.isEmpty model.errorMessage of
+        True ->
+            div [] []
+
+        False ->
+            div [ class "alert alert-danger", attribute "role" "alert" ] [ text model.errorMessage ]
 
 
 viewButton : Shared.Model -> Model -> Html Msg
