@@ -8,12 +8,3 @@ const flags = ({ env }) => {
         flags: {lang: lang}
     };
 }
-
-// This is called AFTER your Elm app starts up
-//
-// Here you can work with `app.ports` to send messages
-// to your Elm application, or subscribe to incoming
-// messages from Elm
-const onReady = ({ app, env }) => {
-
-}

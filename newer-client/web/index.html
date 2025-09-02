@@ -19,6 +19,13 @@
         node: document.getElementById('elm'),
         flags: {flags: flags({})}
     });
+    if (app.ports) {
+        if (app.ports.sendToLocalStorage) {
+            app.ports.sendToLocalStorage.subscribe(({key, value}) => {
+                window.localStorage[key] = JSON.stringify(value);
+            });
+        }
+    }
 </script>
 
 </body>

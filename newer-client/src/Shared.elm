@@ -109,16 +109,19 @@ update _ msg model =
 
         Shared.Msg.LoginApiResponded user ->
             ( { model | user = Just user }
-            , Effect.pushRoute
-                { path = Route.Path.Home_
-                , query = Dict.empty
-                , hash = Nothing
-                }
+            , Effect.batch
+                [ Effect.pushRoute
+                    { path = Route.Path.Home_
+                    , query = Dict.empty
+                    , hash = Nothing
+                    }
+                , Effect.saveUser user
+                ]
             )
 
         Shared.Msg.Logout ->
             ( { model | user = Nothing }
-            , Effect.none
+            , Effect.clearUser
             )
 
 

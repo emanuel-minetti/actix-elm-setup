@@ -1,4 +1,4 @@
-module Effect exposing
+port module Effect exposing
     ( Effect
     , none, batch
     , sendCmd, sendMsg
@@ -6,7 +6,7 @@ module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , login, logout
+    , clearUser, login, logout, saveUser
     )
 
 {-|
@@ -24,9 +24,9 @@ module Effect exposing
 
 -}
 
-import Api.Login.Model
 import Browser.Navigation
 import Dict exposing (Dict)
+import Json.Encode
 import Route exposing (Route)
 import Route.Path
 import Shared.Model
@@ -48,6 +48,8 @@ type Effect msg
     | Back
       -- SHARED
     | SendSharedMsg Shared.Msg.Msg
+      -- PORTS
+    | SendToLocalStorage { key : String, value : Json.Encode.Value }
 
 
 
@@ -175,6 +177,9 @@ map fn effect =
         SendSharedMsg sharedMsg ->
             SendSharedMsg sharedMsg
 
+        SendToLocalStorage value ->
+            SendToLocalStorage value
+
 
 {-| Elm Land depends on this function to perform your effects.
 -}
@@ -215,6 +220,9 @@ toCmd options effect =
             Task.succeed sharedMsg
                 |> Task.perform options.fromSharedMsg
 
+        SendToLocalStorage value ->
+            sendToLocalStorage value
+
 
 
 -- SHARED
@@ -228,3 +236,30 @@ login apiResponseData =
 logout : Effect msg
 logout =
     SendSharedMsg Shared.Msg.Logout
+
+
+
+-- PORTS
+
+
+port sendToLocalStorage :
+    { key : String
+    , value : Json.Encode.Value
+    }
+    -> Cmd msg
+
+
+saveUser : User -> Effect msg
+saveUser user =
+    batch
+        [ SendToLocalStorage { key = "token", value = Json.Encode.string user.token }
+        , SendToLocalStorage { key = "expires", value = Json.Encode.int user.expires }
+        ]
+
+
+clearUser : Effect msg
+clearUser =
+    batch
+        [ SendToLocalStorage { key = "token", value = Json.Encode.null }
+        , SendToLocalStorage { key = "expires", value = Json.Encode.null }
+        ]
