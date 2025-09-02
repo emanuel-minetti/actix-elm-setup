@@ -1,9 +1,12 @@
 module Pages.Login exposing (Model, Msg, page)
 
+import Api
+import Api.Login
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -61,6 +64,7 @@ type Field
 type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
+    | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.ApiResponseData))
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -78,6 +82,24 @@ update msg model =
 
         UserSubmittedForm ->
             ( { model | isSubmittingForm = True }
+            , Api.Login.post { onResponse = LoginApiResponded, user = model.username, password = model.password }
+            )
+
+        LoginApiResponded (Ok apiResponseData) ->
+            let
+                _ =
+                    Debug.log "Token" apiResponseData.data.token
+            in
+            ( { model | isSubmittingForm = False }
+            , Effect.login { token = apiResponseData.data.token }
+            )
+
+        LoginApiResponded (Err error) ->
+            let
+                _ =
+                    Debug.log "Error" error
+            in
+            ( { model | isSubmittingForm = False }
             , Effect.none
             )
 
@@ -153,7 +175,10 @@ viewButton shared model =
     case model.isSubmittingForm of
         True ->
             button [ type_ "submit", class "btn btn-primary", tabindex 3, disabled True ]
-                [ div [ class "spinner-border" ] [ span [ class "visually-hidden" ] [ text <| I18n.loggingIn t ] ] ]
+                [ div [ class "spinner-border", attribute "role" "status" ]
+                    [ span [ class "visually-hidden" ] [ text <| I18n.loggingIn t ]
+                    ]
+                ]
 
         False ->
             button [ type_ "submit", class "btn btn-primary", tabindex 3 ] [ text <| I18n.login t ]

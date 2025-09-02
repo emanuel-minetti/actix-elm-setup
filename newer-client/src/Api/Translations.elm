@@ -1,5 +1,6 @@
 module Api.Translations exposing (..)
 
+import Api
 import Effect exposing (Effect)
 import Http
 import I18Next exposing (Translations)
@@ -9,7 +10,7 @@ getTranslations : String -> (Result Http.Error Translations -> msg) -> Effect ms
 getTranslations lang options =
     Effect.sendCmd
         (Http.get
-            { url = "http://localhost:8080/lang/translation." ++ lang ++ ".json"
+            { url = Api.schemeAndHost ++ "lang/translation." ++ lang ++ ".json"
             , expect = Http.expectJson options I18Next.translationsDecoder
             }
         )

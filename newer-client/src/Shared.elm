@@ -14,10 +14,12 @@ module Shared exposing
 
 import Api
 import Api.Translations
+import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Locale
 import Route exposing (Route)
+import Route.Path
 import Shared.Model
 import Shared.Msg
 
@@ -104,6 +106,20 @@ update _ msg model =
                             Api.Failure error
             in
             ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
+
+        Shared.Msg.LoginApiResponded apiResponseData ->
+            ( { model | token = Just apiResponseData.token }
+            , Effect.pushRoute
+                { path = Route.Path.Home_
+                , query = Dict.empty
+                , hash = Nothing
+                }
+            )
+
+        Shared.Msg.Logout ->
+            ( { model | token = Nothing }
+            , Effect.none
+            )
 
 
 
