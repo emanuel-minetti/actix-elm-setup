@@ -1,5 +1,6 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Auth
 import Effect exposing (Effect)
 import Html
 import Layouts
@@ -11,8 +12,8 @@ import Translations.Home as I18nHome
 import View exposing (View)
 
 
-page : Shared.Model -> Route () -> Page Model Msg
-page shared _ =
+page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
+page _ shared _ =
     Page.new
         { init = init
         , update = update
