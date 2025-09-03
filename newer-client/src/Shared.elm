@@ -29,16 +29,20 @@ import Shared.Msg
 
 
 type alias Flags =
-    { browserLang : String }
+    { browserLang : String
+    , token : String
+    , expires : Int
+    }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.string
-        |> Json.Decode.field "lang"
-        |> Json.Decode.field "flags"
-        |> Json.Decode.field "flags"
-        |> Json.Decode.map Flags
+    Json.Decode.field "flags"
+        (Json.Decode.map3 Flags
+            (Json.Decode.field "lang" Json.Decode.string)
+            (Json.Decode.field "savedSessionToken" Json.Decode.string)
+            (Json.Decode.field "expires" Json.Decode.int)
+        )
 
 
 
