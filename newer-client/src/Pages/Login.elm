@@ -3,6 +3,7 @@ module Pages.Login exposing (Model, Msg, page)
 import Api
 import Api.Login
 import Api.Login.Model
+import Api.Session
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -69,6 +70,7 @@ type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
     | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.ApiResponseData))
+    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.ApiResponseData))
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -111,15 +113,66 @@ update shared msg model =
 
                                 Api.Login.NoneResponseData _ ->
                                     ""
-
-                        expires =
-                            apiResponseData.expires
                     in
-                    ( { model | isSubmittingForm = False }
-                    , Effect.login <| User.init token expires
+                    ( model
+                    , Api.Session.get { token = token, onResponse = SessionApiResponded token }
                     )
 
         LoginApiResponded (Err error) ->
+            let
+                httpError =
+                    case error of
+                        Http.BadUrl string ->
+                            "BadUrl: " ++ string
+
+                        Http.Timeout ->
+                            "Timed Out"
+
+                        Http.NetworkError ->
+                            "NetworkError"
+
+                        Http.BadStatus int ->
+                            "Bad Status: " ++ String.fromInt int
+
+                        Http.BadBody string ->
+                            "Bad Body: " ++ string
+
+                message =
+                    I18n.networkError shared.locale.t ++ httpError
+            in
+            ( { model | isSubmittingForm = False, errorMessage = message }
+            , Effect.none
+            )
+
+        SessionApiResponded token (Ok apiResponseData) ->
+            let
+                hasError =
+                    not <| String.isEmpty apiResponseData.error
+            in
+            case hasError of
+                True ->
+                    let
+                        message =
+                            I18n.fail shared.locale.t
+                    in
+                    ( { model | errorMessage = message, isSubmittingForm = False }, Effect.none )
+
+                False ->
+                    case apiResponseData.data of
+                        Api.Session.SessionResponseData apiSessionResponseData ->
+                            ( { model | errorMessage = "", isSubmittingForm = False }
+                            , Effect.login
+                                { token = token
+                                , expires = apiResponseData.expires
+                                , name = apiSessionResponseData.name
+                                , preferredLang = apiSessionResponseData.lang
+                                }
+                            )
+
+                        Api.Session.NoneResponseData _ ->
+                            ( { model | errorMessage = "", isSubmittingForm = False }, Effect.none )
+
+        SessionApiResponded _ (Err error) ->
             let
                 httpError =
                     case error of

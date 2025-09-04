@@ -1,4 +1,4 @@
-module Auth exposing (User, init, onPageLoad, viewCustomPage)
+module Auth exposing (User, onPageLoad, viewCustomPage)
 
 import Auth.Action
 import Dict
@@ -11,11 +11,6 @@ import View exposing (View)
 
 type alias User =
     User.User
-
-
-init : String -> Int -> User
-init =
-    User.init
 
 
 {-| Called before an auth-only page is loaded.

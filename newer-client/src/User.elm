@@ -1,10 +1,14 @@
-module User exposing (..)
+module User exposing (User)
 
 
 type alias User =
-    { token : String, expires : Int }
+    { token : String
+    , expires : Int
+    , name : String
+    , preferredLang : String
+    }
 
 
-init : String -> Int -> User
-init token expires =
-    { token = token, expires = expires }
+init : String -> Int -> String -> String -> User
+init token expires name lang =
+    { token = token, expires = expires, name = name, preferredLang = lang }

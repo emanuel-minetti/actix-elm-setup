@@ -1,15 +1,14 @@
-module Api.Login exposing (ApiResponseData(..), post)
+module Api.Session exposing (ApiResponseData(..), get)
 
 import Api
-import Api.Login.Model
+import Api.Session.Model
 import Effect exposing (Effect)
 import Http
-import Json.Decode as Dec exposing (Decoder, Value, andThen, decodeValue, fail, field, keyValuePairs, string, succeed)
-import Json.Encode
+import Json.Decode as Dec exposing (..)
 
 
 type ApiResponseData
-    = LoginResponseData Api.Login.Model.ApiResponseData
+    = SessionResponseData Api.Session.Model.ApiResponseData
     | NoneResponseData {}
 
 
@@ -38,8 +37,8 @@ apiResponseDecoderHelper value =
                             "None"
     in
     case api of
-        "Login" ->
-            apiLoginResponseDataDecoder
+        "Session" ->
+            apiSessionResponseDataDecoder
 
         "None" ->
             noneResponseDataDecoder
@@ -48,40 +47,39 @@ apiResponseDecoderHelper value =
             fail <| "No such service"
 
 
-apiLoginResponseDataDecoder : Decoder ApiResponseData
-apiLoginResponseDataDecoder =
-    field "Login"
-        (Dec.map
-            (\s -> LoginResponseData { token = s })
-            (field "session_token" string)
-        )
-
-
 noneResponseDataDecoder : Decoder ApiResponseData
 noneResponseDataDecoder =
     field "None"
         (Dec.map (\_ -> NoneResponseData {}) (succeed {}))
 
 
-post :
-    { onResponse : Result Http.Error (Api.ApiResponse ApiResponseData) -> msg
-    , user : String
-    , password : String
-    }
-    -> Effect msg
-post options =
+apiSessionResponseDataDecoder : Decoder ApiResponseData
+apiSessionResponseDataDecoder =
+    field "Session"
+        (Dec.map2 (\s t -> SessionResponseData { name = s, lang = t })
+            (field "name" string)
+            (field "preferred_lang" string)
+        )
+
+
+get : { onResponse : Result Http.Error (Api.ApiResponse ApiResponseData) -> msg, token : String } -> Effect msg
+get options =
     let
-        body =
-            Json.Encode.object
-                [ ( "account", Json.Encode.string options.user )
-                , ( "pw", Json.Encode.string options.password )
-                ]
+        url =
+            Api.schemeAndHost ++ "api/session"
+
+        header =
+            Http.header "Authorization" <| "Bearer " ++ options.token
 
         cmd =
-            Http.post
-                { url = Api.schemeAndHost ++ "api/login"
-                , body = Http.jsonBody body
+            Http.request
+                { method = "GET"
+                , headers = [ header ]
+                , url = url
+                , body = Http.emptyBody
                 , expect = Http.expectJson options.onResponse (Api.apiResponseDecoder apiResponseDataDecoder)
+                , timeout = Nothing
+                , tracker = Nothing
                 }
     in
     Effect.sendCmd cmd

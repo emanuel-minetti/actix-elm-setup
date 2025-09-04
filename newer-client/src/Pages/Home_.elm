@@ -13,12 +13,12 @@ import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
-page _ shared _ =
+page user shared _ =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view shared
+        , view = view user shared
         }
         |> Page.withLayout toLayout
 
@@ -73,12 +73,15 @@ subscriptions _ =
 -- VIEW
 
 
-view : Shared.Model -> Model -> View Msg
-view shared _ =
+view : Auth.User -> Shared.Model -> Model -> View Msg
+view user shared _ =
     let
         t =
             shared.locale.t
     in
     { title = "Home"
-    , body = [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang ]
+    , body =
+        [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang
+        , Html.text ("Name: " ++ user.name)
+        ]
     }
