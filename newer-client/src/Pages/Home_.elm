@@ -2,7 +2,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Auth
 import Effect exposing (Effect)
-import Html exposing (br)
+import Html exposing (br, text)
 import Layouts
 import Locale
 import Page exposing (Page)
@@ -81,8 +81,8 @@ view user shared _ =
     in
     { title = "Home"
     , body =
-        [ Html.text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang
+        [ text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang
         , br [] []
-        , Html.text ("Name: " ++ user.name)
+        , text ("Name: " ++ user.name)
         ]
     }
