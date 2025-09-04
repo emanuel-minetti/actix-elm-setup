@@ -254,6 +254,7 @@ saveUser user =
     batch
         [ SendToLocalStorage { key = "token", value = Json.Encode.string user.token }
         , SendToLocalStorage { key = "expires", value = Json.Encode.int user.expires }
+        , SendToLocalStorage { key = "lang", value = Json.Encode.string user.preferredLang }
         ]
 
 
