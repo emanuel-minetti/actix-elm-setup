@@ -56,6 +56,7 @@ type alias Model =
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult _ =
     let
+        -- TODO here to set user if applicable
         lang =
             case flagsResult of
                 Ok value ->

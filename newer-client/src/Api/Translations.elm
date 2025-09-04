@@ -8,6 +8,7 @@ import I18Next exposing (Translations)
 
 getTranslations : String -> (Result Http.Error Translations -> msg) -> Effect msg
 getTranslations lang options =
+    -- TODO use!
     Effect.sendCmd
         (Http.get
             { url = Api.schemeAndHost ++ "lang/translation." ++ lang ++ ".json"

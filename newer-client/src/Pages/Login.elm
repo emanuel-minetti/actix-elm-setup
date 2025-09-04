@@ -121,21 +121,7 @@ update shared msg model =
         LoginApiResponded (Err error) ->
             let
                 httpError =
-                    case error of
-                        Http.BadUrl string ->
-                            "BadUrl: " ++ string
-
-                        Http.Timeout ->
-                            "Timed Out"
-
-                        Http.NetworkError ->
-                            "NetworkError"
-
-                        Http.BadStatus int ->
-                            "Bad Status: " ++ String.fromInt int
-
-                        Http.BadBody string ->
-                            "Bad Body: " ++ string
+                    httpErrorToString error
 
                 message =
                     I18n.networkError shared.locale.t ++ httpError
@@ -175,21 +161,7 @@ update shared msg model =
         SessionApiResponded _ (Err error) ->
             let
                 httpError =
-                    case error of
-                        Http.BadUrl string ->
-                            "BadUrl: " ++ string
-
-                        Http.Timeout ->
-                            "Timed Out"
-
-                        Http.NetworkError ->
-                            "NetworkError"
-
-                        Http.BadStatus int ->
-                            "Bad Status: " ++ String.fromInt int
-
-                        Http.BadBody string ->
-                            "Bad Body: " ++ string
+                    httpErrorToString error
 
                 message =
                     I18n.networkError shared.locale.t ++ httpError
@@ -197,6 +169,25 @@ update shared msg model =
             ( { model | isSubmittingForm = False, errorMessage = message }
             , Effect.none
             )
+
+
+httpErrorToString : Http.Error -> String
+httpErrorToString error =
+    case error of
+        Http.BadUrl string ->
+            "BadUrl: " ++ string
+
+        Http.Timeout ->
+            "Timed Out"
+
+        Http.NetworkError ->
+            "NetworkError"
+
+        Http.BadStatus int ->
+            "Bad Status: " ++ String.fromInt int
+
+        Http.BadBody string ->
+            "Bad Body: " ++ string
 
 
 
