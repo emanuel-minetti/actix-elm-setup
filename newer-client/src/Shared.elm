@@ -69,7 +69,7 @@ init flagsResult _ =
       , locale = Locale.init lang
       , user = Nothing
       }
-    , Api.Translations.getTranslations lang Shared.Msg.TranslationsApiResponded
+    , Api.Translations.getTranslations { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
     )
 
 
