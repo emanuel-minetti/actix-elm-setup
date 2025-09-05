@@ -69,7 +69,7 @@ init flagsResult _ =
       , locale = Locale.init lang
       , user = Nothing
       }
-    , Api.Translations.getTranslations { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
+    , Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
     )
 
 
@@ -84,11 +84,6 @@ type alias Msg =
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
 update _ msg model =
     case msg of
-        Shared.Msg.NoOp ->
-            ( model
-            , Effect.none
-            )
-
         Shared.Msg.TranslationsApiResponded result ->
             let
                 locale =
@@ -113,9 +108,33 @@ update _ msg model =
             ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
 
         Shared.Msg.LoginApiResponded user ->
-            ( { model | user = Just user }
+            let
+                userLang =
+                    String.toLower user.preferredLang
+
+                needToLoadTranslations =
+                    userLang /= Locale.toLanguageValue model.locale.lang
+
+                langEffect =
+                    case needToLoadTranslations of
+                        True ->
+                            Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
+
+                        False ->
+                            Effect.none
+
+                locale =
+                    case needToLoadTranslations of
+                        True ->
+                            Locale.init userLang
+
+                        False ->
+                            model.locale
+            in
+            ( { model | user = Just user, locale = locale }
             , Effect.batch
-                [ Effect.pushRoute
+                [ langEffect
+                , Effect.pushRoute
                     { path = Route.Path.Home_
                     , query = Dict.empty
                     , hash = Nothing

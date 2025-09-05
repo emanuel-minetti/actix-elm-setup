@@ -1,4 +1,4 @@
-module Api.Translations exposing (..)
+module Api.Translations exposing (get)
 
 import Api
 import Effect exposing (Effect)
@@ -6,8 +6,8 @@ import Http
 import I18Next exposing (Translations)
 
 
-getTranslations : { lang : String, onResponse : Result Http.Error Translations -> msg } -> Effect msg
-getTranslations options =
+get : { lang : String, onResponse : Result Http.Error Translations -> msg } -> Effect msg
+get options =
     -- TODO use!
     Effect.sendCmd
         (Http.get

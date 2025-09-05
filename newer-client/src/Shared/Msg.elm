@@ -6,7 +6,6 @@ import User exposing (User)
 
 
 type Msg
-    = NoOp
-    | TranslationsApiResponded (Result Http.Error Translations)
+    = TranslationsApiResponded (Result Http.Error Translations)
     | LoginApiResponded User
     | Logout
