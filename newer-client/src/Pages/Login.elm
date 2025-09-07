@@ -70,7 +70,7 @@ type Field
 type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
-    | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.ApiResponseData))
+    | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.Model.ApiResponseData))
     | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.ApiResponseData))
 
 
@@ -109,10 +109,10 @@ update shared msg model =
                     let
                         token =
                             case apiResponseData.data of
-                                Api.Login.LoginResponseData loginApiResponseData ->
+                                Api.Login.Model.LoginResponseData loginApiResponseData ->
                                     loginApiResponseData.token
 
-                                Api.Login.NoneResponseData _ ->
+                                Api.Login.Model.NoneResponseData _ ->
                                     ""
                     in
                     ( model

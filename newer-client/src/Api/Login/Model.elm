@@ -1,5 +1,10 @@
-module Api.Login.Model exposing (ApiResponseData)
+module Api.Login.Model exposing (ApiResponseData(..), LoginApiResponseData)
 
 
-type alias ApiResponseData =
+type ApiResponseData
+    = LoginResponseData LoginApiResponseData
+    | NoneResponseData {}
+
+
+type alias LoginApiResponseData =
     { token : String }

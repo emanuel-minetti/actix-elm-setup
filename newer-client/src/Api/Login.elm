@@ -1,16 +1,11 @@
-module Api.Login exposing (ApiResponseData(..), post)
+module Api.Login exposing (post)
 
 import Api
-import Api.Login.Model
+import Api.Login.Model exposing (ApiResponseData(..))
 import Effect exposing (Effect)
 import Http
 import Json.Decode as Dec exposing (Decoder, Value, andThen, decodeValue, fail, field, keyValuePairs, string, succeed)
 import Json.Encode
-
-
-type ApiResponseData
-    = LoginResponseData Api.Login.Model.ApiResponseData
-    | NoneResponseData {}
 
 
 apiResponseDataDecoder : Decoder ApiResponseData
