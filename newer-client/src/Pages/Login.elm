@@ -4,6 +4,7 @@ import Api
 import Api.Login
 import Api.Login.Model
 import Api.Session
+import Api.Session.Model
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -70,7 +71,7 @@ type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
     | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.ApiResponseData))
-    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.ApiResponseData))
+    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.ApiResponseData))
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -145,17 +146,17 @@ update shared msg model =
 
                 False ->
                     case apiResponseData.data of
-                        Api.Session.SessionResponseData apiSessionResponseData ->
+                        Api.Session.Model.SessionResponseData sessionApiResponseData ->
                             ( { model | errorMessage = "", isSubmittingForm = False }
                             , Effect.login
                                 { token = token
                                 , expires = apiResponseData.expires
-                                , name = apiSessionResponseData.name
-                                , preferredLang = apiSessionResponseData.lang
+                                , name = sessionApiResponseData.name
+                                , preferredLang = sessionApiResponseData.lang
                                 }
                             )
 
-                        Api.Session.NoneResponseData _ ->
+                        Api.Session.Model.NoneResponseData _ ->
                             ( { model | errorMessage = "", isSubmittingForm = False }, Effect.none )
 
         SessionApiResponded _ (Err error) ->

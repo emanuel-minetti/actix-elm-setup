@@ -1,15 +1,10 @@
-module Api.Session exposing (ApiResponseData(..), get)
+module Api.Session exposing (get)
 
 import Api
-import Api.Session.Model
+import Api.Session.Model exposing (ApiResponseData(..))
 import Effect exposing (Effect)
 import Http
 import Json.Decode as Dec exposing (..)
-
-
-type ApiResponseData
-    = SessionResponseData Api.Session.Model.ApiResponseData
-    | NoneResponseData {}
 
 
 apiResponseDataDecoder : Decoder ApiResponseData

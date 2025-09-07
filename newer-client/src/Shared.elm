@@ -13,6 +13,8 @@ module Shared exposing
 -}
 
 import Api
+import Api.Session
+import Api.Session.Model exposing (ApiResponseData(..))
 import Api.Translations
 import Dict
 import Effect exposing (Effect)
@@ -32,16 +34,18 @@ type alias Flags =
     { browserLang : String
     , token : String
     , expires : Int
+    , nowPlusSome : Int
     }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
     Json.Decode.field "flags"
-        (Json.Decode.map3 Flags
+        (Json.Decode.map4 Flags
             (Json.Decode.field "lang" Json.Decode.string)
             (Json.Decode.field "savedSessionToken" Json.Decode.string)
             (Json.Decode.field "expires" Json.Decode.int)
+            (Json.Decode.field "nowPlusSome" Json.Decode.int)
         )
 
 
@@ -55,16 +59,54 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult _ =
-    let
-        -- TODO here to set user if applicable
-        lang =
-            case flagsResult of
-                Ok value ->
-                    String.left 2 value.browserLang
+    case flagsResult of
+        Ok flags ->
+            let
+                needsToSetUser =
+                    not (String.isEmpty flags.token)
+                        && (flags.expires /= 0)
+                        && (flags.expires > flags.nowPlusSome)
 
-                Err _ ->
-                    "de"
-    in
+                ( newModel, newEffect ) =
+                    case needsToSetUser of
+                        True ->
+                            ( { translationsApiData = Api.Loading
+                              , locale = Locale.init flags.browserLang
+                              , user = Nothing
+                              }
+                            , Api.Session.get { token = flags.token, onResponse = Shared.Msg.SessionApiResponded flags.token }
+                            )
+
+                        False ->
+                            noUser flags.browserLang
+            in
+            ( newModel, newEffect )
+
+        Err _ ->
+            noUser "de"
+
+
+
+--let
+--    -- here to set user if applicable
+--    lang =
+--        case flagsResult of
+--            Ok value ->
+--                String.left 2 value.browserLang
+--
+--            Err _ ->
+--                "de"
+--in
+--( { translationsApiData = Api.Loading
+--  , locale = Locale.init lang
+--  , user = Nothing
+--  }
+--, Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
+--)
+
+
+noUser : String -> ( Model, Effect Msg )
+noUser lang =
     ( { translationsApiData = Api.Loading
       , locale = Locale.init lang
       , user = Nothing
@@ -147,6 +189,51 @@ update _ msg model =
             ( { model | user = Nothing }
             , Effect.clearUser
             )
+
+        Shared.Msg.SessionApiResponded token (Ok apiResponseData) ->
+            let
+                hasError =
+                    not <| String.isEmpty apiResponseData.error
+            in
+            case hasError of
+                True ->
+                    ( model, Effect.none )
+
+                False ->
+                    case apiResponseData.data of
+                        SessionResponseData sessionApiResponseData ->
+                            let
+                                userLang =
+                                    String.toLower sessionApiResponseData.lang
+
+                                needToLoadTranslations =
+                                    Locale.toLanguageValue model.locale.lang /= userLang
+
+                                locale =
+                                    case needToLoadTranslations of
+                                        True ->
+                                            Locale.init userLang
+
+                                        False ->
+                                            model.locale
+                            in
+                            ( { model | locale = locale }
+                            , Effect.batch
+                                [ Effect.login
+                                    { token = token
+                                    , expires = apiResponseData.expires
+                                    , name = sessionApiResponseData.name
+                                    , preferredLang = sessionApiResponseData.lang
+                                    }
+                                , Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
+                                ]
+                            )
+
+                        NoneResponseData _ ->
+                            ( model, Effect.none )
+
+        Shared.Msg.SessionApiResponded _ (Err _) ->
+            ( model, Effect.none )
 
 
 
