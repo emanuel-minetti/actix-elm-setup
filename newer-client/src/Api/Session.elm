@@ -14,7 +14,7 @@ type alias Model =
 apiSessionResponseDataDecoder : Decoder (Api.ApiResponseData SessionApiResponseData)
 apiSessionResponseDataDecoder =
     field "Session"
-        (Dec.map2 (\s t -> Api.ResponseData (Api.Session.Model.SessionApiResponseData s t))
+        (Dec.map2 (\s t -> Api.ResponseData (Api.Session.Model.Data { name = s, lang = t }))
             (field "name" string)
             (field "preferred_lang" string)
         )
@@ -30,8 +30,8 @@ get options =
             Http.header "Authorization" <| "Bearer " ++ options.token
 
         decoder =
-            apiSessionResponseDataDecoder
-                |> Api.apiResponseDataDecoder "Session"
+            "Session"
+                |> Api.apiResponseDataDecoder apiSessionResponseDataDecoder
                 |> Api.apiResponseDecoder
 
         cmd =

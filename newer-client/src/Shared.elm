@@ -14,6 +14,7 @@ module Shared exposing
 
 import Api
 import Api.Session
+import Api.Session.Model
 import Api.Translations
 import Dict
 import Effect exposing (Effect)
@@ -159,6 +160,8 @@ update _ msg model =
             ( { model | user = Just user, locale = locale }
             , Effect.batch
                 [ langEffect
+
+                -- TODO review!
                 , Effect.pushRoute
                     { path = Route.Path.Home_
                     , query = Dict.empty
@@ -187,7 +190,9 @@ update _ msg model =
                         Api.ResponseData sessionData ->
                             let
                                 userLang =
-                                    String.toLower sessionData.lang
+                                    sessionData
+                                        |> Api.Session.Model.lang
+                                        |> String.toLower
 
                                 needToLoadTranslations =
                                     Locale.toLanguageValue model.locale.lang /= userLang
@@ -205,8 +210,8 @@ update _ msg model =
                                 [ Effect.login
                                     { token = token
                                     , expires = apiResponseData.expires
-                                    , name = sessionData.name
-                                    , preferredLang = sessionData.lang
+                                    , name = Api.Session.Model.name sessionData
+                                    , preferredLang = Api.Session.Model.lang sessionData
                                     }
                                 , Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
                                 ]

@@ -2,6 +2,7 @@ module Pages.Login exposing (Model, Msg, page)
 
 import Api
 import Api.Login
+import Api.Login.Model
 import Api.Session
 import Api.Session.Model
 import Effect exposing (Effect)
@@ -109,7 +110,7 @@ update shared msg model =
                         token =
                             case apiResponseData.data of
                                 Api.ResponseData loginData ->
-                                    loginData.token
+                                    Api.Login.Model.token loginData
 
                                 Api.NoneResponseData _ ->
                                     ""
@@ -147,11 +148,12 @@ update shared msg model =
                     case apiResponseData.data of
                         Api.ResponseData sessionData ->
                             ( { model | errorMessage = "", isSubmittingForm = False }
+                              -- TODO send wanted url
                             , Effect.login
                                 { token = token
                                 , expires = apiResponseData.expires
-                                , name = sessionData.name
-                                , preferredLang = sessionData.lang
+                                , name = Api.Session.Model.name sessionData
+                                , preferredLang = Api.Session.Model.lang sessionData
                                 }
                             )
 

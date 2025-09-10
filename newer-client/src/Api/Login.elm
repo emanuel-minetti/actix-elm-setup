@@ -16,7 +16,7 @@ apiLoginResponseDataDecoder : Decoder (Api.ApiResponseData LoginApiResponseData)
 apiLoginResponseDataDecoder =
     field "Login"
         (map
-            (\s -> Api.ResponseData (Api.Login.Model.LoginApiResponseData s))
+            (\s -> Api.ResponseData (Api.Login.Model.Data { token = s }))
             (field "session_token" string)
         )
 
@@ -36,8 +36,8 @@ post options =
                 ]
 
         decoder =
-            apiLoginResponseDataDecoder
-                |> Api.apiResponseDataDecoder "Login"
+            "Login"
+                |> Api.apiResponseDataDecoder apiLoginResponseDataDecoder
                 |> Api.apiResponseDecoder
 
         cmd =

@@ -57,13 +57,13 @@ apiResponseDecoder responseDataDecoder =
         (field "data" responseDataDecoder)
 
 
-apiResponseDataDecoder : String -> Decoder (ApiResponseData data) -> Decoder (ApiResponseData data)
-apiResponseDataDecoder jsonFieldName dataDecoder =
-    value |> andThen (apiResponseDecoderHelper jsonFieldName dataDecoder)
+apiResponseDataDecoder : Decoder (ApiResponseData data) -> String -> Decoder (ApiResponseData data)
+apiResponseDataDecoder dataDecoder jsonFieldName =
+    value |> andThen (apiResponseDecoderHelper dataDecoder jsonFieldName)
 
 
-apiResponseDecoderHelper : String -> Decoder (ApiResponseData data) -> Value -> Decoder (ApiResponseData data)
-apiResponseDecoderHelper jsonFieldName dataDecoder value =
+apiResponseDecoderHelper : Decoder (ApiResponseData data) -> String -> Value -> Decoder (ApiResponseData data)
+apiResponseDecoderHelper dataDecoder jsonFieldName value =
     let
         pairs =
             decodeValue (keyValuePairs Dec.value) value
