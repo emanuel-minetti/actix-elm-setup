@@ -1,7 +1,29 @@
-module Api exposing (ApiResponse, ApiResponseData(..), Data(..), apiResponseDecoder, noneResponseDataDecoder, schemeAndHost)
+module Api exposing
+    ( ApiResponse
+    , ApiResponseData(..)
+    , Data(..)
+    , apiResponseDataDecoder
+    , apiResponseDecoder
+    , schemeAndHost
+    )
 
 import Http
-import Json.Decode exposing (Decoder, field, int, map, map3, string, succeed)
+import Json.Decode as Dec
+    exposing
+        ( Decoder
+        , Value
+        , andThen
+        , decodeValue
+        , fail
+        , field
+        , int
+        , keyValuePairs
+        , map
+        , map3
+        , string
+        , succeed
+        , value
+        )
 
 
 schemeAndHost : String
@@ -28,11 +50,47 @@ type ApiResponseData data
 
 
 apiResponseDecoder : Decoder (ApiResponseData data) -> Decoder (ApiResponse data)
-apiResponseDecoder apiResponseDataDecoder =
+apiResponseDecoder responseDataDecoder =
     map3 ApiResponse
         (field "expires_at" int)
         (field "error" string)
-        (field "data" apiResponseDataDecoder)
+        (field "data" responseDataDecoder)
+
+
+apiResponseDataDecoder : String -> Decoder (ApiResponseData data) -> Decoder (ApiResponseData data)
+apiResponseDataDecoder jsonFieldName dataDecoder =
+    value |> andThen (apiResponseDecoderHelper jsonFieldName dataDecoder)
+
+
+apiResponseDecoderHelper : String -> Decoder (ApiResponseData data) -> Value -> Decoder (ApiResponseData data)
+apiResponseDecoderHelper jsonFieldName dataDecoder value =
+    let
+        pairs =
+            decodeValue (keyValuePairs Dec.value) value
+
+        api =
+            case pairs of
+                Err _ ->
+                    "None"
+
+                Ok list ->
+                    case List.head list of
+                        Just ( key, _ ) ->
+                            key
+
+                        Nothing ->
+                            "None"
+    in
+    case api of
+        "None" ->
+            noneResponseDataDecoder
+
+        _ ->
+            if api == jsonFieldName then
+                dataDecoder
+
+            else
+                fail <| "No such Client service"
 
 
 noneResponseDataDecoder : Decoder (ApiResponseData data)

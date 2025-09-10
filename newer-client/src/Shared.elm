@@ -73,7 +73,10 @@ init flagsResult _ =
                               , locale = Locale.init flags.browserLang
                               , user = Nothing
                               }
-                            , Api.Session.get { token = flags.token, onResponse = Shared.Msg.SessionApiResponded flags.token }
+                            , Effect.batch
+                                [ Api.Session.get { token = flags.token, onResponse = Shared.Msg.SessionApiResponded flags.token }
+                                , Api.Translations.get { lang = flags.browserLang, onResponse = Shared.Msg.TranslationsApiResponded }
+                                ]
                             )
 
                         False ->
