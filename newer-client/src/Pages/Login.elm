@@ -1,8 +1,7 @@
 module Pages.Login exposing (Model, Msg, page)
 
-import Api
+import Api exposing (ApiResponseData(..))
 import Api.Login
-import Api.Login.Model
 import Api.Session
 import Api.Session.Model
 import Effect exposing (Effect)
@@ -70,8 +69,8 @@ type Field
 type Msg
     = UserUpdatedInput Field String
     | UserSubmittedForm
-    | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.Model.ApiResponseData))
-    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.ApiResponseData))
+    | LoginApiResponded (Result Http.Error (Api.ApiResponse Api.Login.Model))
+    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model))
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -109,11 +108,17 @@ update shared msg model =
                     let
                         token =
                             case apiResponseData.data of
-                                Api.Login.Model.LoginResponseData loginApiResponseData ->
-                                    loginApiResponseData.token
+                                Api.ResponseData loginData ->
+                                    loginData.token
 
-                                Api.Login.Model.NoneResponseData _ ->
+                                Api.NoneResponseData _ ->
                                     ""
+
+                        --Api.Login.Model.LoginResponseData loginApiResponseData ->
+                        --    loginApiResponseData.token
+                        --
+                        --Api.Login.Model.NoneResponseData _ ->
+                        --    ""
                     in
                     ( model
                     , Api.Session.get { token = token, onResponse = SessionApiResponded token }
@@ -146,17 +151,17 @@ update shared msg model =
 
                 False ->
                     case apiResponseData.data of
-                        Api.Session.Model.SessionResponseData sessionApiResponseData ->
+                        ResponseData sessionData ->
                             ( { model | errorMessage = "", isSubmittingForm = False }
                             , Effect.login
                                 { token = token
                                 , expires = apiResponseData.expires
-                                , name = sessionApiResponseData.name
-                                , preferredLang = sessionApiResponseData.lang
+                                , name = sessionData.name
+                                , preferredLang = sessionData.lang
                                 }
                             )
 
-                        Api.Session.Model.NoneResponseData _ ->
+                        NoneResponseData _ ->
                             ( { model | errorMessage = "", isSubmittingForm = False }, Effect.none )
 
         SessionApiResponded _ (Err error) ->

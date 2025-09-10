@@ -1,19 +1,23 @@
-module Api.Login exposing (post)
+module Api.Login exposing (Model, post)
 
-import Api
-import Api.Login.Model exposing (ApiResponseData(..))
+import Api exposing (ApiResponseData(..))
+import Api.Login.Model exposing (LoginApiResponseData)
 import Effect exposing (Effect)
 import Http
-import Json.Decode as Dec exposing (Decoder, Value, andThen, decodeValue, fail, field, keyValuePairs, string, succeed)
+import Json.Decode as Dec exposing (Decoder, Value, andThen, decodeValue, fail, field, keyValuePairs, string)
 import Json.Encode
 
 
-apiResponseDataDecoder : Decoder ApiResponseData
+type alias Model =
+    LoginApiResponseData
+
+
+apiResponseDataDecoder : Decoder (ApiResponseData LoginApiResponseData)
 apiResponseDataDecoder =
     Dec.value |> andThen apiResponseDecoderHelper
 
 
-apiResponseDecoderHelper : Value -> Decoder ApiResponseData
+apiResponseDecoderHelper : Value -> Decoder (ApiResponseData LoginApiResponseData)
 apiResponseDecoderHelper value =
     let
         pairs =
@@ -37,29 +41,23 @@ apiResponseDecoderHelper value =
             apiLoginResponseDataDecoder
 
         "None" ->
-            noneResponseDataDecoder
+            Api.noneResponseDataDecoder
 
         _ ->
             fail <| "No such service"
 
 
-apiLoginResponseDataDecoder : Decoder ApiResponseData
+apiLoginResponseDataDecoder : Decoder (ApiResponseData LoginApiResponseData)
 apiLoginResponseDataDecoder =
     field "Login"
         (Dec.map
-            (\s -> LoginResponseData { token = s })
+            (\s -> ResponseData (Api.Login.Model.LoginApiResponseData s))
             (field "session_token" string)
         )
 
 
-noneResponseDataDecoder : Decoder ApiResponseData
-noneResponseDataDecoder =
-    field "None"
-        (Dec.map (\_ -> NoneResponseData {}) (succeed {}))
-
-
 post :
-    { onResponse : Result Http.Error (Api.ApiResponse ApiResponseData) -> msg
+    { onResponse : Result Http.Error (Api.ApiResponse LoginApiResponseData) -> msg
     , user : String
     , password : String
     }

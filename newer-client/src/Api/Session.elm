@@ -1,18 +1,22 @@
-module Api.Session exposing (get)
+module Api.Session exposing (Model, get)
 
-import Api
-import Api.Session.Model exposing (ApiResponseData(..))
+import Api exposing (ApiResponseData(..))
+import Api.Session.Model exposing (SessionApiResponseData)
 import Effect exposing (Effect)
 import Http
 import Json.Decode as Dec exposing (..)
 
 
-apiResponseDataDecoder : Decoder ApiResponseData
+type alias Model =
+    SessionApiResponseData
+
+
+apiResponseDataDecoder : Decoder (ApiResponseData SessionApiResponseData)
 apiResponseDataDecoder =
     Dec.value |> andThen apiResponseDecoderHelper
 
 
-apiResponseDecoderHelper : Value -> Decoder ApiResponseData
+apiResponseDecoderHelper : Value -> Decoder (ApiResponseData SessionApiResponseData)
 apiResponseDecoderHelper value =
     let
         pairs =
@@ -36,28 +40,22 @@ apiResponseDecoderHelper value =
             apiSessionResponseDataDecoder
 
         "None" ->
-            noneResponseDataDecoder
+            Api.noneResponseDataDecoder
 
         _ ->
             fail <| "No such service"
 
 
-noneResponseDataDecoder : Decoder ApiResponseData
-noneResponseDataDecoder =
-    field "None"
-        (Dec.map (\_ -> NoneResponseData {}) (succeed {}))
-
-
-apiSessionResponseDataDecoder : Decoder ApiResponseData
+apiSessionResponseDataDecoder : Decoder (ApiResponseData SessionApiResponseData)
 apiSessionResponseDataDecoder =
     field "Session"
-        (Dec.map2 (\s t -> SessionResponseData { name = s, lang = t })
+        (Dec.map2 (\s t -> ResponseData (Api.Session.Model.SessionApiResponseData s t))
             (field "name" string)
             (field "preferred_lang" string)
         )
 
 
-get : { onResponse : Result Http.Error (Api.ApiResponse ApiResponseData) -> msg, token : String } -> Effect msg
+get : { onResponse : Result Http.Error (Api.ApiResponse SessionApiResponseData) -> msg, token : String } -> Effect msg
 get options =
     let
         url =

@@ -14,7 +14,6 @@ module Shared exposing
 
 import Api
 import Api.Session
-import Api.Session.Model exposing (ApiResponseData(..))
 import Api.Translations
 import Dict
 import Effect exposing (Effect)
@@ -84,25 +83,6 @@ init flagsResult _ =
 
         Err _ ->
             noUser "de"
-
-
-
---let
---    -- here to set user if applicable
---    lang =
---        case flagsResult of
---            Ok value ->
---                String.left 2 value.browserLang
---
---            Err _ ->
---                "de"
---in
---( { translationsApiData = Api.Loading
---  , locale = Locale.init lang
---  , user = Nothing
---  }
---, Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
---)
 
 
 noUser : String -> ( Model, Effect Msg )
@@ -201,10 +181,10 @@ update _ msg model =
 
                 False ->
                     case apiResponseData.data of
-                        SessionResponseData sessionApiResponseData ->
+                        Api.ResponseData sessionData ->
                             let
                                 userLang =
-                                    String.toLower sessionApiResponseData.lang
+                                    String.toLower sessionData.lang
 
                                 needToLoadTranslations =
                                     Locale.toLanguageValue model.locale.lang /= userLang
@@ -222,14 +202,14 @@ update _ msg model =
                                 [ Effect.login
                                     { token = token
                                     , expires = apiResponseData.expires
-                                    , name = sessionApiResponseData.name
-                                    , preferredLang = sessionApiResponseData.lang
+                                    , name = sessionData.name
+                                    , preferredLang = sessionData.lang
                                     }
                                 , Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
                                 ]
                             )
 
-                        NoneResponseData _ ->
+                        Api.NoneResponseData _ ->
                             ( model, Effect.none )
 
         Shared.Msg.SessionApiResponded _ (Err _) ->
