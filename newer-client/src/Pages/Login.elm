@@ -1,6 +1,6 @@
 module Pages.Login exposing (Model, Msg, page)
 
-import Api exposing (ApiResponseData(..))
+import Api
 import Api.Login
 import Api.Session
 import Api.Session.Model
@@ -113,12 +113,6 @@ update shared msg model =
 
                                 Api.NoneResponseData _ ->
                                     ""
-
-                        --Api.Login.Model.LoginResponseData loginApiResponseData ->
-                        --    loginApiResponseData.token
-                        --
-                        --Api.Login.Model.NoneResponseData _ ->
-                        --    ""
                     in
                     ( model
                     , Api.Session.get { token = token, onResponse = SessionApiResponded token }
@@ -151,7 +145,7 @@ update shared msg model =
 
                 False ->
                     case apiResponseData.data of
-                        ResponseData sessionData ->
+                        Api.ResponseData sessionData ->
                             ( { model | errorMessage = "", isSubmittingForm = False }
                             , Effect.login
                                 { token = token
@@ -161,7 +155,7 @@ update shared msg model =
                                 }
                             )
 
-                        NoneResponseData _ ->
+                        Api.NoneResponseData _ ->
                             ( { model | errorMessage = "", isSubmittingForm = False }, Effect.none )
 
         SessionApiResponded _ (Err error) ->
