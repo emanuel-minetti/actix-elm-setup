@@ -103,7 +103,9 @@ update shared msg model =
                         message =
                             I18n.fail shared.locale.t
                     in
-                    ( { model | errorMessage = message, isSubmittingForm = False }, Effect.none )
+                    ( { model | errorMessage = message, isSubmittingForm = False, username = "", password = "" }
+                    , Effect.none
+                    )
 
                 False ->
                     let
@@ -127,7 +129,7 @@ update shared msg model =
                 message =
                     I18n.networkError shared.locale.t ++ httpError
             in
-            ( { model | isSubmittingForm = False, errorMessage = message }
+            ( { model | isSubmittingForm = False, errorMessage = message, username = "", password = "" }
             , Effect.none
             )
 
@@ -142,12 +144,14 @@ update shared msg model =
                         message =
                             I18n.fail shared.locale.t
                     in
-                    ( { model | errorMessage = message, isSubmittingForm = False }, Effect.none )
+                    ( { model | errorMessage = message, isSubmittingForm = False, username = "", password = "" }
+                    , Effect.none
+                    )
 
                 False ->
                     case apiResponseData.data of
                         Api.ResponseData sessionData ->
-                            ( { model | errorMessage = "", isSubmittingForm = False }
+                            ( { model | errorMessage = "", isSubmittingForm = False, username = "", password = "" }
                               -- TODO send wanted url
                             , Effect.login
                                 { token = token
