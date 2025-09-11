@@ -1,25 +1,22 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Applicant exposing (Model, Msg, page)
 
 import Auth
 import Effect exposing (Effect)
-import Html exposing (a, br, text)
-import Html.Attributes exposing (href)
+import Html
 import Layouts
-import Locale
 import Page exposing (Page)
 import Route exposing (Route)
 import Shared
-import Translations.Home as I18nHome
 import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
-page user shared _ =
+page user shared route =
     Page.new
         { init = init
         , update = update
         , subscriptions = subscriptions
-        , view = view user shared
+        , view = view
         }
         |> Page.withLayout toLayout
 
@@ -66,7 +63,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Sub.none
 
 
@@ -74,18 +71,8 @@ subscriptions _ =
 -- VIEW
 
 
-view : Auth.User -> Shared.Model -> Model -> View Msg
-view user shared _ =
-    let
-        t =
-            shared.locale.t
-    in
-    { title = "Home"
-    , body =
-        [ text <| I18nHome.yourPreferredLang t <| Locale.toLanguageString t shared.locale.lang
-        , br [] []
-        , text ("Name: " ++ user.name)
-        , br [] []
-        , a [ href "/applicant/" ] [ text "/applicant/" ]
-        ]
+view : Model -> View Msg
+view model =
+    { title = "Pages.Applicant"
+    , body = [ Html.text "/applicant" ]
     }
