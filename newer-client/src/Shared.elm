@@ -65,12 +65,13 @@ init flagsResult _ =
                 needsToSetUser =
                     not (String.isEmpty flags.token)
                         && (flags.expires /= 0)
-                        && (flags.expires > flags.nowPlusSome)
+                        && (flags.expires * 1000 > flags.nowPlusSome)
 
                 ( newModel, newEffect ) =
                     case needsToSetUser of
                         True ->
                             ( { translationsApiData = Api.Loading
+                              , isRestoringSession = True
                               , locale = Locale.init flags.browserLang
                               , user = Nothing
                               }
@@ -92,6 +93,7 @@ init flagsResult _ =
 noUser : String -> ( Model, Effect Msg )
 noUser lang =
     ( { translationsApiData = Api.Loading
+      , isRestoringSession = False
       , locale = Locale.init lang
       , user = Nothing
       }
@@ -183,7 +185,7 @@ update _ msg model =
             in
             case hasError of
                 True ->
-                    ( model, Effect.none )
+                    ( { model | isRestoringSession = False }, Effect.none )
 
                 False ->
                     case apiResponseData.data of
@@ -205,7 +207,7 @@ update _ msg model =
                                         False ->
                                             model.locale
                             in
-                            ( { model | locale = locale }
+                            ( { model | locale = locale, isRestoringSession = False }
                             , Effect.batch
                                 [ Effect.login
                                     { token = token
@@ -218,10 +220,10 @@ update _ msg model =
                             )
 
                         Api.NoneResponseData _ ->
-                            ( model, Effect.none )
+                            ( { model | isRestoringSession = False }, Effect.none )
 
         Shared.Msg.SessionApiResponded _ (Err _) ->
-            ( model, Effect.none )
+            ( { model | isRestoringSession = False }, Effect.none )
 
 
 

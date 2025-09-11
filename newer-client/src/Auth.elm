@@ -17,16 +17,20 @@ type alias User =
 -}
 onPageLoad : Shared.Model -> Route () -> Auth.Action.Action User
 onPageLoad shared route =
-    case shared.user of
-        Just user ->
-            Auth.Action.LoadPageWithUser user
+    if shared.isRestoringSession then
+        Auth.Action.loadCustomPage
 
-        Nothing ->
-            Auth.Action.pushRoute
-                { path = Route.Path.Login
-                , query = Dict.fromList [ ( "from", route.url.path ) ]
-                , hash = Nothing
-                }
+    else
+        case shared.user of
+            Just user ->
+                Auth.Action.LoadPageWithUser user
+
+            Nothing ->
+                Auth.Action.pushRoute
+                    { path = Route.Path.Login
+                    , query = Dict.fromList [ ( "from", route.url.path ) ]
+                    , hash = Nothing
+                    }
 
 
 {-| Renders whenever `Auth.Action.loadCustomPage` is returned from `onPageLoad`.

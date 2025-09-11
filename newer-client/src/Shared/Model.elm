@@ -8,6 +8,7 @@ import User exposing (User)
 
 type alias Model =
     { translationsApiData : Api.Data Translations
+    , isRestoringSession : Bool
     , locale : Locale
     , user : Maybe User
     }
