@@ -11,7 +11,7 @@ import View exposing (View)
 
 
 page : Auth.User -> Shared.Model -> Route () -> Page Model Msg
-page user shared route =
+page _ _ _ =
     Page.new
         { init = init
         , update = update
@@ -63,7 +63,7 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -72,7 +72,7 @@ subscriptions model =
 
 
 view : Model -> View Msg
-view model =
+view _ =
     { title = "Pages.Applicant"
     , body = [ Html.text "/applicant" ]
     }
