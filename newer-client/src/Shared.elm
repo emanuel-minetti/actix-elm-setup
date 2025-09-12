@@ -76,8 +76,14 @@ init flagsResult _ =
                               , user = Nothing
                               }
                             , Effect.batch
-                                [ Api.Session.get { token = flags.token, onResponse = Shared.Msg.RestoreSessionApiResponded flags.token }
-                                , Api.Translations.get { lang = flags.browserLang, onResponse = Shared.Msg.TranslationsApiResponded }
+                                [ Api.Session.get
+                                    { token = flags.token
+                                    , onResponse = Shared.Msg.RestoreSessionApiResponded flags.token
+                                    }
+                                , Api.Translations.get
+                                    { lang = flags.browserLang
+                                    , onResponse = Shared.Msg.TranslationsApiResponded
+                                    }
                                 ]
                             )
 
