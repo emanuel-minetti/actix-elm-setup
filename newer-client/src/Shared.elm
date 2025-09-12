@@ -178,52 +178,54 @@ update _ msg model =
             , Effect.clearUser
             )
 
-        Shared.Msg.RestoreSessionApiResponded token (Ok apiResponseData) ->
-            let
-                hasError =
-                    not <| String.isEmpty apiResponseData.error
-            in
-            case hasError of
-                True ->
+        Shared.Msg.RestoreSessionApiResponded token apiResult ->
+            case apiResult of
+                Ok apiResponseData ->
+                    let
+                        hasError =
+                            not <| String.isEmpty apiResponseData.error
+                    in
+                    if hasError then
+                        ( { model | isRestoringSession = False }, Effect.none )
+
+                    else
+                        case apiResponseData.data of
+                            Api.ResponseData sessionData ->
+                                let
+                                    userLang =
+                                        sessionData
+                                            |> Api.Session.Model.lang
+                                            |> String.toLower
+
+                                    needToLoadTranslations =
+                                        Locale.toLanguageValue model.locale.lang /= userLang
+
+                                    locale =
+                                        case needToLoadTranslations of
+                                            True ->
+                                                Locale.init userLang
+
+                                            False ->
+                                                model.locale
+                                in
+                                ( { model | locale = locale, isRestoringSession = False }
+                                , Effect.batch
+                                    [ Effect.login
+                                        { token = token
+                                        , expires = apiResponseData.expires
+                                        , name = Api.Session.Model.name sessionData
+                                        , preferredLang = Api.Session.Model.lang sessionData
+                                        }
+                                    , Api.Translations.get
+                                        { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
+                                    ]
+                                )
+
+                            Api.NoneResponseData _ ->
+                                ( { model | isRestoringSession = False }, Effect.none )
+
+                Err _ ->
                     ( { model | isRestoringSession = False }, Effect.none )
-
-                False ->
-                    case apiResponseData.data of
-                        Api.ResponseData sessionData ->
-                            let
-                                userLang =
-                                    sessionData
-                                        |> Api.Session.Model.lang
-                                        |> String.toLower
-
-                                needToLoadTranslations =
-                                    Locale.toLanguageValue model.locale.lang /= userLang
-
-                                locale =
-                                    case needToLoadTranslations of
-                                        True ->
-                                            Locale.init userLang
-
-                                        False ->
-                                            model.locale
-                            in
-                            ( { model | locale = locale, isRestoringSession = False }
-                            , Effect.batch
-                                [ Effect.login
-                                    { token = token
-                                    , expires = apiResponseData.expires
-                                    , name = Api.Session.Model.name sessionData
-                                    , preferredLang = Api.Session.Model.lang sessionData
-                                    }
-                                , Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
-                                ]
-                            )
-
-                        Api.NoneResponseData _ ->
-                            ( { model | isRestoringSession = False }, Effect.none )
-
-        Shared.Msg.RestoreSessionApiResponded _ (Err _) ->
-            ( { model | isRestoringSession = False }, Effect.none )
 
 
 
