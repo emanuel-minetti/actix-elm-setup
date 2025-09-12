@@ -9,6 +9,6 @@ import User exposing (User)
 
 type Msg
     = TranslationsApiResponded (Result Http.Error Translations)
-    | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
-    | LoginApiResponded User
+    | RestoreSessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
+    | LoginSucceeded User
     | Logout

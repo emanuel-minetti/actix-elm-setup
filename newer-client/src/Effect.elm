@@ -230,7 +230,7 @@ toCmd options effect =
 
 login : User -> Effect msg
 login apiResponseData =
-    SendSharedMsg (Shared.Msg.LoginApiResponded apiResponseData)
+    SendSharedMsg (Shared.Msg.LoginSucceeded apiResponseData)
 
 
 logout : Effect msg

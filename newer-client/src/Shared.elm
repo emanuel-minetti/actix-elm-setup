@@ -76,7 +76,7 @@ init flagsResult _ =
                               , user = Nothing
                               }
                             , Effect.batch
-                                [ Api.Session.get { token = flags.token, onResponse = Shared.Msg.SessionApiResponded flags.token }
+                                [ Api.Session.get { token = flags.token, onResponse = Shared.Msg.RestoreSessionApiResponded flags.token }
                                 , Api.Translations.get { lang = flags.browserLang, onResponse = Shared.Msg.TranslationsApiResponded }
                                 ]
                             )
@@ -135,7 +135,7 @@ update _ msg model =
             in
             ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
 
-        Shared.Msg.LoginApiResponded user ->
+        Shared.Msg.LoginSucceeded user ->
             let
                 userLang =
                     String.toLower user.preferredLang
@@ -178,7 +178,7 @@ update _ msg model =
             , Effect.clearUser
             )
 
-        Shared.Msg.SessionApiResponded token (Ok apiResponseData) ->
+        Shared.Msg.RestoreSessionApiResponded token (Ok apiResponseData) ->
             let
                 hasError =
                     not <| String.isEmpty apiResponseData.error
@@ -222,7 +222,7 @@ update _ msg model =
                         Api.NoneResponseData _ ->
                             ( { model | isRestoringSession = False }, Effect.none )
 
-        Shared.Msg.SessionApiResponded _ (Err _) ->
+        Shared.Msg.RestoreSessionApiResponded _ (Err _) ->
             ( { model | isRestoringSession = False }, Effect.none )
 
 
