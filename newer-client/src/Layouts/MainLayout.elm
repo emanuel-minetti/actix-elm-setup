@@ -96,6 +96,7 @@ viewHeader shared =
                 , span [ class "navbar-text" ] [ viewLoggedInText shared ]
                 , div [ style "display" "flex" ]
                     [ viewLoginTimer shared
+                    , viewLogout shared
                     , select [] <| viewSelectOptions shared.locale
                     ]
                 ]
@@ -105,13 +106,23 @@ viewHeader shared =
 
 viewLoggedInText : Shared.Model -> Html contentMsg
 viewLoggedInText shared =
-    -- TODO adjust if user name is known
     case shared.user of
-        Just _ ->
-            text <| I18n.loggedInText shared.locale.t ""
+        Just user ->
+            text <| I18n.loggedInText shared.locale.t user.name
 
         Nothing ->
             text <| I18n.notLoggedInText shared.locale.t
+
+
+viewLogout : Shared.Model -> Html contentMsg
+viewLogout shared =
+    case shared.user of
+        Just _ ->
+            -- TODO implement
+            div [] []
+
+        Nothing ->
+            div [] []
 
 
 viewLoginTimer : Shared.Model -> Html contentMsg
