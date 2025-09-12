@@ -86,6 +86,6 @@ view user shared _ =
         , br [] []
         , text ("Name: " ++ user.name)
         , br [] []
-        , a [ href "/applicant/" ] [ text "/applicant/" ]
+        , a [ href "/applicant" ] [ text "/applicant" ]
         ]
     }

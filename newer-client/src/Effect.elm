@@ -28,7 +28,7 @@ import Browser.Navigation
 import Dict exposing (Dict)
 import Json.Encode
 import Route exposing (Route)
-import Route.Path
+import Route.Path exposing (Path)
 import Shared.Model
 import Shared.Msg
 import Task
@@ -228,9 +228,9 @@ toCmd options effect =
 -- SHARED
 
 
-login : User -> Effect msg
-login apiResponseData =
-    SendSharedMsg (Shared.Msg.LoginSucceeded apiResponseData)
+login : User -> Path -> Effect msg
+login user path =
+    SendSharedMsg <| Shared.Msg.LoginSucceeded user path
 
 
 logout : Effect msg

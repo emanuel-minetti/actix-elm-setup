@@ -5,6 +5,7 @@ import Api.Login
 import Api.Login.Model
 import Api.Session
 import Api.Session.Model
+import Dict
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -13,6 +14,7 @@ import Http
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
+import Route.Path exposing (Path)
 import Shared
 import Translations.Login as I18n
 import User
@@ -20,10 +22,10 @@ import View exposing (View)
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page shared _ =
+page shared route =
     Page.new
         { init = init
-        , update = update shared
+        , update = update shared route
         , subscriptions = subscriptions
         , view = view shared
         }
@@ -74,8 +76,8 @@ type Msg
     | SessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model))
 
 
-update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
-update shared msg model =
+update : Shared.Model -> Route () -> Msg -> Model -> ( Model, Effect Msg )
+update shared route msg model =
     case msg of
         UserUpdatedInput User userName ->
             ( { model | username = userName }
@@ -151,14 +153,29 @@ update shared msg model =
                 False ->
                     case apiResponseData.data of
                         Api.ResponseData sessionData ->
+                            let
+                                path : Path
+                                path =
+                                    case Dict.get "from" route.query of
+                                        Just maybeRoute ->
+                                            case Route.Path.fromString maybeRoute of
+                                                Just a ->
+                                                    a
+
+                                                Nothing ->
+                                                    Route.Path.Home_
+
+                                        Nothing ->
+                                            Route.Path.Home_
+                            in
                             ( { model | errorMessage = "", isSubmittingForm = False, username = "", password = "" }
-                              -- TODO send wanted url
                             , Effect.login
                                 { token = token
                                 , expires = apiResponseData.expires
                                 , name = Api.Session.Model.name sessionData
                                 , preferredLang = Api.Session.Model.lang sessionData
                                 }
+                                path
                             )
 
                         Api.NoneResponseData _ ->

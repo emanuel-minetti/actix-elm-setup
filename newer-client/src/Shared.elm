@@ -16,12 +16,10 @@ import Api
 import Api.Session
 import Api.Session.Model
 import Api.Translations
-import Dict
 import Effect exposing (Effect)
 import Json.Decode
 import Locale
 import Route exposing (Route)
-import Route.Path
 import Shared.Model
 import Shared.Msg
 
@@ -116,7 +114,7 @@ type alias Msg =
 
 
 update : Route () -> Msg -> Model -> ( Model, Effect Msg )
-update _ msg model =
+update route msg model =
     case msg of
         Shared.Msg.TranslationsApiResponded result ->
             let
@@ -141,7 +139,7 @@ update _ msg model =
             in
             ( { model | locale = newLocale, translationsApiData = newTranslationsApiData }, Effect.none )
 
-        Shared.Msg.LoginSucceeded user ->
+        Shared.Msg.LoginSucceeded user path ->
             let
                 userLang =
                     String.toLower user.preferredLang
@@ -168,13 +166,7 @@ update _ msg model =
             ( { model | user = Just user, locale = locale }
             , Effect.batch
                 [ langEffect
-
-                -- TODO review!
-                , Effect.pushRoute
-                    { path = Route.Path.Home_
-                    , query = Dict.empty
-                    , hash = Nothing
-                    }
+                , Effect.pushRoutePath path
                 , Effect.saveUser user
                 ]
             )
@@ -222,6 +214,7 @@ update _ msg model =
                                         , name = Api.Session.Model.name sessionData
                                         , preferredLang = Api.Session.Model.lang sessionData
                                         }
+                                        route.path
                                     , Api.Translations.get
                                         { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
                                     ]
