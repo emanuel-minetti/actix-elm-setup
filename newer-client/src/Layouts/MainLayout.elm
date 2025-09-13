@@ -4,7 +4,7 @@ import Api exposing (Data(..))
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 import Http exposing (Error(..))
 import Layout exposing (Layout)
 import Locale exposing (Language, Locale)
@@ -48,6 +48,7 @@ init _ =
 
 type Msg
     = Logout
+    | ChangeLanguage String
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -55,6 +56,17 @@ update msg model =
     case msg of
         Logout ->
             ( model, Effect.logout )
+
+        ChangeLanguage value ->
+            let
+                effect =
+                    if List.member value (List.map Locale.toLanguageStringValue Locale.languages) then
+                        Effect.changeLocale value
+
+                    else
+                        Effect.none
+            in
+            ( model, effect )
 
 
 subscriptions : Model -> Sub Msg
@@ -98,7 +110,7 @@ viewHeader shared toContentMsg =
                 , div [ style "display" "flex" ]
                     [ viewLoginTimer shared
                     , viewLogout shared toContentMsg
-                    , select [] <| viewSelectOptions shared.locale
+                    , select [ onInput ChangeLanguage ] (viewSelectOptions shared.locale) |> Html.map toContentMsg
                     ]
                 ]
             ]
@@ -148,7 +160,7 @@ viewSelectOption locale lang =
             locale.lang == lang
 
         valueString =
-            Locale.toLanguageValue lang
+            Locale.toLanguageStringValue lang
 
         textString =
             Locale.toLanguageString locale.t lang

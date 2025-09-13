@@ -145,31 +145,44 @@ update route msg model =
                     String.toLower user.preferredLang
 
                 needToLoadTranslations =
-                    userLang /= Locale.toLanguageValue model.locale.lang
+                    userLang /= Locale.toLanguageStringValue model.locale.lang
 
                 langEffect =
-                    case needToLoadTranslations of
-                        True ->
-                            Api.Translations.get { lang = userLang, onResponse = Shared.Msg.TranslationsApiResponded }
+                    if needToLoadTranslations then
+                        Effect.changeLocale userLang
 
-                        False ->
-                            Effect.none
-
-                locale =
-                    case needToLoadTranslations of
-                        True ->
-                            Locale.init userLang
-
-                        False ->
-                            model.locale
+                    else
+                        Effect.none
             in
-            ( { model | user = Just user, locale = locale }
+            ( { model | user = Just user }
             , Effect.batch
                 [ langEffect
                 , Effect.pushRoutePath path
                 , Effect.saveUser user
                 ]
             )
+
+        Shared.Msg.ChangeLocale newValue ->
+            -- TODO save locale to server, if logged in
+            let
+                langEffect =
+                    Api.Translations.get { lang = newValue, onResponse = Shared.Msg.TranslationsApiResponded }
+
+                locale =
+                    Locale.init newValue
+
+                storageEffect =
+                    Effect.saveLang locale
+
+                newUser =
+                    case model.user of
+                        Just user ->
+                            Just { user | preferredLang = Locale.toLanguageValue locale }
+
+                        Nothing ->
+                            Nothing
+            in
+            ( { model | locale = locale, user = newUser }, Effect.batch [ langEffect, storageEffect ] )
 
         Shared.Msg.Logout ->
             ( { model | user = Nothing }
@@ -196,7 +209,7 @@ update route msg model =
                                             |> String.toLower
 
                                     needToLoadTranslations =
-                                        Locale.toLanguageValue model.locale.lang /= userLang
+                                        Locale.toLanguageStringValue model.locale.lang /= userLang
 
                                     locale =
                                         case needToLoadTranslations of

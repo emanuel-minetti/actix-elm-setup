@@ -13,3 +13,4 @@ type Msg
     | RestoreSessionApiResponded String (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
     | LoginSucceeded User Path
     | Logout
+    | ChangeLocale String

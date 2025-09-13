@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , clearUser, login, logout, saveUser
+    , changeLocale, clearUser, login, logout, saveLang, saveUser
     )
 
 {-|
@@ -27,6 +27,7 @@ port module Effect exposing
 import Browser.Navigation
 import Dict exposing (Dict)
 import Json.Encode
+import Locale exposing (Locale)
 import Route exposing (Route)
 import Route.Path exposing (Path)
 import Shared.Model
@@ -228,6 +229,11 @@ toCmd options effect =
 -- SHARED
 
 
+changeLocale : String -> Effect msg
+changeLocale newValue =
+    SendSharedMsg <| Shared.Msg.ChangeLocale newValue
+
+
 login : User -> Path -> Effect msg
 login user path =
     SendSharedMsg <| Shared.Msg.LoginSucceeded user path
@@ -247,6 +253,11 @@ port sendToLocalStorage :
     , value : Json.Encode.Value
     }
     -> Cmd msg
+
+
+saveLang : Locale -> Effect msg
+saveLang locale =
+    SendToLocalStorage { key = "lang", value = Json.Encode.string (Locale.toLanguageValue locale) }
 
 
 saveUser : User -> Effect msg
