@@ -4,6 +4,7 @@ import Api exposing (Data(..))
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Http exposing (Error(..))
 import Layout exposing (Layout)
 import Locale exposing (Language, Locale)
@@ -46,14 +47,14 @@ init _ =
 
 
 type Msg
-    = NoOp
+    = Logout
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Effect.none )
+        Logout ->
+            ( model, Effect.logout )
 
 
 subscriptions : Model -> Sub Msg
@@ -69,7 +70,7 @@ view : Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View conten
 view shared { toContentMsg, model, content } =
     { title = content.title
     , body =
-        [ viewHeader shared
+        [ viewHeader shared toContentMsg
         , viewTranslationsApiDataMessage shared
         , div [ class "page ms-5" ] content.body
         , viewFooter shared
@@ -77,8 +78,8 @@ view shared { toContentMsg, model, content } =
     }
 
 
-viewHeader : Shared.Model -> Html contentMsg
-viewHeader shared =
+viewHeader : Shared.Model -> (Msg -> contentMsg) -> Html contentMsg
+viewHeader shared toContentMsg =
     header []
         [ nav [ class "navbar bg-body-tertiary" ]
             [ div [ class "container-fluid" ]
@@ -96,7 +97,7 @@ viewHeader shared =
                 , span [ class "navbar-text" ] [ viewLoggedInText shared ]
                 , div [ style "display" "flex" ]
                     [ viewLoginTimer shared
-                    , viewLogout shared
+                    , viewLogout shared toContentMsg
                     , select [] <| viewSelectOptions shared.locale
                     ]
                 ]
@@ -114,15 +115,19 @@ viewLoggedInText shared =
             text <| I18n.notLoggedInText shared.locale.t
 
 
-viewLogout : Shared.Model -> Html contentMsg
-viewLogout shared =
+viewLogout : Shared.Model -> (Msg -> contentMsg) -> Html contentMsg
+viewLogout shared toContentMsg =
     case shared.user of
         Just _ ->
-            -- TODO implement
-            div [] []
+            let
+                t =
+                    shared.locale.t
+            in
+            h4 [ title <| I18n.logoutTooltip t, onClick Logout ] [ i [ class "bi bi-box-arrow-right me-3" ] [] ]
+                |> Html.map toContentMsg
 
         Nothing ->
-            div [] []
+            div [ class "me-3" ] []
 
 
 viewLoginTimer : Shared.Model -> Html contentMsg
