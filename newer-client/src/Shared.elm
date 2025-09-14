@@ -72,6 +72,7 @@ init flagsResult _ =
                               , isRestoringSession = True
                               , locale = Locale.init flags.browserLang
                               , user = Nothing
+                              , globalErrors = []
                               }
                             , Effect.batch
                                 [ Api.Session.get
@@ -100,6 +101,7 @@ noUser lang =
       , isRestoringSession = False
       , locale = Locale.init lang
       , user = Nothing
+      , globalErrors = []
       }
     , Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
     )

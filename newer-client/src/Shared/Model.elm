@@ -11,4 +11,5 @@ type alias Model =
     , isRestoringSession : Bool
     , locale : Locale
     , user : Maybe User
+    , globalErrors : List String
     }
