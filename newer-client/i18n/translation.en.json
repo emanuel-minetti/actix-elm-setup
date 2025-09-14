@@ -42,9 +42,7 @@
     "fail": "Username or password is invalid.",
     "networkError": "There was an network error: "
   },
-  "Message": {
-    "empty": "",
-    "logoffTitle": "Logoff",
-    "logoffSuccess": "You successfully logged off"
+  "Error" : {
+    "intro": "While processing '{{caller}}' the following error occurred: "
   }
 }

@@ -42,9 +42,7 @@
     "fail": "Benutzername oder Passwort ungültig.",
     "networkError": "Es gab einen Netzwerk-Fehler: "
   },
-  "Message": {
-    "empty": "",
-    "logoffTitle": "Abmeldung",
-    "logoffSuccess": "Sie haben sich erfolgreich abgemeldet"
+  "Error" : {
+    "intro": "Beim Ausführen der Funktion '{{caller}}' ist der folgende Fehler aufgetreten: "
   }
 }

@@ -17,6 +17,7 @@ import Api.Session
 import Api.Session.Model
 import Api.Translations
 import Effect exposing (Effect)
+import Error
 import Json.Decode
 import Locale
 import Route exposing (Route)
@@ -202,7 +203,11 @@ update route msg model =
                             not <| String.isEmpty apiResponseData.error
                     in
                     if hasError then
-                        ( { model | isRestoringSession = False }, Effect.none )
+                        let
+                            newGlobalErrors =
+                                Error.ApiError "RestoreSessionApiResponded" apiResponseData.error :: model.globalErrors
+                        in
+                        ( { model | isRestoringSession = False, globalErrors = newGlobalErrors }, Effect.none )
 
                     else
                         case apiResponseData.data of
@@ -241,8 +246,12 @@ update route msg model =
                             Api.NoneResponseData _ ->
                                 ( { model | isRestoringSession = False }, Effect.none )
 
-                Err _ ->
-                    ( { model | isRestoringSession = False }, Effect.none )
+                Err error ->
+                    let
+                        newGlobalErrors =
+                            Error.HttpError "RestoreSessionApiResponded" error :: model.globalErrors
+                    in
+                    ( { model | isRestoringSession = False, globalErrors = newGlobalErrors }, Effect.none )
 
         Shared.Msg.ChangeLocaleResponded apiResult ->
             case apiResult of
@@ -252,8 +261,11 @@ update route msg model =
                             not <| String.isEmpty apiResponseData.error
                     in
                     if hasError then
-                        -- TODO handle: i.e. session timed out
-                        ( model, Effect.none )
+                        let
+                            newGlobalErrors =
+                                Error.ApiError "ChangeLocaleResponded" apiResponseData.error :: model.globalErrors
+                        in
+                        ( { model | globalErrors = newGlobalErrors }, Effect.none )
 
                     else
                         case apiResponseData.data of
@@ -276,8 +288,12 @@ update route msg model =
                             Api.NoneResponseData _ ->
                                 ( model, Effect.none )
 
-                Err _ ->
-                    ( model, Effect.none )
+                Err error ->
+                    let
+                        newGlobalErrors =
+                            Error.HttpError "ChangeLocaleResponded" error :: model.globalErrors
+                    in
+                    ( { model | globalErrors = newGlobalErrors }, Effect.none )
 
 
 

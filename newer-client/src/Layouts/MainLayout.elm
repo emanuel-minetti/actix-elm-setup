@@ -2,10 +2,12 @@ module Layouts.MainLayout exposing (Model, Msg(..), Props, layout)
 
 import Api exposing (Data(..))
 import Effect exposing (Effect)
+import Error exposing (Error)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Http exposing (Error(..))
+import Http
+import I18Next exposing (Translations)
 import Layout exposing (Layout)
 import Locale exposing (Language, Locale)
 import Pages
@@ -84,6 +86,7 @@ view shared { toContentMsg, model, content } =
     , body =
         [ viewHeader shared toContentMsg
         , viewTranslationsApiDataMessage shared
+        , viewGlobalErrorMessages shared
         , div [ class "page ms-5" ] content.body
         , viewFooter shared
         ]
@@ -181,19 +184,19 @@ viewTranslationsApiDataMessage shared =
             let
                 errorText =
                     case error of
-                        BadUrl string ->
+                        Http.BadUrl string ->
                             "BadUrl: " ++ string
 
-                        Timeout ->
+                        Http.Timeout ->
                             "Timed out"
 
-                        NetworkError ->
+                        Http.NetworkError ->
                             "Network Error"
 
-                        BadStatus int ->
+                        Http.BadStatus int ->
                             "Bad Status: " ++ String.fromInt int
 
-                        BadBody string ->
+                        Http.BadBody string ->
                             "Bad Body: " ++ string
             in
             div [ class "alert alert-danger" ]
@@ -201,6 +204,26 @@ viewTranslationsApiDataMessage shared =
                 , br [] []
                 , text errorText
                 ]
+
+
+viewGlobalErrorMessages : Shared.Model -> Html contentMsg
+viewGlobalErrorMessages shared =
+    let
+        t =
+            shared.locale.t
+    in
+    if List.isEmpty shared.globalErrors then
+        div [] []
+
+    else
+        shared.globalErrors
+            |> List.map (viewGlobalErrorMessage t)
+            |> div [ class "alert alert-danger" ]
+
+
+viewGlobalErrorMessage : Translations -> Error -> Html contentMsg
+viewGlobalErrorMessage t error =
+    text <| Error.toString t error
 
 
 viewFooter : Shared.Model -> Html contentMsg
