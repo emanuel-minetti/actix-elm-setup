@@ -163,7 +163,6 @@ update route msg model =
             )
 
         Shared.Msg.ChangeLocale newValue ->
-            -- TODO save locale to server, if logged in
             let
                 langEffect =
                     Api.Translations.get { lang = newValue, onResponse = Shared.Msg.TranslationsApiResponded }
@@ -174,15 +173,19 @@ update route msg model =
                 storageEffect =
                     Effect.saveLang locale
 
-                newUser =
+                serverEffect =
                     case model.user of
                         Just user ->
-                            Just { user | preferredLang = Locale.toLanguageValue locale }
+                            Api.Session.post
+                                { lang = newValue
+                                , token = user.token
+                                , onResponse = Shared.Msg.ChangeLocaleResponded
+                                }
 
                         Nothing ->
-                            Nothing
+                            Effect.none
             in
-            ( { model | locale = locale, user = newUser }, Effect.batch [ langEffect, storageEffect ] )
+            ( { model | locale = locale }, Effect.batch [ langEffect, storageEffect, serverEffect ] )
 
         Shared.Msg.Logout ->
             ( { model | user = Nothing }
@@ -238,6 +241,41 @@ update route msg model =
 
                 Err _ ->
                     ( { model | isRestoringSession = False }, Effect.none )
+
+        Shared.Msg.ChangeLocaleResponded apiResult ->
+            case apiResult of
+                Ok apiResponseData ->
+                    let
+                        hasError =
+                            not <| String.isEmpty apiResponseData.error
+                    in
+                    if hasError then
+                        -- TODO handle: i.e. session timed out
+                        ( model, Effect.none )
+
+                    else
+                        case apiResponseData.data of
+                            Api.ResponseData sessionData ->
+                                let
+                                    newUser =
+                                        case model.user of
+                                            Just user ->
+                                                let
+                                                    preferredLang =
+                                                        Api.Session.Model.lang sessionData
+                                                in
+                                                Just { user | preferredLang = preferredLang }
+
+                                            Nothing ->
+                                                model.user
+                                in
+                                ( { model | user = newUser }, Effect.none )
+
+                            Api.NoneResponseData _ ->
+                                ( model, Effect.none )
+
+                Err _ ->
+                    ( model, Effect.none )
 
 
 

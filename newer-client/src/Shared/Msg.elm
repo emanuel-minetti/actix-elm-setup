@@ -14,3 +14,4 @@ type Msg
     | LoginSucceeded User Path
     | Logout
     | ChangeLocale String
+    | ChangeLocaleResponded (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
