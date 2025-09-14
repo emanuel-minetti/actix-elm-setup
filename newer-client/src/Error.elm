@@ -1,5 +1,7 @@
 module Error exposing (..)
 
+import Html exposing (Html, div, p, text)
+import Html.Attributes exposing (class)
 import Http
 import I18Next exposing (Translations)
 import Translations.Error as I18n
@@ -10,18 +12,18 @@ type Error
     | ApiError String String
 
 
-toString : Translations -> Error -> String
-toString t error =
+toView : Translations -> Error -> Html msg
+toView t error =
     let
-        caller =
-            case error of
-                HttpError called _ ->
-                    called
+        intro =
+            t
+                |> I18n.intro
+                |> text
 
-                ApiError called _ ->
-                    called
+        errorMessage =
+            p [ class "ms-5" ] [ text "Hallo" ]
 
         message =
-            I18n.intro t caller
+            div [] [ intro, errorMessage ]
     in
     message

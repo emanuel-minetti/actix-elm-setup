@@ -43,6 +43,6 @@
     "networkError": "There was an network error: "
   },
   "Error" : {
-    "intro": "While processing '{{caller}}' the following error occurred: "
+    "intro": "An error occurred. Please contact support with the following information: "
   }
 }

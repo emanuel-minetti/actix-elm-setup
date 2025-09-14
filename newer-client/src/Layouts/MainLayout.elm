@@ -223,7 +223,7 @@ viewGlobalErrorMessages shared =
 
 viewGlobalErrorMessage : Translations -> Error -> Html contentMsg
 viewGlobalErrorMessage t error =
-    text <| Error.toString t error
+    Error.toView t error
 
 
 viewFooter : Shared.Model -> Html contentMsg

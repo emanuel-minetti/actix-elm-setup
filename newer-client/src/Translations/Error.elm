@@ -7,6 +7,6 @@ module Translations.Error exposing (..)
 import I18Next exposing (Delims(..), Translations, t, tr)
 
 
-intro : Translations -> String -> String
-intro translations caller =
-    tr translations Curly "Error.intro" [ ( "caller", caller ) ]
+intro : Translations -> String
+intro translations =
+    t translations "Error.intro"

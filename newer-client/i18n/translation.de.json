@@ -43,6 +43,6 @@
     "networkError": "Es gab einen Netzwerk-Fehler: "
   },
   "Error" : {
-    "intro": "Beim Ausführen der Funktion '{{caller}}' ist der folgende Fehler aufgetreten: "
+    "intro": "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Support mit den folgenden Informationen:"
   }
 }

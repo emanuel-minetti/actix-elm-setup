@@ -43,7 +43,7 @@ post options =
                 |> Json.Encode.object
                 |> Http.jsonBody
     in
-    request { method = "POST", token = options.token, body = body, onResponse = options.onResponse }
+    request { method = "POST", token = options.token ++ "t", body = body, onResponse = options.onResponse }
 
 
 request :
