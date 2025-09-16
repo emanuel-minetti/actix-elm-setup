@@ -10,3 +10,18 @@ import I18Next exposing (Delims(..), Translations, t, tr)
 intro : Translations -> String
 intro translations =
     t translations "Error.intro"
+
+
+errorMsg : Translations -> String -> String
+errorMsg translations msg =
+    tr translations Curly "Error.errorMsg" [ ( "msg", msg ) ]
+
+
+errorContent : Translations -> String -> String
+errorContent translations msg =
+    tr translations Curly "Error.errorContent" [ ( "msg", msg ) ]
+
+
+errorTimestamp : Translations -> String
+errorTimestamp translations =
+    t translations "Error.errorTimestamp"

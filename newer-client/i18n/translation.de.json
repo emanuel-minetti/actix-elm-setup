@@ -43,6 +43,9 @@
     "networkError": "Es gab einen Netzwerk-Fehler: "
   },
   "Error" : {
-    "intro": "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Support mit den folgenden Informationen:"
+    "intro": "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Support mit den folgenden Informationen:",
+    "errorMsg": "Verarbeitete Nachricht: {{msg}}",
+    "errorContent": "Fehlermeldung: {{msg}}",
+    "errorTimestamp": "Zeitstempel: "
   }
 }

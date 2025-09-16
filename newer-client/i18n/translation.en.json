@@ -43,6 +43,9 @@
     "networkError": "There was an network error: "
   },
   "Error" : {
-    "intro": "An error occurred. Please contact support with the following information: "
+    "intro": "An error occurred. Please contact support with the following information: ",
+    "errorMsg": "Processing Message: {{msg}}",
+    "errorContent": "Error Message: {{msg}}",
+    "errorTimestamp": "Timestamp: "
   }
 }

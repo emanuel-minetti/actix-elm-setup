@@ -23,6 +23,8 @@ import Locale
 import Route exposing (Route)
 import Shared.Model
 import Shared.Msg
+import Task
+import Time
 
 
 
@@ -74,6 +76,7 @@ init flagsResult _ =
                               , locale = Locale.init flags.browserLang
                               , user = Nothing
                               , globalErrors = []
+                              , globalErrorsTimestamp = Time.millisToPosix 0
                               }
                             , Effect.batch
                                 [ Api.Session.get
@@ -84,6 +87,7 @@ init flagsResult _ =
                                     { lang = flags.browserLang
                                     , onResponse = Shared.Msg.TranslationsApiResponded
                                     }
+                                , getTime
                                 ]
                             )
 
@@ -103,8 +107,12 @@ noUser lang =
       , locale = Locale.init lang
       , user = Nothing
       , globalErrors = []
+      , globalErrorsTimestamp = Time.millisToPosix 0
       }
-    , Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
+    , Effect.batch
+        [ Api.Translations.get { lang = lang, onResponse = Shared.Msg.TranslationsApiResponded }
+        , getTime
+        ]
     )
 
 
@@ -295,6 +303,9 @@ update route msg model =
                     in
                     ( { model | globalErrors = newGlobalErrors }, Effect.none )
 
+        Shared.Msg.GotTime posix ->
+            ( { model | globalErrorsTimestamp = posix }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -303,3 +314,12 @@ update route msg model =
 subscriptions : Route () -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.none
+
+
+
+-- COMMANDS
+
+
+getTime : Effect Msg
+getTime =
+    Effect.sendCmd <| Task.perform Shared.Msg.GotTime Time.now

@@ -13,6 +13,8 @@ import Locale exposing (Language, Locale)
 import Pages
 import Route exposing (Route)
 import Shared
+import Time
+import Translations.Error as I18nError
 import Translations.Page as I18n
 import View exposing (View)
 
@@ -86,8 +88,8 @@ view shared { toContentMsg, model, content } =
     , body =
         [ viewHeader shared toContentMsg
         , viewTranslationsApiDataMessage shared
-        , viewGlobalErrorMessages shared
-        , div [ class "page ms-5" ] content.body
+        , div [ class "page mx-5" ] [ viewGlobalErrorMessages shared ]
+        , div [ class "page mx-5" ] content.body
         , viewFooter shared
         ]
     }
@@ -216,14 +218,17 @@ viewGlobalErrorMessages shared =
         div [] []
 
     else
-        shared.globalErrors
-            |> List.map (viewGlobalErrorMessage t)
-            |> div [ class "alert alert-danger" ]
+        div [ class "alert alert-danger" ]
+            (List.map (viewGlobalErrorMessage t shared.globalErrorsTimestamp) shared.globalErrors)
 
 
-viewGlobalErrorMessage : Translations -> Error -> Html contentMsg
-viewGlobalErrorMessage t error =
-    Error.toView t error
+viewGlobalErrorMessage : Translations -> Time.Posix -> Error -> Html contentMsg
+viewGlobalErrorMessage t time error =
+    div []
+        [ text (I18nError.intro t)
+        , button [ type_ "button", class "btn-close ms-5", attribute "aria-label" "Close", attribute "data-bs-dismiss" "alert" ] []
+        , Error.toView t time error
+        ]
 
 
 viewFooter : Shared.Model -> Html contentMsg

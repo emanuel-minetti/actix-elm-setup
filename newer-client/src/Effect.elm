@@ -241,6 +241,7 @@ login user path =
 
 logout : Effect msg
 logout =
+    -- TODO delete session on server
     SendSharedMsg Shared.Msg.Logout
 
 
