@@ -53,6 +53,7 @@ init _ =
 type Msg
     = Logout
     | ChangeLanguage String
+    | ErrorsDismissed
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -72,6 +73,9 @@ update msg model =
             in
             ( model, effect )
 
+        ErrorsDismissed ->
+            ( model, Effect.clearErrors )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -88,7 +92,7 @@ view shared { toContentMsg, model, content } =
     , body =
         [ viewHeader shared toContentMsg
         , viewTranslationsApiDataMessage shared
-        , div [ class "page mx-5" ] [ viewGlobalErrorMessages shared ]
+        , div [ class "page mx-5" ] [ viewGlobalErrorMessages shared toContentMsg ]
         , div [ class "page mx-5" ] content.body
         , viewFooter shared
         ]
@@ -208,8 +212,8 @@ viewTranslationsApiDataMessage shared =
                 ]
 
 
-viewGlobalErrorMessages : Shared.Model -> Html contentMsg
-viewGlobalErrorMessages shared =
+viewGlobalErrorMessages : Shared.Model -> (Msg -> contentMsg) -> Html contentMsg
+viewGlobalErrorMessages shared toContentMsg =
     let
         t =
             shared.locale.t
@@ -218,15 +222,24 @@ viewGlobalErrorMessages shared =
         div [] []
 
     else
-        div [ class "alert alert-danger" ]
-            (List.map (viewGlobalErrorMessage t shared.globalErrorsTimestamp) shared.globalErrors)
+        div [ class "alert alert-danger alert-dismissable show fade" ]
+            [ span [] (List.map (viewGlobalErrorMessage t shared.globalErrorsTimestamp) shared.globalErrors)
+            , button
+                [ type_ "button"
+                , class "btn-close"
+                , attribute "aria-label" "Close"
+                , attribute "data-bs-dismiss" "alert"
+                , onClick ErrorsDismissed
+                ]
+                []
+            ]
+            |> Html.map toContentMsg
 
 
 viewGlobalErrorMessage : Translations -> Time.Posix -> Error -> Html contentMsg
 viewGlobalErrorMessage t time error =
-    div []
+    span []
         [ text (I18nError.intro t)
-        , button [ type_ "button", class "btn-close ms-5", attribute "aria-label" "Close", attribute "data-bs-dismiss" "alert" ] []
         , Error.toView t time error
         ]
 

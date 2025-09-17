@@ -17,3 +17,4 @@ type Msg
     | ChangeLocale String
     | ChangeLocaleResponded (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
     | GotTime Time.Posix
+    | ClearErrors

@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , changeLocale, clearUser, login, logout, saveLang, saveUser
+    , changeLocale, clearErrors, clearUser, login, logout, saveLang, saveUser
     )
 
 {-|
@@ -237,6 +237,11 @@ changeLocale newValue =
 login : User -> Path -> Effect msg
 login user path =
     SendSharedMsg <| Shared.Msg.LoginSucceeded user path
+
+
+clearErrors : Effect msg
+clearErrors =
+    SendSharedMsg <| Shared.Msg.ClearErrors
 
 
 logout : Effect msg

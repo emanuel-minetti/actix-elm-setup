@@ -306,6 +306,9 @@ update route msg model =
         Shared.Msg.GotTime posix ->
             ( { model | globalErrorsTimestamp = posix }, Effect.none )
 
+        Shared.Msg.ClearErrors ->
+            ( { model | globalErrorsTimestamp = Time.millisToPosix 0, globalErrors = [] }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
