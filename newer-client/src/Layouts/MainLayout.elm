@@ -38,12 +38,12 @@ layout _ shared _ =
 
 
 type alias Model =
-    {}
+    { time : Time.Posix }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( {}, Effect.none )
+    ( Model <| Time.millisToPosix 0, Effect.none )
 
 
 
@@ -54,6 +54,7 @@ type Msg
     = Logout
     | ChangeLanguage String
     | ErrorsDismissed
+    | Tick Time.Posix
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -76,21 +77,28 @@ update msg model =
         ErrorsDismissed ->
             ( model, Effect.clearErrors )
 
+        Tick newTime ->
+            ( { model | time = newTime }, Effect.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    -- 1000 is 1 sec
+    Time.every 1000 Tick
 
 
 
 -- VIEW
 
 
-view : Shared.Model -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view :
+    Shared.Model
+    -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model }
+    -> View contentMsg
 view shared { toContentMsg, model, content } =
     { title = content.title
     , body =
-        [ viewHeader shared toContentMsg
+        [ viewHeader shared toContentMsg model
         , viewTranslationsApiDataMessage shared
         , div [ class "page mx-5" ] [ viewGlobalErrorMessages shared toContentMsg ]
         , div [ class "page mx-5" ] content.body
@@ -99,8 +107,8 @@ view shared { toContentMsg, model, content } =
     }
 
 
-viewHeader : Shared.Model -> (Msg -> contentMsg) -> Html contentMsg
-viewHeader shared toContentMsg =
+viewHeader : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
+viewHeader shared toContentMsg model =
     header []
         [ nav [ class "navbar bg-body-tertiary" ]
             [ div [ class "container-fluid" ]
@@ -117,7 +125,7 @@ viewHeader shared toContentMsg =
                     ]
                 , span [ class "navbar-text" ] [ viewLoggedInText shared ]
                 , div [ style "display" "flex" ]
-                    [ viewLoginTimer shared
+                    [ viewLoginTimer shared model
                     , viewLogout shared toContentMsg
                     , select [ onInput ChangeLanguage ] (viewSelectOptions shared.locale) |> Html.map toContentMsg
                     ]
@@ -151,10 +159,33 @@ viewLogout shared toContentMsg =
             div [ class "me-3" ] []
 
 
-viewLoginTimer : Shared.Model -> Html contentMsg
-viewLoginTimer _ =
+viewLoginTimer : Shared.Model -> Model -> Html contentMsg
+viewLoginTimer shared model =
     -- TODO adjust if session timeout is known
-    h4 [] [ text "30" ]
+    case shared.user of
+        Just user ->
+            if Time.posixToMillis model.time /= 0 then
+                let
+                    millisToExpire =
+                        user.expires * 1000 - Time.posixToMillis model.time
+
+                    minsToExpire =
+                        millisToExpire // 1000 // 60
+
+                    isLessThanFiveMinutes =
+                        minsToExpire <= 5
+
+                    isExpired =
+                        minsToExpire < 0
+                in
+                strong [ class "me-5" ]
+                    [ minsToExpire |> String.fromInt |> text ]
+
+            else
+                div [] []
+
+        Nothing ->
+            div [] []
 
 
 viewSelectOptions : Locale -> List (Html contentMsg)
