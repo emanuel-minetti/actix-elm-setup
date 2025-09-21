@@ -30,12 +30,12 @@
                 let modal = undefined
                 if (value === true) {
                     modal = new bootstrap.Modal( '#' + id, {backdrop: 'static'});
-                    modal.show();
+                    modal.show(null);
                 }
                 else
                     if (typeof modal !== 'undefined') {
                         // noinspection JSObjectNullOrUndefined
-                        modal.dispose();
+                        modal.hide();
                     }
             });
         }

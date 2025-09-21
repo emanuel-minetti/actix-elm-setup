@@ -335,7 +335,6 @@ showFiveMinutesModal =
     SendToModal { id = fiveMinutesModalId, value = True }
 
 
-renewSession : Effect msg
-renewSession =
-    --TODO implement
-    none
+renewSession : String -> Effect msg
+renewSession token =
+    SendSharedMsg <| Shared.Msg.RenewSession token

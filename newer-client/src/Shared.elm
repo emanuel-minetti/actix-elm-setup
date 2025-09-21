@@ -309,6 +309,17 @@ update route msg model =
         Shared.Msg.ClearErrors ->
             ( { model | globalErrorsTimestamp = Time.millisToPosix 0, globalErrors = [] }, Effect.none )
 
+        Shared.Msg.RenewSession token ->
+            let
+                effect : Effect Msg
+                effect =
+                    Api.Session.get
+                        { token = token
+                        , onResponse = Shared.Msg.RestoreSessionApiResponded token
+                        }
+            in
+            ( model, effect )
+
 
 
 -- SUBSCRIPTIONS

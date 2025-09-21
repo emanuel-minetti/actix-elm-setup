@@ -93,7 +93,7 @@ update shared msg model =
             in
             case shared.user of
                 Just _ ->
-                    if millisToExpire <= 28 * 60 * 1000 && not model.fiveMinutesModalShown then
+                    if millisToExpire <= 29 * 60 * 1000 && not model.fiveMinutesModalShown then
                         ( { model | millisToExpire = millisToExpire, fiveMinutesModalShown = True }
                         , Effect.showFiveMinutesModal
                         )
@@ -105,7 +105,12 @@ update shared msg model =
                     ( { model | millisToExpire = millisToExpire }, Effect.none )
 
         RenewSession ->
-            ( { model | fiveMinutesModalShown = False }, Effect.renewSession )
+            case shared.user of
+                Just user ->
+                    ( { model | fiveMinutesModalShown = False }, Effect.renewSession user.token )
+
+                Nothing ->
+                    ( { model | fiveMinutesModalShown = False }, Effect.none )
 
 
 subscriptions : Model -> Sub Msg

@@ -18,3 +18,4 @@ type Msg
     | ChangeLocaleResponded (Result Http.Error (Api.ApiResponse Api.Session.Model.SessionApiResponseData))
     | GotTime Time.Posix
     | ClearErrors
+    | RenewSession String
