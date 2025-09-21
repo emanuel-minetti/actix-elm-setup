@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , changeLocale, clearErrors, clearUser, login, logout, saveLang, saveUser
+    , changeLocale, clearErrors, clearUser, fiveMinutesModalId, login, logout, renewSession, saveLang, saveUser, showFiveMinutesModal
     )
 
 {-|
@@ -51,6 +51,16 @@ type Effect msg
     | SendSharedMsg Shared.Msg.Msg
       -- PORTS
     | SendToLocalStorage { key : String, value : Json.Encode.Value }
+    | SendToModal { id : String, value : Bool }
+
+
+
+-- STRING CONSTS
+
+
+fiveMinutesModalId : String
+fiveMinutesModalId =
+    "five-minutes-modal"
 
 
 
@@ -80,6 +90,12 @@ sendCmd =
 
 {-| Send a message as an effect. Useful when emitting events from UI components.
 -}
+
+
+
+--noinspection unused,ElmReview
+
+
 sendMsg : msg -> Effect msg
 sendMsg msg =
     Task.succeed msg
@@ -125,6 +141,12 @@ replaceRoute route =
 
 {-| Same as `Effect.replaceRoute`, but without `query` or `hash` support
 -}
+
+
+
+--noinspection unused,ElmReview
+
+
 replaceRoutePath : Route.Path.Path -> Effect msg
 replaceRoutePath path =
     ReplaceUrl (Route.Path.toString path)
@@ -132,6 +154,12 @@ replaceRoutePath path =
 
 {-| Redirect users to a new URL, somewhere external to your web application.
 -}
+
+
+
+--noinspection unused,ElmReview
+
+
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
@@ -139,6 +167,12 @@ loadExternalUrl =
 
 {-| Navigate back one page
 -}
+
+
+
+--noinspection unused,ElmReview
+
+
 back : Effect msg
 back =
     Back
@@ -180,6 +214,9 @@ map fn effect =
 
         SendToLocalStorage value ->
             SendToLocalStorage value
+
+        SendToModal value ->
+            SendToModal value
 
 
 {-| Elm Land depends on this function to perform your effects.
@@ -224,6 +261,9 @@ toCmd options effect =
         SendToLocalStorage value ->
             sendToLocalStorage value
 
+        SendToModal value ->
+            sendToModal value
+
 
 
 -- SHARED
@@ -261,6 +301,13 @@ port sendToLocalStorage :
     -> Cmd msg
 
 
+port sendToModal :
+    { id : String
+    , value : Bool
+    }
+    -> Cmd msg
+
+
 saveLang : Locale -> Effect msg
 saveLang locale =
     SendToLocalStorage { key = "lang", value = Json.Encode.string (Locale.toLanguageValue locale) }
@@ -281,3 +328,14 @@ clearUser =
         [ SendToLocalStorage { key = "token", value = Json.Encode.null }
         , SendToLocalStorage { key = "expires", value = Json.Encode.null }
         ]
+
+
+showFiveMinutesModal : Effect msg
+showFiveMinutesModal =
+    SendToModal { id = fiveMinutesModalId, value = True }
+
+
+renewSession : Effect msg
+renewSession =
+    --TODO implement
+    none

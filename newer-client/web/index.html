@@ -22,7 +22,21 @@
     if (app.ports) {
         if (app.ports.sendToLocalStorage) {
             app.ports.sendToLocalStorage.subscribe(({key, value}) => {
-                window.localStorage[key] = value;
+                window.localStorage[key] = value ;
+            });
+        }
+        if (app.ports.sendToModal) {
+            app.ports.sendToModal.subscribe(({id, value}) => {
+                let modal = undefined
+                if (value === true) {
+                    modal = new bootstrap.Modal( '#' + id, {backdrop: 'static'});
+                    modal.show();
+                }
+                else
+                    if (typeof modal !== 'undefined') {
+                        // noinspection JSObjectNullOrUndefined
+                        modal.dispose();
+                    }
             });
         }
     }

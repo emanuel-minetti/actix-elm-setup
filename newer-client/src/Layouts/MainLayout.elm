@@ -27,7 +27,7 @@ layout : Props -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
 layout _ shared _ =
     Layout.new
         { init = init
-        , update = update
+        , update = update shared
         , view = view shared
         , subscriptions = subscriptions
         }
@@ -38,12 +38,14 @@ layout _ shared _ =
 
 
 type alias Model =
-    { time : Time.Posix }
+    { millisToExpire : Int
+    , fiveMinutesModalShown : Bool
+    }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( Model <| Time.millisToPosix 0, Effect.none )
+    ( Model 30 False, Effect.none )
 
 
 
@@ -55,10 +57,11 @@ type Msg
     | ChangeLanguage String
     | ErrorsDismissed
     | Tick Time.Posix
+    | RenewSession
 
 
-update : Msg -> Model -> ( Model, Effect Msg )
-update msg model =
+update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
+update shared msg model =
     case msg of
         Logout ->
             ( model, Effect.logout )
@@ -78,7 +81,31 @@ update msg model =
             ( model, Effect.clearErrors )
 
         Tick newTime ->
-            ( { model | time = newTime }, Effect.none )
+            let
+                millisToExpire : Int
+                millisToExpire =
+                    case shared.user of
+                        Just user ->
+                            user.expires * 1000 - Time.posixToMillis newTime
+
+                        Nothing ->
+                            -1
+            in
+            case shared.user of
+                Just _ ->
+                    if millisToExpire <= 28 * 60 * 1000 && not model.fiveMinutesModalShown then
+                        ( { model | millisToExpire = millisToExpire, fiveMinutesModalShown = True }
+                        , Effect.showFiveMinutesModal
+                        )
+
+                    else
+                        ( { model | millisToExpire = millisToExpire }, Effect.none )
+
+                Nothing ->
+                    ( { model | millisToExpire = millisToExpire }, Effect.none )
+
+        RenewSession ->
+            ( { model | fiveMinutesModalShown = False }, Effect.renewSession )
 
 
 subscriptions : Model -> Sub Msg
@@ -125,7 +152,7 @@ viewHeader shared toContentMsg model =
                     ]
                 , span [ class "navbar-text" ] [ viewLoggedInText shared ]
                 , div [ style "display" "flex" ]
-                    [ viewLoginTimer shared model
+                    [ viewLoginTimer shared toContentMsg model
                     , viewLogout shared toContentMsg
                     , select [ onInput ChangeLanguage ] (viewSelectOptions shared.locale) |> Html.map toContentMsg
                     ]
@@ -159,30 +186,25 @@ viewLogout shared toContentMsg =
             div [ class "me-3" ] []
 
 
-viewLoginTimer : Shared.Model -> Model -> Html contentMsg
-viewLoginTimer shared model =
+viewLoginTimer : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
+viewLoginTimer shared toContentMsg model =
     -- TODO adjust if session timeout is known
     case shared.user of
-        Just user ->
-            if Time.posixToMillis model.time /= 0 then
-                let
-                    millisToExpire =
-                        user.expires * 1000 - Time.posixToMillis model.time
+        Just _ ->
+            let
+                minsToExpire =
+                    model.millisToExpire // 1000 // 60
 
-                    minsToExpire =
-                        millisToExpire // 1000 // 60
+                defaultMessage : Html contentMsg
+                defaultMessage =
+                    strong [ class "me-5" ]
+                        [ minsToExpire |> String.fromInt |> text ]
 
-                    isLessThanFiveMinutes =
-                        minsToExpire <= 5
-
-                    isExpired =
-                        minsToExpire < 0
-                in
-                strong [ class "me-5" ]
-                    [ minsToExpire |> String.fromInt |> text ]
-
-            else
-                div [] []
+                message : Html contentMsg
+                message =
+                    div [] [ defaultMessage, viewFiveMinutesModal toContentMsg model ]
+            in
+            message
 
         Nothing ->
             div [] []
@@ -307,3 +329,43 @@ viewFooterLinks shared =
             li [] [ a [ href <| pageToHref page ] [ button [ class "btn btn-secondary" ] [ text <| pageToText page ] ] ]
     in
     List.map pageToListItem pages
+
+
+viewFiveMinutesModal : (Msg -> contentMsg) -> Model -> Html contentMsg
+viewFiveMinutesModal toContentMsg model =
+    div [ id Effect.fiveMinutesModalId, class "modal", tabindex -1 ]
+        [ div [ class "modal-dialog" ]
+            [ div [ class "modal-content" ]
+                [ div [ class "modal-header" ]
+                    [ h5 [ class "modal-title" ] [ text "Hallo" ]
+                    , button
+                        [ type_ "button"
+                        , class "btn-close"
+                        , attribute "data-bs-dismiss" "modal"
+                        , attribute "aria-label" "Close"
+                        ]
+                        []
+                    ]
+                , div [ class "modal-body" ]
+                    [ p []
+                        [ text <|
+                            "Nur noch "
+                                ++ String.fromInt model.millisToExpire
+                                ++ " Sekunden bis die Anmeldung abläuft"
+                        ]
+                    ]
+                , div [ class "modal-footer" ]
+                    [ button [ type_ "button", class "btn btn-secondary", attribute "data-bs-dismiss" "modal" ]
+                        [ text "Close" ]
+                    , button
+                        [ type_ "button"
+                        , class "btn btn-secondary"
+                        , attribute "data-bs-dismiss" "modal"
+                        , onClick RenewSession
+                        ]
+                        [ text "Anmeldung erneuern" ]
+                    ]
+                ]
+            ]
+        ]
+        |> Html.map toContentMsg
