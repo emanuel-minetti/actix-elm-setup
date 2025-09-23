@@ -38,14 +38,14 @@ layout _ shared _ =
 
 
 type alias Model =
-    { millisToExpire : Int
+    { secsToExpire : Int
     , fiveMinutesModalShown : Bool
     }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( Model 30 False, Effect.none )
+    ( Model 0 False, Effect.none )
 
 
 
@@ -82,27 +82,28 @@ update shared msg model =
 
         Tick newTime ->
             let
-                millisToExpire : Int
-                millisToExpire =
+                secsToExpire : Int
+                secsToExpire =
                     case shared.user of
                         Just user ->
-                            user.expires * 1000 - Time.posixToMillis newTime
+                            (user.expires * 1000 - Time.posixToMillis newTime) // 1000
 
                         Nothing ->
-                            -1
+                            0
             in
             case shared.user of
                 Just _ ->
-                    if millisToExpire <= 29 * 60 * 1000 && not model.fiveMinutesModalShown then
-                        ( { model | millisToExpire = millisToExpire, fiveMinutesModalShown = True }
+                    -- TODO adjust
+                    if secsToExpire <= 29 * 60 && not model.fiveMinutesModalShown then
+                        ( { model | secsToExpire = secsToExpire, fiveMinutesModalShown = True }
                         , Effect.showFiveMinutesModal
                         )
 
                     else
-                        ( { model | millisToExpire = millisToExpire }, Effect.none )
+                        ( { model | secsToExpire = secsToExpire }, Effect.none )
 
                 Nothing ->
-                    ( { model | millisToExpire = millisToExpire }, Effect.none )
+                    ( { model | secsToExpire = secsToExpire }, Effect.none )
 
         RenewSession ->
             case shared.user of
@@ -197,7 +198,7 @@ viewLoginTimer shared toContentMsg model =
         Just _ ->
             let
                 minsToExpire =
-                    model.millisToExpire // 1000 // 60
+                    model.secsToExpire // 60
 
                 timer : Html contentMsg
                 timer =
@@ -344,7 +345,7 @@ viewFiveMinutesModal shared toContentMsg model =
         timeString =
             let
                 mins =
-                    model.millisToExpire // 1000 // 60
+                    model.secsToExpire // 60
 
                 minsString =
                     if mins < 10 then
@@ -354,7 +355,7 @@ viewFiveMinutesModal shared toContentMsg model =
                         String.fromInt mins
 
                 secs =
-                    remainderBy 60 (model.millisToExpire // 1000)
+                    remainderBy 60 model.secsToExpire
 
                 secsString =
                     if secs < 10 then
