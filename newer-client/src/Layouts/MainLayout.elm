@@ -15,7 +15,7 @@ import Route exposing (Route)
 import Shared
 import Time
 import Translations.Error as I18nError
-import Translations.Page as I18n
+import Translations.MainLayout as I18n
 import View exposing (View)
 
 
@@ -193,23 +193,22 @@ viewLogout shared toContentMsg =
 
 viewLoginTimer : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
 viewLoginTimer shared toContentMsg model =
-    -- TODO adjust if session timeout is known
     case shared.user of
         Just _ ->
             let
                 minsToExpire =
                     model.millisToExpire // 1000 // 60
 
-                defaultMessage : Html contentMsg
-                defaultMessage =
+                timer : Html contentMsg
+                timer =
                     strong [ class "me-5" ]
                         [ minsToExpire |> String.fromInt |> text ]
 
-                message : Html contentMsg
-                message =
-                    div [] [ defaultMessage, viewFiveMinutesModal toContentMsg model ]
+                fiveMinutesModal : Html contentMsg
+                fiveMinutesModal =
+                    viewFiveMinutesModal shared toContentMsg model
             in
-            message
+            div [] [ timer, fiveMinutesModal ]
 
         Nothing ->
             div [] []
@@ -336,13 +335,41 @@ viewFooterLinks shared =
     List.map pageToListItem pages
 
 
-viewFiveMinutesModal : (Msg -> contentMsg) -> Model -> Html contentMsg
-viewFiveMinutesModal toContentMsg model =
+viewFiveMinutesModal : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
+viewFiveMinutesModal shared toContentMsg model =
+    let
+        t =
+            shared.locale.t
+
+        timeString =
+            let
+                mins =
+                    model.millisToExpire // 1000 // 60
+
+                minsString =
+                    if mins < 10 then
+                        "0" ++ String.fromInt mins
+
+                    else
+                        String.fromInt mins
+
+                secs =
+                    remainderBy 60 (model.millisToExpire // 1000)
+
+                secsString =
+                    if secs < 10 then
+                        "0" ++ String.fromInt secs
+
+                    else
+                        String.fromInt secs
+            in
+            minsString ++ ":" ++ secsString
+    in
     div [ id Effect.fiveMinutesModalId, class "modal", tabindex -1 ]
         [ div [ class "modal-dialog" ]
             [ div [ class "modal-content" ]
                 [ div [ class "modal-header" ]
-                    [ h5 [ class "modal-title" ] [ text "Hallo" ]
+                    [ h5 [ class "modal-title" ] [ text <| I18n.fiveMinutesTitle t ]
                     , button
                         [ type_ "button"
                         , class "btn-close"
@@ -353,22 +380,19 @@ viewFiveMinutesModal toContentMsg model =
                     ]
                 , div [ class "modal-body" ]
                     [ p []
-                        [ text <|
-                            "Nur noch "
-                                ++ String.fromInt model.millisToExpire
-                                ++ " Sekunden bis die Anmeldung abläuft"
+                        [ text <| I18n.fiveMinutesText t timeString
                         ]
                     ]
                 , div [ class "modal-footer" ]
                     [ button [ type_ "button", class "btn btn-secondary", attribute "data-bs-dismiss" "modal" ]
-                        [ text "Close" ]
+                        [ text <| I18n.close t ]
                     , button
                         [ type_ "button"
                         , class "btn btn-secondary"
                         , attribute "data-bs-dismiss" "modal"
                         , onClick RenewSession
                         ]
-                        [ text "Anmeldung erneuern" ]
+                        [ text <| I18n.renew t ]
                     ]
                 ]
             ]

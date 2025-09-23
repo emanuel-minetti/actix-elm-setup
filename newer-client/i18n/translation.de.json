@@ -1,12 +1,12 @@
 {
-  "Page": {
+  "MainLayout": {
     "notLoggedInText": "Sie sind nicht angemeldet",
     "loggedInText": "Sie sind angemeldet als {{name}}",
     "logoutTooltip": "Klicken Sie hier um sich abzumelden",
-    "success": "Erfolg",
-    "info": "Information",
-    "warning": "Warnung",
-    "error": "Fehler"
+    "fiveMinutesTitle": "Ihre Anmeldung droht abzulaufen",
+    "fiveMinutesText": "Ihre Anmeldung läuft ab in: {{time}}",
+    "close": "Schießen",
+    "renew": "Anmeldung erneuern"
   },
   "Route": {
     "Privacy": "Datenschutz-Erklärung",
