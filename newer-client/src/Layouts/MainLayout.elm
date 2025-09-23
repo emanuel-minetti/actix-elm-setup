@@ -40,12 +40,13 @@ layout _ shared _ =
 type alias Model =
     { secsToExpire : Int
     , fiveMinutesModalShown : Bool
+    , expiredModalShown : Bool
     }
 
 
 init : () -> ( Model, Effect Msg )
 init _ =
-    ( Model 0 False, Effect.none )
+    ( Model 0 False False, Effect.none )
 
 
 
