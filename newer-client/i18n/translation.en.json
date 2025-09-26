@@ -6,7 +6,8 @@
     "fiveMinutesTitle": "Your Session is about to expire",
     "fiveMinutesText": "Your Session expires in: {{time}}",
     "close": "Close",
-    "renew": "Renew Session"
+    "renew": "Renew Session",
+    "expiredModalText": "Your Session expired"
   },
   "Route": {
     "Privacy": "Privacy Declaration",

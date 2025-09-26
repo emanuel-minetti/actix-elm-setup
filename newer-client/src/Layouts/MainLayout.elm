@@ -91,33 +91,47 @@ update shared msg model =
 
                         Nothing ->
                             0
+
+                newModel : Model
+                newModel =
+                    { model | secsToExpire = secsToExpire }
             in
             case shared.user of
                 Just _ ->
                     -- TODO adjust
-                    if secsToExpire <= 29 * 60 && not model.fiveMinutesModalShown then
-                        ( { model | secsToExpire = secsToExpire, fiveMinutesModalShown = True }
+                    if secsToExpire > 1 && secsToExpire <= 28 * 60 && not model.expiredModalShown then
+                        ( { newModel | expiredModalShown = True }
+                        , Effect.showExpiredModal
+                        )
+
+                    else if secsToExpire <= 29 * 60 && not model.fiveMinutesModalShown then
+                        ( { newModel | fiveMinutesModalShown = True }
                         , Effect.showFiveMinutesModal
                         )
 
                     else
-                        ( { model | secsToExpire = secsToExpire }, Effect.none )
+                        ( newModel, Effect.none )
 
                 Nothing ->
-                    ( { model | secsToExpire = secsToExpire }, Effect.none )
+                    ( newModel, Effect.none )
 
         RenewSession ->
+            let
+                newModel : Model
+                newModel =
+                    { model | fiveMinutesModalShown = False }
+            in
             case shared.user of
                 Just user ->
-                    ( { model | fiveMinutesModalShown = False }, Effect.renewSession user.token )
+                    ( newModel, Effect.renewSession user.token )
 
                 Nothing ->
-                    ( { model | fiveMinutesModalShown = False }, Effect.none )
+                    ( newModel, Effect.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    -- 1000 is 1 sec
+    -- every sec
     Time.every 1000 Tick
 
 
@@ -209,8 +223,12 @@ viewLoginTimer shared toContentMsg model =
                 fiveMinutesModal : Html contentMsg
                 fiveMinutesModal =
                     viewFiveMinutesModal shared toContentMsg model
+
+                expiredModal : Html contentMsg
+                expiredModal =
+                    viewExpiredModal shared toContentMsg model
             in
-            div [] [ timer, fiveMinutesModal ]
+            div [] [ timer, fiveMinutesModal, expiredModal ]
 
         Nothing ->
             div [] []
@@ -395,6 +413,36 @@ viewFiveMinutesModal shared toContentMsg model =
                         , onClick RenewSession
                         ]
                         [ text <| I18n.renew t ]
+                    ]
+                ]
+            ]
+        ]
+        |> Html.map toContentMsg
+
+
+viewExpiredModal : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
+viewExpiredModal shared toContentMsg model =
+    let
+        t =
+            shared.locale.t
+    in
+    div [ id Effect.expiredModalId, class "modal", tabindex -1 ]
+        [ div [ class "modal-dialog" ]
+            [ div [ class "modal-content" ]
+                [ div [ class "modal-header" ]
+                    [ h5 [ class "modal-title" ] [ text <| I18n.expiredModalText t ]
+                    , button
+                        [ type_ "button"
+                        , class "btn-close"
+                        , attribute "data-bs-dismiss" "modal"
+                        , attribute "aria-label" "Close"
+                        ]
+                        []
+                    ]
+                , div [ class "modal-body" ]
+                    [ p []
+                        [ text <| I18n.expiredModalText t
+                        ]
                     ]
                 ]
             ]

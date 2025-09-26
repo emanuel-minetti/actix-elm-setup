@@ -6,7 +6,8 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , changeLocale, clearErrors, clearUser, fiveMinutesModalId, login, logout, renewSession, saveLang, saveUser, showFiveMinutesModal
+    , fiveMinutesModalId, expiredModalId, showFiveMinutesModal
+    , changeLocale, clearErrors, clearUser, login, logout, renewSession, saveLang, saveUser, showExpiredModal
     )
 
 {-|
@@ -21,6 +22,8 @@ port module Effect exposing
 @docs loadExternalUrl, back
 
 @docs map, toCmd
+
+@docs fiveMinutesModalId, expiredModalId, showFiveMinutesModal
 
 -}
 
@@ -63,6 +66,11 @@ fiveMinutesModalId =
     "five-minutes-modal"
 
 
+expiredModalId : String
+expiredModalId =
+    "expired-modal"
+
+
 
 -- BASICS
 
@@ -88,14 +96,12 @@ sendCmd =
     SendCmd
 
 
-{-| Send a message as an effect. Useful when emitting events from UI components.
--}
-
-
 
 --noinspection unused,ElmReview
 
 
+{-| Send a message as an effect. Useful when emitting events from UI components.
+-}
 sendMsg : msg -> Effect msg
 sendMsg msg =
     Task.succeed msg
@@ -139,40 +145,34 @@ replaceRoute route =
     ReplaceUrl (Route.toString route)
 
 
-{-| Same as `Effect.replaceRoute`, but without `query` or `hash` support
--}
-
-
 
 --noinspection unused,ElmReview
 
 
+{-| Same as `Effect.replaceRoute`, but without `query` or `hash` support
+-}
 replaceRoutePath : Route.Path.Path -> Effect msg
 replaceRoutePath path =
     ReplaceUrl (Route.Path.toString path)
 
 
-{-| Redirect users to a new URL, somewhere external to your web application.
--}
-
-
 
 --noinspection unused,ElmReview
 
 
+{-| Redirect users to a new URL, somewhere external to your web application.
+-}
 loadExternalUrl : String -> Effect msg
 loadExternalUrl =
     LoadExternalUrl
 
 
-{-| Navigate back one page
--}
-
-
 
 --noinspection unused,ElmReview
 
 
+{-| Navigate back one page
+-}
 back : Effect msg
 back =
     Back
@@ -333,6 +333,14 @@ clearUser =
 showFiveMinutesModal : Effect msg
 showFiveMinutesModal =
     SendToModal { id = fiveMinutesModalId, value = True }
+
+
+showExpiredModal : Effect msg
+showExpiredModal =
+    batch
+        [ SendToModal { id = fiveMinutesModalId, value = False }
+        , SendToModal { id = expiredModalId, value = True }
+        ]
 
 
 renewSession : String -> Effect msg

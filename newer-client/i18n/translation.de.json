@@ -6,7 +6,8 @@
     "fiveMinutesTitle": "Ihre Anmeldung droht abzulaufen",
     "fiveMinutesText": "Ihre Anmeldung läuft ab in: {{time}}",
     "close": "Schießen",
-    "renew": "Anmeldung erneuern"
+    "renew": "Anmeldung erneuern",
+    "expiredModalText": "Ihre Anmeldung ist abgelaufen"
   },
   "Route": {
     "Privacy": "Datenschutz-Erklärung",

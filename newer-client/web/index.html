@@ -27,16 +27,13 @@
         }
         if (app.ports.sendToModal) {
             app.ports.sendToModal.subscribe(({id, value}) => {
-                let modal = undefined
+                const modal = bootstrap.Modal.getOrCreateInstance( '#' + id, {backdrop: 'static'});
                 if (value === true) {
-                    modal = new bootstrap.Modal( '#' + id, {backdrop: 'static'});
                     modal.show(null);
                 }
-                else
-                    if (typeof modal !== 'undefined') {
-                        // noinspection JSObjectNullOrUndefined
-                        modal.hide();
-                    }
+                else {
+                    modal.hide();
+                }
             });
         }
     }
