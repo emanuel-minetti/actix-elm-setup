@@ -121,6 +121,7 @@ update shared msg model =
                 newModel =
                     { model | fiveMinutesModalShown = False }
             in
+            -- TODO here you need to sequence model update and effect
             case shared.user of
                 Just user ->
                     ( newModel, Effect.renewSession user.token )
