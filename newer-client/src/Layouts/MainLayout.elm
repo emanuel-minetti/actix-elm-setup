@@ -59,6 +59,7 @@ type Msg
     | ErrorsDismissed
     | Tick Time.Posix
     | RenewSession
+    | SendToLogin
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Effect Msg )
@@ -128,6 +129,10 @@ update shared msg model =
 
                 Nothing ->
                     ( newModel, Effect.none )
+
+        SendToLogin ->
+            -- TODO implement
+            ( model, Effect.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -234,7 +239,7 @@ viewLoginTimer shared toContentMsg model =
 
                 expiredModal : Html contentMsg
                 expiredModal =
-                    viewExpiredModal shared toContentMsg model
+                    viewExpiredModal shared toContentMsg
             in
             div [] [ timer, fiveMinutesModal, expiredModal ]
 
@@ -428,8 +433,8 @@ viewFiveMinutesModal shared toContentMsg model =
         |> Html.map toContentMsg
 
 
-viewExpiredModal : Shared.Model -> (Msg -> contentMsg) -> Model -> Html contentMsg
-viewExpiredModal shared toContentMsg model =
+viewExpiredModal : Shared.Model -> (Msg -> contentMsg) -> Html contentMsg
+viewExpiredModal shared toContentMsg =
     let
         t =
             shared.locale.t
@@ -451,6 +456,15 @@ viewExpiredModal shared toContentMsg model =
                     [ p []
                         [ text <| I18n.expiredModalText t
                         ]
+                    ]
+                , div [ class "modal-footer" ]
+                    [ button
+                        [ type_ "button"
+                        , class "btn btn-secondary"
+                        , attribute "data-bs-dismiss" "modal"
+                        , onClick SendToLogin
+                        ]
+                        [ text <| I18n.renew t ]
                     ]
                 ]
             ]
