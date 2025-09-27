@@ -215,10 +215,17 @@ viewLoginTimer shared toContentMsg model =
                 minsToExpire =
                     model.secsToExpire // 60
 
+                roundedMinsToExpire =
+                    if remainderBy 60 model.secsToExpire > 30 then
+                        minsToExpire + 1
+
+                    else
+                        minsToExpire
+
                 timer : Html contentMsg
                 timer =
                     strong [ class "me-5" ]
-                        [ minsToExpire |> String.fromInt |> text ]
+                        [ roundedMinsToExpire |> String.fromInt |> text ]
 
                 fiveMinutesModal : Html contentMsg
                 fiveMinutesModal =
