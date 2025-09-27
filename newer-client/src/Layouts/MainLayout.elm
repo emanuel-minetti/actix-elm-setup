@@ -457,7 +457,7 @@ viewExpiredModal shared toContentMsg =
                         [ text <| I18n.expiredModalText t
                         ]
                     ]
-                , div [ class "modal-footer" ]
+                , div [ class "modal-footer mx-auto" ]
                     [ button
                         [ type_ "button"
                         , class "btn btn-secondary"
