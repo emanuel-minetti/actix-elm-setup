@@ -1,0 +1,12 @@
+[package]
+name = "sauron-client"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+sauron = "0.70.0"
+log = "0.4.28"
+console_log = "1.0.0"

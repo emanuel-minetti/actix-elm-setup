@@ -5,7 +5,8 @@
   "scripts": {
     "build-elm": "cd client && npm run build",
     "run-rust": "cd server && cargo run",
-    "run": "npm run build-elm && npm run run-rust",
+    "build-sauron-client": "cd sauron-client && npm run build",
+    "run": "npm run build-sauron-client && npm run run-rust",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,0 +1,14 @@
+{
+  "name": "sauron-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "\"\"",
+  "scripts": {
+    "build-sauron": "wasm-pack build --release --target=web",
+    "copy-pkg": "ncp ./pkg/sauron_client.js ../public/js/sauron_client.js && ncp ./pkg/sauron_client_bg.wasm ../public/js/sauron_client_bg.wasm ..",
+    "copy-web": "ncp ./web ../public/",
+    "build": "npm run build-sauron && npm run copy-web && npm run copy-pkg"
+  },
+  "author": "",
+  "license": "MIT"
+}
