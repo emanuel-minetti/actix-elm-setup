@@ -1,0 +1,52 @@
+{
+  "MainLayout": {
+    "notLoggedInText": "Sie sind nicht angemeldet",
+    "loggedInText": "Sie sind angemeldet als {{name}}",
+    "logoutTooltip": "Klicken Sie hier um sich abzumelden",
+    "fiveMinutesTitle": "Ihre Anmeldung droht abzulaufen",
+    "fiveMinutesText": "Ihre Anmeldung läuft ab in: {{time}}",
+    "close": "Schießen",
+    "renew": "Anmeldung erneuern",
+    "expiredModalText": "Ihre Anmeldung ist abgelaufen"
+  },
+  "Route": {
+    "Privacy": "Datenschutz-Erklärung",
+    "Imprint": "Impressum"
+  },
+  "Lang": {
+    "german": "Deutsch",
+    "english": "Englisch"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Ihre bevorzugte Sprache: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Seite nicht gefunden",
+    "message": "Die von Ihnen angefragte Seite konnte auf diesem Server nicht gefunden werden."
+  },
+  "Imprint": {
+    "title": "Impressum",
+    "message": "Dies ist die Impressum Seite."
+  },
+  "Privacy": {
+    "title": "Datenschutz",
+    "message": "Dies ist die Seite mit Datenschutz Informationen."
+  },
+  "Login": {
+    "title": "Anmeldung",
+    "message": "Bitte melden Sie sich an: ",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "login": "Anmelden",
+    "loggingIn": "Sie werden angemeldet ...",
+    "fail": "Benutzername oder Passwort ungültig.",
+    "networkError": "Es gab einen Netzwerk-Fehler: "
+  },
+  "Error" : {
+    "intro": "Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Support mit den folgenden Informationen:",
+    "errorMsg": "Verarbeitete Nachricht: {{msg}}",
+    "errorContent": "Fehlermeldung: {{msg}}",
+    "errorTimestamp": "Zeitstempel: "
+  }
+}

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build-elm": "cd client && npm run build",
+    "build-elm": "cd newer-client && npm run build",
     "run-rust": "cd server && cargo run",
     "build-sauron-client": "cd sauron-client && npm run build",
     "run": "npm run build-sauron-client && npm run run-rust",

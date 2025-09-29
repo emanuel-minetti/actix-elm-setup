@@ -1,0 +1,52 @@
+{
+  "MainLayout": {
+    "notLoggedInText": "You're not logged in",
+    "loggedInText": "You're logged in as {{name}}",
+    "logoutTooltip": "Click here to log out",
+    "fiveMinutesTitle": "Your Session is about to expire",
+    "fiveMinutesText": "Your Session expires in: {{time}}",
+    "close": "Close",
+    "renew": "Renew Session",
+    "expiredModalText": "Your Session expired"
+  },
+  "Route": {
+    "Privacy": "Privacy Declaration",
+    "Imprint": "Imprint"
+  },
+  "Lang": {
+    "german": "German",
+    "english": "English"
+  },
+  "Home": {
+    "title": "Home",
+    "yourPreferredLang": "Your preferred Language: {{lang}}"
+  },
+  "NotFound": {
+    "title": "Not Found",
+    "message": "The page You requested could not be found on this server."
+  },
+  "Imprint": {
+    "title": "Imprint",
+    "message": "This is the imprint page."
+  },
+  "Privacy": {
+    "title": "Privacy",
+    "message": "On this page You find information on privacy."
+  },
+  "Login": {
+    "title": "Login",
+    "message": "Please log in:",
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "loggingIn": "Logging In ...",
+    "fail": "Username or password is invalid.",
+    "networkError": "There was an network error: "
+  },
+  "Error" : {
+    "intro": "An error occurred. Please contact support with the following information: ",
+    "errorMsg": "Processing Message: {{msg}}",
+    "errorContent": "Error Message: {{msg}}",
+    "errorTimestamp": "Timestamp: "
+  }
+}

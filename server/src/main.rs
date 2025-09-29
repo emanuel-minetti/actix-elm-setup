@@ -53,6 +53,7 @@ async fn main() -> std::io::Result<()> {
                     .service(serve_static_dir("css"))
                     .service(serve_static_dir("img"))
                     .service(serve_static_dir("lang"))
+                    .service(serve_static_dir("assets"))
                     .service(
                         web::scope("/api")
                             .app_data(Data::new(session_secret.clone()))
