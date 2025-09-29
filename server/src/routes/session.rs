@@ -140,7 +140,7 @@ impl NewLangData {
 }
 
 #[derive(Debug)]
-pub struct NewLangDataError(String);
+pub struct NewLangDataError();
 
 impl NewLangData {
     pub fn parse(req: Json<SessionRequest>) -> Result<NewLangData, NewLangDataError> {
@@ -150,7 +150,7 @@ impl NewLangData {
         } else if lang.to_lowercase().eq("en") {
             Ok(Self(Lang::En))
         } else {
-            Err(NewLangDataError("Unknown or missing option".to_string()))
+            Err(NewLangDataError())
         }
 
     }

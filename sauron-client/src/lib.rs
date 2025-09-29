@@ -1,29 +1,52 @@
-use log::trace;
+use log::{debug};
 use sauron::*;
 
-struct App;
+struct App {
+    count: i32,
+}
+
+
+enum Msg {
+    Increment,
+    Decrement,
+    Reset,
+}
 
 impl Application for App {
-    type MSG = ();
+    type MSG = Msg;
 
-    fn view(&self) -> Node<()> {
-        let count = 0;
-        node! {
-            <p id="p1" on_click=|_|{log::info!("hello")} value=count>
-                Hello World!
-                <!-- "This is a comment" -->
-            </p>
+    fn update(&mut self, msg: Msg) -> Cmd<Msg> {
+        match msg {
+            Msg::Increment => self.count += 1,
+            Msg::Decrement => self.count -= 1,
+            Msg::Reset => self.count = 0,
         }
-    }
-
-    fn update(&mut self, _msg: ()) -> Cmd<()> {
         Cmd::none()
+    }
+    fn view(&self) -> Node<Msg> {
+        node! {
+            <main>
+                <input type="button"
+                    value="+"
+                    on_click=|_| {
+                        Msg::Increment
+                    }
+                />
+                <button class="count" on_click=|_|{Msg::Reset} >{text(self.count)}</button>
+                <input type="button"
+                    value="-"
+                    on_click=|_| {
+                        Msg::Decrement
+                    }
+                />
+            </main>
+        }
     }
 }
 
 #[wasm_bindgen(start)]
 pub fn main() {
-    console_log::init_with_level(log::Level::Trace).unwrap();
-    trace!("Can debug and build.");
-    Program::mount_to_body(App);
+    console_log::init_with_level(log::Level::Debug).unwrap();
+    debug!("Can debug and build.");
+    Program::mount_to_body(App{ count: 0 });
 }

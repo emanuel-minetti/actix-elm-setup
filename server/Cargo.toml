@@ -1,7 +1,7 @@
 [package]
 name = "server"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 
 [[bin]]
@@ -13,12 +13,12 @@ name = "actix-elm-setup"
 actix-files = "0.6.6"
 actix-web = "4.7.0"
 base64 = "0.22.1"
-bcrypt = "0.15.1"
+bcrypt = "0.17.1"
 env_logger = "0.11.3"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 simple_crypt = "0.2.3"
-sqlx = { version = "0.8.0", default-features = false, features = [
+sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio-rustls",
     "macros",
     "postgres",
@@ -28,7 +28,7 @@ sqlx = { version = "0.8.0", default-features = false, features = [
 uuid = { version = "1.10.0", features = ["v4"] }
 bytes = "1.6.0"
 futures-util = "0.3.30"
-config = "0.14.0"
+config = "0.15.17"
 unicode-segmentation = "1.11.0"
 regex = "1.10.5"
 anyhow = "1.0.86"
