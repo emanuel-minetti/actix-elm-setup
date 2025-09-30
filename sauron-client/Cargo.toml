@@ -10,6 +10,6 @@ description = "A first Test of the sauron-client"
 crate-type = ["cdylib"]
 
 [dependencies]
-sauron = "0.70.0"
+sauron =  "0.70.0"
 log = "0.4.28"
 console_log = "1.0.0"

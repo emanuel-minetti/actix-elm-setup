@@ -15,6 +15,13 @@ enum Msg {
 impl Application for App {
     type MSG = Msg;
 
+    fn init(&mut self) -> Cmd<Self::MSG> {
+        //TODO get url and flags
+        self.count = 0;
+        debug!("Init called.");
+        Cmd::none()
+    }
+
     fn update(&mut self, msg: Msg) -> Cmd<Msg> {
         match msg {
             Msg::Increment => self.count += 1,
@@ -32,7 +39,9 @@ impl Application for App {
                         Msg::Increment
                     }
                 />
-                <button class="count" on_click=|_|{Msg::Reset} >{text(self.count)}</button>
+                <button class="count" on_click=|_|{Msg::Reset}>
+                    {text(self.count)}
+                </button>
                 <input type="button"
                     value="-"
                     on_click=|_| {
@@ -46,7 +55,7 @@ impl Application for App {
 
 #[wasm_bindgen(start)]
 pub fn main() {
-    console_log::init_with_level(log::Level::Debug).unwrap();
-    debug!("Can debug and build.");
+    console_log::init_with_level(log::Level::Trace).unwrap();
+        debug!("Can debug and build.");
     Program::mount_to_body(App{ count: 0 });
 }
