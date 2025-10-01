@@ -10,6 +10,7 @@ description = "A first Test of the sauron-client"
 crate-type = ["cdylib"]
 
 [dependencies]
-sauron =  "0.70.0"
+sauron = { version = "0.70.0", features = ["default"] }
 log = "0.4.28"
 console_log = "1.0.0"
+web-sys = { version = "0.3.81", features = ["default", "Window", "Storage"] }

@@ -346,6 +346,7 @@ dependencies = [
  "console_log",
  "log",
  "sauron",
+ "web-sys",
 ]
 
 [[package]]
